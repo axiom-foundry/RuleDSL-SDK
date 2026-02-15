@@ -6,7 +6,7 @@ Note: This repository contains the public C SDK surface (headers, documentation,
 The compiled runtime libraries are provided separately as evaluation artifacts
 (or via official release downloads when available). See docs/distribution.md for details.
 
-- Determinism-first evaluation for repeatable outcomes
+- Deterministic evaluation with repeatable outcomes
 - Explicit ABI contract (`struct_size`, `version`, reserved fields)
 - Optional replay support for reproducible validation
 - No database dependency in core evaluation path
