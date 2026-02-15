@@ -80,7 +80,9 @@
 - Updated `reports/public_repo_polish_report.md` wording to remove legacy package-root literal markers.
 
 ## 7) Post-push verification (append)
-- Pending push.
+- Append timestamp (local): 2026-02-15 14:40:11
+- `git status -sb`: `## main...origin/main`
+- `curl -I https://github.com/axiom-foundry/RuleDSL-SDK`: `HTTP/1.1 200 OK`
 
 ## 8) GitHub About update guidance
 - Suggested Description: `Deterministic in-process decision SDK (C ABI) for technical evaluation: headers, docs, and sample integration code.`
