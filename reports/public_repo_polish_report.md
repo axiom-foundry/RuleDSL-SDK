@@ -2,9 +2,9 @@
 
 ## Summary of issues found
 
-- `MANIFEST.txt` referenced old private-layout paths (`dist/sdk/...`) and files not present in this public repository.
-- `docs/quickstart.md` assumed commands from `dist/sdk`, which does not exist in this repository layout.
-- `examples/c/minimal_eval.c` compile-check comments also referenced the old `dist/sdk` layout.
+- `MANIFEST.txt` referenced old private-layout paths (legacy package-root paths) and files not present in this public repository.
+- `docs/quickstart.md` assumed commands from an old package root, which does not exist in this repository layout.
+- `examples/c/minimal_eval.c` compile-check comments also referenced the old package-root layout.
 - Binary distribution expectations were implicit; users could assume local `lib/` artifacts existed when they currently do not.
 - No plain-language evaluation usage terms were present.
 - No guidance file existed for GitHub "About" metadata consistency.
@@ -26,8 +26,8 @@
 Before:
 
 ```text
-Run commands from the package root (dist/sdk)
-cd dist\sdk
+Run commands from an old package root
+cd <old-package-root>
 ```
 
 After:

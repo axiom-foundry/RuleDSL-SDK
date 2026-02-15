@@ -1,6 +1,6 @@
 # C API Ownership and Lifetime Contract
 
-This document is the authoritative ownership and lifetime contract for the public C API in `SDK/Include/axiom/ruledsl_c.h`. If another document conflicts with this one, this contract takes precedence.
+This document is the authoritative ownership and lifetime contract for the public C API in `include/axiom/ruledsl_c.h`. If another document conflicts with this one, this contract takes precedence.
 
 ## Ownership Map
 
