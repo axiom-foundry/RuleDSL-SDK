@@ -1,0 +1,32 @@
+# Build outputs
+build/
+out/
+cmake-build-*/
+
+# Native objects/binaries
+*.obj
+*.o
+*.pdb
+*.ilk
+*.idb
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# CMake/Ninja artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+build.ninja
+.ninja_deps
+.ninja_log
+
+# OS/editor
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+dist/sdk/bin/README.txt
+dist/sdk/docs/capabilities.md
+dist/sdk/docs/error_code_registry.md
+dist/sdk/docs/ownership_contract.md
+dist/sdk/docs/quickstart.md
+dist/sdk/docs/replay_contract.md
+dist/sdk/docs/sdk_struct_contract.md
+dist/sdk/docs/thread_safety_model.md
+dist/sdk/examples/c/minimal_eval.c
+dist/sdk/include/axiom/export.h
+dist/sdk/include/axiom/ruledsl_c.h
+dist/sdk/include/axiom/version.h
+dist/sdk/lib/README.txt
+dist/sdk/MANIFEST.txt
+dist/sdk/VERSION.txt
