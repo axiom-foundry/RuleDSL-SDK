@@ -1,6 +1,6 @@
 # RuleDSL SDK
 
-Deterministic in-process decision evaluation via an ABI-stable C SDK.
+Deterministic decision infrastructure for regulated and latency-sensitive C/C++ systems.
 
 Note: This repository contains the public C SDK surface (headers, documentation, and examples).
 The compiled runtime libraries are provided separately as evaluation artifacts
