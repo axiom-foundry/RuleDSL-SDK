@@ -2,6 +2,10 @@
 
 Deterministic in-process decision evaluation via an ABI-stable C SDK.
 
+Note: This repository contains the public C SDK surface (headers, documentation, and examples).
+The compiled runtime libraries are provided separately as evaluation artifacts
+(or via official release downloads when available). See docs/distribution.md for details.
+
 - Determinism-first evaluation for repeatable outcomes
 - Explicit ABI contract (`struct_size`, `version`, reserved fields)
 - Optional replay support for reproducible validation
