@@ -1,55 +1,44 @@
 # Quickstart (5-Min Customer Evaluation)
 
-## Why RuleDSL?
+This guide assumes you are at the repository root.
 
-- Deterministic decision evaluation (same input -> same output)
-- ABI-stable C SDK (versioned contract)
-- Optional buffer-based replay (audit and debugging)
-- No database dependency
-- No runtime service required (in-process library)
+## What is included in this public repo
 
-This guide uses the packaged SDK layout under `dist/sdk` and gets the sample running fast.
+- `include/axiom/`: public C SDK headers
+- `docs/`: integration, ABI, ownership, replay, and operational docs
+- `examples/c/minimal_eval.c`: compile-time and runtime integration example
+- `MANIFEST.txt` and `VERSION.txt`: package inventory and SDK version marker
 
-## What is in this package
+## How evaluation works
 
-- `include/axiom/`: public C headers
-- `lib/`: SDK libraries for linking
-- `examples/c/minimal_eval.c`: deterministic C demo
-- `docs/`: API contract and behavior docs
+This repository publishes the SDK surface (headers + docs + sample code).
+
+Redistributable binaries are not committed here by default. Binaries are delivered separately during evaluation engagement or through release artifacts when published.
 
 ## Prerequisites
 
 ### Windows
 
-- Visual Studio 2022 Build Tools (or full VS) with C/C++ toolchain
-- x64 Native Tools / Developer Command Prompt
+- Visual Studio 2022 Build Tools (or full Visual Studio)
+- x64 Developer Command Prompt
 
 ### Linux
 
 - `gcc` or `clang`
-- standard C runtime and linker toolchain (`libc`, `ld`)
+- standard C runtime/linker toolchain
 
-## Build (copy-paste)
-
-Run commands from the package root (`dist/sdk`).
+## Build (when SDK binaries are provided under `lib/`)
 
 ### Windows (Developer Command Prompt)
 
 ```bat
-cd dist\sdk
 cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:lib axiom_ruledsl_c.lib /OUT:minimal_eval.exe
 ```
 
-If you get a missing DLL at runtime:
-- The package may include either a DLL + import lib or a static library.
-- If a DLL is shipped, it must be reachable at runtime (same folder as `minimal_eval.exe` or in `PATH`).
-- From `dist\sdk`, you can run `set PATH=%CD%\bin;%PATH%` before executing the demo.
-
-If you are in a plain Command Prompt first:
-
-```bat
-call "%ProgramFiles%/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build/vcvars64.bat"
-```
+If runtime reports a missing DLL:
+- SDK distribution may be static (`.lib`) or dynamic (`.dll` + import lib).
+- When using dynamic linkage, ensure required DLLs are reachable at runtime.
+- Typical local run setup from repo root: `set PATH=%CD%\bin;%PATH%`
 
 ### Linux (gcc)
 
@@ -87,12 +76,10 @@ Replay: code=0 bytes=...
 DETERMINISTIC_OK
 ```
 
-`DETERMINISTIC_OK` is the success marker for customer evaluation runs.
-
 ## Troubleshooting
 
-- **Bytecode path error**: verify `<bytecode.bc>` exists and is readable from your current shell directory.
-- **Architecture mismatch**: use x64 toolchain and x64 libraries together (avoid mixing x86 and x64).
-- **Runtime/CRT load issues**: on Windows, run from the VS Developer shell or install the matching MSVC redistributable.
-- **Linker cannot find SDK lib**: confirm library file exists in `lib/` and library name matches your platform build.
-- **`Replay: not supported in this build`**: this is valid; replay is capability-dependent and not always enabled.
+- `lib/` missing: this public repo does not include binaries by default; request evaluation binaries or use published release assets.
+- Bytecode path error: verify `<bytecode.bc>` exists and is readable.
+- Architecture mismatch: use matching x64 toolchain and x64 libraries.
+- Runtime loader errors: add SDK runtime directory to `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux).
+- `Replay: not supported in this build`: valid for builds where replay capability is disabled.

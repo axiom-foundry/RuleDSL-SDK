@@ -1,8 +1,8 @@
 /*
 MSVC compile check:
-cmd /c "\"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat\" >nul && cl /nologo /W4 /WX /std:c11 /I dist\sdk\include /c dist\sdk\examples\c\minimal_eval.c /Fo:build\minimal_eval.obj"
+cmd /c "\"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat\" >nul && cl /nologo /W4 /WX /std:c11 /I include /c examples\c\minimal_eval.c /Fo:build\minimal_eval.obj"
 Linux compile check (gcc/clang):
-gcc -std=c11 -Wall -Wextra -Werror -I dist/sdk/include -c dist/sdk/examples/c/minimal_eval.c -o /tmp/minimal_eval.o
+gcc -std=c11 -Wall -Wextra -Werror -I include -c examples/c/minimal_eval.c -o /tmp/minimal_eval.o
 */
 
 #include <stdint.h>

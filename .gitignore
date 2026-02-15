@@ -3,7 +3,7 @@ build/
 out/
 cmake-build-*/
 
-# Native objects/binaries
+# Native objects/binaries (default)
 *.obj
 *.o
 *.pdb
@@ -15,6 +15,20 @@ cmake-build-*/
 *.dylib
 *.a
 *.lib
+
+# Future release policy:
+# Allow committed SDK binaries only under /bin and /lib when intentionally published.
+!bin/
+!lib/
+!bin/**/*.dll
+!bin/**/*.so
+!bin/**/*.dylib
+!bin/**/*.exe
+!lib/**/*.lib
+!lib/**/*.a
+!lib/**/*.dll
+!lib/**/*.so
+!lib/**/*.dylib
 
 # CMake/Ninja artifacts
 CMakeFiles/

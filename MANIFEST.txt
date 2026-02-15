@@ -1,15 +1,29 @@
-dist/sdk/bin/README.txt
-dist/sdk/docs/capabilities.md
-dist/sdk/docs/error_code_registry.md
-dist/sdk/docs/ownership_contract.md
-dist/sdk/docs/quickstart.md
-dist/sdk/docs/replay_contract.md
-dist/sdk/docs/sdk_struct_contract.md
-dist/sdk/docs/thread_safety_model.md
-dist/sdk/examples/c/minimal_eval.c
-dist/sdk/include/axiom/export.h
-dist/sdk/include/axiom/ruledsl_c.h
-dist/sdk/include/axiom/version.h
-dist/sdk/lib/README.txt
-dist/sdk/MANIFEST.txt
-dist/sdk/VERSION.txt
+# RuleDSL SDK Public Manifest
+# Purpose: Inventory of files intentionally published in this repository.
+# Paths are repository-root-relative.
+
+.gitignore
+EVALUATION_TERMS.md
+MANIFEST.txt
+README.md
+VERSION.txt
+docs/capabilities.md
+docs/determinism_value_model.md
+docs/distribution.md
+docs/error_code_registry.md
+docs/evaluation_engagement_model.md
+docs/github_metadata.md
+docs/integration_operational_model.md
+docs/migration_and_lockin_model.md
+docs/ownership_contract.md
+docs/product_offer_definition.md
+docs/quickstart.md
+docs/replay_contract.md
+docs/sdk_struct_contract.md
+docs/technical_positioning.md
+docs/thread_safety_model.md
+examples/c/minimal_eval.c
+include/axiom/export.h
+include/axiom/ruledsl_c.h
+include/axiom/version.h
+reports/public_repo_polish_report.md
