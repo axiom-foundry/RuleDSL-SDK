@@ -44,3 +44,5 @@ build.ninja
 .vscode/
 .DS_Store
 Thumbs.db
+# Internal verification artifacts (keep local, not part of public surface)
+reports/
