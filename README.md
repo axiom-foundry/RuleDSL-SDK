@@ -30,13 +30,24 @@ gcc -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -laxi
 
 ## Documentation
 
-- [Technical positioning](docs/technical_positioning.md)
-- [Integration and operational model](docs/integration_operational_model.md)
-- [Migration and lock-in model](docs/migration_and_lockin_model.md)
-- [Determinism value model](docs/determinism_value_model.md)
-- [Quickstart guide](docs/quickstart.md)
-- [Distribution model](docs/distribution.md)
-- [Evaluation terms](EVALUATION_TERMS.md)
+Core:
+- [docs/quickstart.md](docs/quickstart.md)
+- [docs/technical_positioning.md](docs/technical_positioning.md)
+- [docs/determinism_value_model.md](docs/determinism_value_model.md)
+- [docs/sdk_struct_contract.md](docs/sdk_struct_contract.md)
+- [docs/thread_safety_model.md](docs/thread_safety_model.md)
+
+Advanced & Commercial Notes:
+- [docs/distribution.md](docs/distribution.md)
+- [docs/evaluation_engagement_model.md](docs/evaluation_engagement_model.md)
+- [docs/integration_operational_model.md](docs/integration_operational_model.md)
+- [docs/migration_and_lockin_model.md](docs/migration_and_lockin_model.md)
+- [docs/ownership_contract.md](docs/ownership_contract.md)
+- [docs/product_offer_definition.md](docs/product_offer_definition.md)
+- [docs/replay_contract.md](docs/replay_contract.md)
+- [docs/error_code_registry.md](docs/error_code_registry.md)
+- [docs/capabilities.md](docs/capabilities.md)
+- [docs/github_metadata.md](docs/github_metadata.md)
 
 Engine implementation is private; this repository contains the SDK surface for evaluation.
 
