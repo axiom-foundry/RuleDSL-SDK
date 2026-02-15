@@ -14,6 +14,10 @@ The compiled runtime libraries are provided separately as evaluation artifacts
 
 ## Quickstart
 
+The commands below assume you have received the evaluation runtime package
+containing the compiled library for your platform (for example placed under a local "lib/" directory).
+This repository includes headers and examples only.
+
 Windows (Developer Command Prompt):
 
 ```bat
