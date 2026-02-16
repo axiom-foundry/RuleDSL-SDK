@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          ref: 9795e00
+          ref: sdk-canonical-v1
           path: _engine
 
       - name: Compare canonical header (normalized)
