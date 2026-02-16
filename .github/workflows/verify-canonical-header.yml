@@ -17,6 +17,7 @@ jobs:
           repository: axiom-foundry/RuleDSL
           ref: sdk-canonical-v1
           path: _engine
+          token: ${{ secrets.ENGINE_REPO_TOKEN }}
 
       - name: Compare canonical header (normalized)
         shell: bash
@@ -57,6 +58,9 @@ PY
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
 
       - name: Forbidden token sweep (must be 0 hits)
         shell: bash
