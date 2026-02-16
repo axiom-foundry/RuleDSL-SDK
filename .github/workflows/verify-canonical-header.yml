@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   header-drift:
     runs-on: ubuntu-latest
@@ -23,10 +26,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           SDK_HDR="include/axiom/ruledsl_c.h"
           ENG_HDR="_engine/SDK/Include/axiom/ruledsl_c.h"
-
           test -f "$SDK_HDR" || (echo "Missing $SDK_HDR" && exit 1)
           test -f "$ENG_HDR" || (echo "Missing $ENG_HDR" && exit 1)
 
@@ -49,7 +50,6 @@ PY
 
           if [[ "$sdk_hash" != "$eng_hash" ]]; then
             echo "::error::SDK header drift detected. Sync include/axiom/ruledsl_c.h with engine canonical header."
-            echo "Diff (first 200 lines):"
             diff -u <(normalize "$ENG_HDR") <(normalize "$SDK_HDR") | sed -n '1,200p' || true
             exit 1
           fi
@@ -83,12 +83,18 @@ PY
             'AXCapabilitiesV1'
           )
 
-          # only public-facing SDK surface paths
           roots=(README.md VERSION.txt MANIFEST.txt include docs examples)
 
           hits=0
           for p in "${patterns[@]}"; do
-            if rg -n -i --hidden               --glob '!.git/**'               --glob '!reports/**'               --glob '!build/**'               --glob '!build*/**'               --glob '!out/**'               --glob '!.vs/**'               "$p" "${roots[@]}"; then
+            if rg -n -i --hidden \
+              --glob '!.git/**' \
+              --glob '!reports/**' \
+              --glob '!build/**' \
+              --glob '!build*/**' \
+              --glob '!out/**' \
+              --glob '!.vs/**' \
+              "$p" "${roots[@]}"; then
               hits=$((hits+1))
             fi
           done
@@ -97,4 +103,4 @@ PY
             echo "::error::Forbidden token sweep failed ($hits pattern groups produced hits)."
             exit 1
           fi
-          echo "TOTAL_HITS=0 (pattern groups with hits: $hits)"
+          echo "TOTAL_HITS=0"
