@@ -33,12 +33,10 @@ jobs:
             python3 - "$1" <<'PY'
 import sys, pathlib
 p = pathlib.Path(sys.argv[1]).read_bytes()
-if p.startswith(b'ï»¿'):
+if p.startswith(b'\xef\xbb\xbf'):
     p = p[3:]
-sys.stdout.buffer.write(p.replace(b'
-', b'
-').replace(b'', b'
-'))
+p = p.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+sys.stdout.buffer.write(p)
 PY
           }
 
