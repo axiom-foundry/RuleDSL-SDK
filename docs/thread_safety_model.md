@@ -13,5 +13,5 @@
 ## Required usage pattern
 
 - Use one compiler per thread or external synchronization for compiler calls.
-- Use one `AXDecision`/`AXDecisionV2` per evaluation call.
-- Call `ax_decision_reset` or `ax_decision_reset_v2` before reusing decision structs.
+- Use one `AXDecision` per evaluation call.
+- Call `ax_decision_reset` before reusing decision structs.

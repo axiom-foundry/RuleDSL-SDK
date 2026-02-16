@@ -69,10 +69,8 @@ Linux:
 ## Expected output (sample)
 
 ```text
-RuleDSL/1.0.0 (abi=1; ex2=1; replay_schema=1)
-Capabilities: abi_level=1 replay_schema=1 has_ex2=1
+RuleDSL/1.0.0 (abi=1)
 Decision: matched=1 action_type=0
-Replay: code=0 bytes=...
 DETERMINISTIC_OK
 ```
 
@@ -82,4 +80,4 @@ DETERMINISTIC_OK
 - Bytecode path error: verify `<bytecode.bc>` exists and is readable.
 - Architecture mismatch: use matching x64 toolchain and x64 libraries.
 - Runtime loader errors: add SDK runtime directory to `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux).
-- `Replay: not supported in this build`: valid for builds where replay capability is disabled.
+- Replay may be unavailable in some builds; this is expected for minimal runtime packages.

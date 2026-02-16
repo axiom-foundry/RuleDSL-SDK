@@ -1,1 +1,1 @@
-RuleDSL/1.0.0 (abi=1; ex2=1; replay_schema=1)
+RuleDSL/1.0.0 (abi=1)
