@@ -1,0 +1,98 @@
+name: verify-canonical-header
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  header-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+
+      - name: Checkout engine repo at canonical ref
+        uses: actions/checkout@v4
+        with:
+          repository: axiom-foundry/RuleDSL
+          ref: 9795e00
+          path: _engine
+
+      - name: Compare canonical header (normalized)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SDK_HDR="include/axiom/ruledsl_c.h"
+          ENG_HDR="_engine/SDK/Include/axiom/ruledsl_c.h"
+
+          test -f "$SDK_HDR" || (echo "Missing $SDK_HDR" && exit 1)
+          test -f "$ENG_HDR" || (echo "Missing $ENG_HDR" && exit 1)
+
+          normalize() {
+            python3 - "$1" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]).read_bytes()
+if p.startswith(b'ï»¿'):
+    p = p[3:]
+sys.stdout.buffer.write(p.replace(b'
+', b'
+').replace(b'', b'
+'))
+PY
+          }
+
+          sdk_hash="$(normalize "$SDK_HDR" | sha256sum | awk '{print $1}')"
+          eng_hash="$(normalize "$ENG_HDR" | sha256sum | awk '{print $1}')"
+
+          echo "SDK_HDR_SHA256=$sdk_hash"
+          echo "ENG_HDR_SHA256=$eng_hash"
+
+          if [[ "$sdk_hash" != "$eng_hash" ]]; then
+            echo "::error::SDK header drift detected. Sync include/axiom/ruledsl_c.h with engine canonical header."
+            echo "Diff (first 200 lines):"
+            diff -u <(normalize "$ENG_HDR") <(normalize "$SDK_HDR") | sed -n '1,200p' || true
+            exit 1
+          fi
+
+  forbidden-token-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Forbidden token sweep (must be 0 hits)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          patterns=(
+            '\bV2\b'
+            '_ex2\b'
+            '_v2\b'
+            'has_ex2'
+            'ex2='
+            '\blegacy\b'
+            'Legacy flow'
+            'V2 flow'
+            'ax_eval_bytecode_ex2'
+            'ax_decision_reset_v2'
+            'AXEvalOptionsV2'
+            'AXDecisionV2'
+            'AXCapabilitiesV1'
+          )
+
+          # only public-facing SDK surface paths
+          roots=(README.md VERSION.txt MANIFEST.txt include docs examples)
+
+          hits=0
+          for p in "${patterns[@]}"; do
+            if rg -n -i --hidden               --glob '!.git/**'               --glob '!reports/**'               --glob '!build/**'               --glob '!build*/**'               --glob '!out/**'               --glob '!.vs/**'               "$p" "${roots[@]}"; then
+              hits=$((hits+1))
+            fi
+          done
+
+          if [[ "$hits" -ne 0 ]]; then
+            echo "::error::Forbidden token sweep failed ($hits pattern groups produced hits)."
+            exit 1
+          fi
+          echo "TOTAL_HITS=0 (pattern groups with hits: $hits)"
