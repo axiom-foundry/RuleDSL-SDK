@@ -25,6 +25,13 @@ typedef enum AXActionType {
     AX_ACTION_LIMIT = 3
 } AXActionType;
 
+// AXErrorCode numeric contract (append-only):
+// 0       : success
+// 1-63    : user/integration failures
+// 64-127  : artifact failures (reserved for growth)
+// 128-191 : engine/runtime failures (reserved for growth)
+// 192-255 : reserved for future public expansion
+// Existing values below are frozen and must never be renumbered.
 typedef enum AXErrorCode {
     AX_ERR_OK = 0,
     AX_ERR_INVALID_ARGUMENT = 1,
@@ -113,6 +120,10 @@ AXIOM_API void ax_decision_reset(AXDecision* decision);
 AXIOM_API void ax_decision_free(AXDecision* decision);
 AXIOM_API void ax_free(void* ptr);
 AXIOM_API const char* ax_version_string(void);
+AXIOM_API const char* ax_error_to_string(AXErrorCode code);
+AXIOM_API AXErrorCode ax_last_error_code(void);
+AXIOM_API size_t ax_last_error_detail_utf8(char* buf, size_t cap);
+AXIOM_API void ax_clear_last_error(void);
 
 #ifdef __cplusplus
 }
