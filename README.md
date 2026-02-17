@@ -22,6 +22,7 @@ This repository provides the **public SDK surface** (headers + documentation) us
 ## Language Specification
 
 - Contract snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
+- Bytecode Workflow (v0.9): [`docs/bytecode_workflow_v0_9.md`](docs/bytecode_workflow_v0_9.md)
 
 ## Quickstart (integration)
 
