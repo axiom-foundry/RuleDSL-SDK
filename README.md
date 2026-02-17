@@ -13,7 +13,7 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Active profile: `decision-rules-v0.9`.
 - Strict conformance mode is available via `RULEDSL_CONFORMANCE_STRICT=1`.
 - Windows and Linux CI jobs validate strict conformance.
-- Snapshot: `docs/language/status_v0_9.md`
+- Snapshot: [docs/language/status_v0_9.md](docs/language/status_v0_9.md)
 
 ## Docs index
 
