@@ -7,6 +7,18 @@ This repository provides the **public SDK surface** (headers + documentation) us
 > Binaries are provided separately as part of a commercial delivery packet.  
 > Verification of release artifacts (hashes and optional signature) is required before integration (see distribution policy below).
 
+## Docs index
+
+- Start here (integration): [`docs/integration_snippets.md`](docs/integration_snippets.md)
+- Error contract: [`docs/errors.md`](docs/errors.md)
+- Versioning: [`docs/version_policy.md`](docs/version_policy.md)
+- Support: [`docs/support_policy.md`](docs/support_policy.md)
+- Distribution + verification: [`docs/distribution.md`](docs/distribution.md)
+- Evaluation workflow: [`docs/evaluation_playbook.md`](docs/evaluation_playbook.md)
+- Bytecode lifecycle: [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md)
+- Release gate: [`docs/release_gate.md`](docs/release_gate.md)
+- Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
+
 ## Quickstart (integration)
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
