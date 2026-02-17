@@ -7,6 +7,14 @@ This repository provides the **public SDK surface** (headers + documentation) us
 > Binaries are provided separately as part of a commercial delivery packet.  
 > Verification of release artifacts (hashes and optional signature) is required before integration (see distribution policy below).
 
+## Language Contract (v0.9)
+
+- RuleDSL language surface is versioned and contract-driven.
+- Active profile: `decision-rules-v0.9`.
+- Strict conformance mode is available via `RULEDSL_CONFORMANCE_STRICT=1`.
+- Windows and Linux CI jobs validate strict conformance.
+- Snapshot: `docs/language/status_v0_9.md`
+
 ## Docs index
 
 - Start here (integration): [`docs/integration_snippets.md`](docs/integration_snippets.md)
