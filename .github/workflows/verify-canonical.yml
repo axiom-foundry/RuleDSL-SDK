@@ -42,3 +42,24 @@ jobs:
           fi
 
           echo "Header hash match"
+
+      - name: Forbidden token sweep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGETS="README.md VERSION.txt MANIFEST.txt include docs examples"
+          DENYLIST="_ex2|_v2|has_ex2|legacy|experimental"
+
+          echo "Scanning public surface for forbidden tokens..."
+
+          for path in $TARGETS; do
+              if [ -e "$path" ]; then
+                  if grep -R -E "$DENYLIST" "$path"; then
+                      echo "Forbidden token detected in $path"
+                      exit 1
+                  fi
+              fi
+          done
+
+          echo "No forbidden tokens found"
