@@ -24,6 +24,14 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Contract snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
 - Bytecode Workflow (v0.9): [`docs/bytecode_workflow_v0_9.md`](docs/bytecode_workflow_v0_9.md)
 
+### Core Language Documents (v0.9)
+
+- Full Specification: [`docs/language/spec_v0_9.md`](docs/language/spec_v0_9.md)
+- Grammar Definition: [`docs/language/grammar_v0_9.md`](docs/language/grammar_v0_9.md)
+- Lexical Core: [`docs/language/lexical_core_v0_9.md`](docs/language/lexical_core_v0_9.md)
+- Numeric Model: [`docs/language/numeric_model_v0_9.md`](docs/language/numeric_model_v0_9.md)
+- Status Snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
+
 ## Quickstart (integration)
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
