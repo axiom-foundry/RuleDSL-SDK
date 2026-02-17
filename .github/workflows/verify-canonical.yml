@@ -1,0 +1,25 @@
+name: verify-canonical
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+
+      - name: Checkout engine repo at canonical ref
+        uses: actions/checkout@v4
+        with:
+          repository: axiom-foundry/RuleDSL
+          ref: sdk-canonical-v1
+          token: ${{ secrets.ENGINE_REPO_TOKEN }}
+          path: engine
+
+      - name: Dual checkout confirmation
+        run: echo "Dual checkout OK"
+

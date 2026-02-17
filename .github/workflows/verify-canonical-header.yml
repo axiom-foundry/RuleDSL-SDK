@@ -1,8 +1,0 @@
-name: sanity
-on: [push, pull_request]
-jobs:
-  ok:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: echo "OK"
