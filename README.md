@@ -19,6 +19,10 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Release gate: [`docs/release_gate.md`](docs/release_gate.md)
 - Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
 
+## Language Specification
+
+- Contract snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
+
 ## Quickstart (integration)
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
