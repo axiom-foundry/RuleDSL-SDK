@@ -27,6 +27,8 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Release gate: [`docs/release_gate.md`](docs/release_gate.md)
 - Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
 - Compiler workflow contract: [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md)
+- Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
+- Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
 
 ## Language Specification
 
@@ -45,7 +47,7 @@ This repository provides the **public SDK surface** (headers + documentation) us
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
 
-Customer workflow: compile `*.rule` with `ruledslc` to `*.axbc`, then load/evaluate bytecode with the C API.
+Customer workflow: **Write -> Compile -> Verify -> Evaluate** (`*.rule` -> `ruledslc compile` -> `ruledslc verify` -> C API evaluation).
 
 - Start here: [`docs/integration_snippets.md`](docs/integration_snippets.md)
 - Error handling contract: [`docs/errors.md`](docs/errors.md)

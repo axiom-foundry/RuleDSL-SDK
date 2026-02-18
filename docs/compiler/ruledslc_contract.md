@@ -9,6 +9,8 @@ The compiler is distributed as a licensed binary for local customer use.
 
 ```text
 ruledslc compile <input.rule> -o <output.axbc> [--lang 0.9] [--target axbc3] [--emit-manifest <path.json>]
+ruledslc verify <input.axbc>
+ruledslc license --status
 ruledslc --version
 ruledslc --help
 ```
@@ -22,6 +24,40 @@ ruledslc --help
 | `3` | Compile error (syntax or semantic) |
 | `4` | Incompatible language/target request |
 | `5` | Internal compiler failure |
+| `6` | Structurally invalid bytecode (`verify`) |
+| `7` | Unsupported bytecode/language/ABI version (`verify`) |
+| `8` | Corrupted bytecode payload (`verify`) |
+
+## `verify` Contract
+
+`ruledslc verify <input.axbc>` performs deterministic offline checks:
+- bytecode header structure,
+- supported AXBC schema version,
+- supported language version,
+- minimum engine ABI compatibility,
+- payload integrity check.
+
+Successful output is machine-readable:
+
+```text
+STATUS=OK
+AXBC=3
+LANG=0.9
+ABI=1
+FLAGS=0
+```
+
+Failure output is machine-readable and reason-coded, for example:
+
+```text
+STATUS=INCOMPATIBLE
+REASON=UNSUPPORTED_AXBC
+```
+
+## License Status Command
+
+`ruledslc license --status` is deterministic and offline.
+Current baseline is a local non-network status surface (no telemetry, no SaaS dependency).
 
 ## Determinism Contract
 
@@ -34,25 +70,23 @@ For the same compiler version, same input bytes, and same compile flags, `ruleds
 
 ## Version Handshake
 
-`ruledslc --version` returns a machine-parseable line:
+`ruledslc --version` returns machine-readable metadata:
 
 ```text
-RuleDSL/1.0.0 (lang=0.9; axbc=3; abi=1; ex2=1)
+RuleDSL/1.0.0 (lang=0.9; axbc=3; abi=1)
+BUILD_HASH=<short-hash>
 ```
-
-If a field is not supported in a release, it is omitted from the printed tuple.
-Current baseline fields are `lang`, `axbc`, and `abi`.
 
 ## Compatibility Policy
 
-| Compiler | Language | Bytecode target | SDK ABI | Notes |
+| Compiler | Language | Bytecode target | SDK ABI | Minimum engine version |
 | --- | --- | --- | --- | --- |
-| `1.0.x` | `0.9` | `axbc3` | `1` | Baseline public contract |
+| `1.0.x` | `0.9` | `axbc3` | `1` | `1.0.0` |
 
 Compatibility rules:
 - Compiler major version change MAY introduce breaking compile behavior.
 - Compiler minor/patch updates SHOULD keep language compatibility within the same major line.
-- Engine MUST reject incompatible bytecode schema versions at load/evaluation time.
+- Engine MUST reject incompatible bytecode schema or ABI requirements before evaluation.
 
 ## Optional Compile Manifest
 

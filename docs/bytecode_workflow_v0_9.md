@@ -19,7 +19,9 @@ RuleDSL Compiler (licensed binary)
    ->
 rule.axbc
    ->
-C API (ax_load_bytecode / ax_evaluate)
+ruledslc verify
+   ->
+C API (ax_check_bytecode_compatibility -> ax_eval_bytecode)
 ```
 
 This flow is the supported producer/consumer path for v0.9 distribution.
