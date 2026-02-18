@@ -35,6 +35,17 @@ function Resolve-Tool {
     throw "Compiler binary '$Candidate' not found in PATH."
 }
 
+function Normalize-Newlines {
+    param([string]$Text)
+
+    if ($null -eq $Text) {
+        return ""
+    }
+
+    # Normalize CRLF/LF/CR differences before output comparisons.
+    return (($Text -replace "`r`n", "`n") -replace "`r", "`n")
+}
+
 $EngineLibDir = (Resolve-Path $EngineLibDir).Path
 if (-not $IncludeDir) {
     $IncludeDir = Join-Path $RepoRoot "include"
@@ -200,8 +211,10 @@ foreach ($name in $examples) {
             throw "example run failed with exit code $($row.run_exit): $runOutput"
         }
 
-        $expected = (Get-Content $expectedPath -Raw).Trim()
-        $actual = ($runOutput -join "`n").Trim()
+        $expectedRaw = Get-Content $expectedPath -Raw -Encoding utf8
+        $expected = (Normalize-Newlines -Text $expectedRaw).Trim()
+        $actualRaw = ($runOutput -join "`n")
+        $actual = (Normalize-Newlines -Text $actualRaw).Trim()
         $row.output_match = ($expected -eq $actual)
         if (-not $row.output_match) {
             throw "output mismatch. expected=`"$expected`" actual=`"$actual`""
