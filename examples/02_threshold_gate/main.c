@@ -67,6 +67,22 @@ int main(int argc, char** argv)
         return 1;
     }
 
+
+    AXCompatibilityInfo compatibility = AX_COMPATIBILITY_INFO_INIT;
+    AXStatus compat_status = ax_check_bytecode_compatibility(bytecode.data, bytecode.size, &compatibility);
+    if (compat_status != AX_STATUS_OK) {
+        fprintf(stderr, "ax_check_bytecode_compatibility failed: status=%d axbc=%u lang=%u.%u abi=%u\n",
+                (int)compat_status,
+                (unsigned)compatibility.axbc_version,
+                (unsigned)compatibility.lang_major,
+                (unsigned)compatibility.lang_minor,
+                (unsigned)compatibility.minimum_engine_abi);
+        free(bytecode.data);
+        bytecode.data = NULL;
+        bytecode.size = 0;
+        ax_compiler_destroy(compiler);
+        return 1;
+    }
     memset(fields, 0, sizeof(fields));
     fields[0].name = "amount";
     fields[0].value.type = AX_VALUE_NUMBER;
