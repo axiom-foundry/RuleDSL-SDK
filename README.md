@@ -26,6 +26,7 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Bytecode lifecycle: [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md)
 - Release gate: [`docs/release_gate.md`](docs/release_gate.md)
 - Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
+- Compiler workflow contract: [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md)
 
 ## Language Specification
 
@@ -43,6 +44,8 @@ This repository provides the **public SDK surface** (headers + documentation) us
 ## Quickstart (integration)
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
+
+Customer workflow: compile `*.rule` with `ruledslc` to `*.axbc`, then load/evaluate bytecode with the C API.
 
 - Start here: [`docs/integration_snippets.md`](docs/integration_snippets.md)
 - Error handling contract: [`docs/errors.md`](docs/errors.md)
