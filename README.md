@@ -30,6 +30,13 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
 - Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
 
+## Distribution & Verification
+
+- Distribution runbook: [`docs/distribution/runbook.md`](docs/distribution/runbook.md)
+- Bundle standard: [`docs/distribution/bundle_standard.md`](docs/distribution/bundle_standard.md)
+- Customer verification: [`docs/distribution/customer_verification.md`](docs/distribution/customer_verification.md)
+- Release notes template: [`docs/distribution/release_notes_template.md`](docs/distribution/release_notes_template.md)
+
 ## Language Specification
 
 - Contract snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
