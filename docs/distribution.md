@@ -81,7 +81,7 @@ Rollback:
 
 - source code,
 - debug symbols unless explicitly provided,
-- non-contract experimental features.
+- non-contract preview features.
 
 ## References
 
