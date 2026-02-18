@@ -55,6 +55,13 @@ ruledslc verify rules.axbc
 - Use `docs/compatibility_matrix.md` as the source of truth for compiler/language/AXBC/ABI alignment.
 - Treat unmatched versions as incompatible until a new matrix is published.
 
+## Release Gate
+
+- `verify` CI status check MUST be green on the candidate commit.
+- `Tools/release_bundle/audit_bundle_layout.ps1` MUST pass on the final bundle.
+- `manifests/MANIFEST.json` and `manifests/HASHES.txt` MUST be generated and included.
+- The release-candidate packet (RC bundle + hashes) MUST be archived before announcement.
+- Publish/announce only after all gate items above pass.
 ## References
 
 - `docs/distribution/bundle_standard.md`
