@@ -1,0 +1,24 @@
+{
+  "bundle_type": "Evaluation",
+  "created_by": "Tools/release_bundle/build_bundle.ps1",
+  "ruledslc_version": "RuleDSL/1.0.0 (lang=0.9; axbc=3; abi=1)",
+  "engine_version": "1.0.0",
+  "lang_version": "0.9",
+  "axbc_version": "3",
+  "abi_level": "1",
+  "file_list": [
+    "LICENSE",
+    "NOTICE",
+    "bin/ruledsl_capi.dll",
+    "bin/ruledslc.exe",
+    "docs/README.md",
+    "examples/01_risk_scoring/README.md",
+    "examples/01_risk_scoring/expected_output.txt",
+    "examples/01_risk_scoring/main.c",
+    "examples/01_risk_scoring/rules.rule",
+    "include/axiom/ruledsl_c.h",
+    "manifests/LICENSE_STATUS.txt",
+    "manifests/MANIFEST.json",
+    "manifests/TOOLCHAIN.txt"
+  ]
+}
