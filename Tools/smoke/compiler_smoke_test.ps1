@@ -1,5 +1,5 @@
 param(
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
+    [string]$RepoRoot = "",
     [string]$CompilerBin = "ruledslc",
     [Parameter(Mandatory = $true)]
     [string]$EngineLibDir,
@@ -8,6 +8,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+if (-not $RepoRoot) {
+    $RepoRoot = (Resolve-Path (Join-Path $scriptRoot "..\..")).Path
+}
+else {
+    $RepoRoot = (Resolve-Path $RepoRoot).Path
+}
 
 function Resolve-Tool {
     param([string]$Candidate)
@@ -27,7 +35,6 @@ function Resolve-Tool {
     throw "Compiler binary '$Candidate' not found in PATH."
 }
 
-$RepoRoot = (Resolve-Path $RepoRoot).Path
 $EngineLibDir = (Resolve-Path $EngineLibDir).Path
 if (-not $IncludeDir) {
     $IncludeDir = Join-Path $RepoRoot "include"
@@ -87,7 +94,9 @@ foreach ($name in $examples) {
     $row = [ordered]@{
         example = $name
         compile_first_exit = 0
+        verify_first_exit = 0
         compile_second_exit = 0
+        verify_second_exit = 0
         deterministic_hash_match = $false
         run_exit = 0
         output_match = $false
@@ -108,10 +117,28 @@ foreach ($name in $examples) {
             throw "first compile failed with exit code $($row.compile_first_exit)"
         }
 
+        $verifyOut1 = & $CompilerExe verify $axbc1 2>&1
+        $row.verify_first_exit = $LASTEXITCODE
+        if ($row.verify_first_exit -ne 0) {
+            throw "first verify failed with exit code $($row.verify_first_exit): $verifyOut1"
+        }
+        if ((($verifyOut1 -join "`n") -notmatch 'STATUS=OK')) {
+            throw "first verify did not return STATUS=OK"
+        }
+
         & $CompilerExe compile $rulePath -o $axbc2 --lang 0.9 --target axbc3 --emit-manifest $manifest2
         $row.compile_second_exit = $LASTEXITCODE
         if ($row.compile_second_exit -ne 0) {
             throw "second compile failed with exit code $($row.compile_second_exit)"
+        }
+
+        $verifyOut2 = & $CompilerExe verify $axbc2 2>&1
+        $row.verify_second_exit = $LASTEXITCODE
+        if ($row.verify_second_exit -ne 0) {
+            throw "second verify failed with exit code $($row.verify_second_exit): $verifyOut2"
+        }
+        if ((($verifyOut2 -join "`n") -notmatch 'STATUS=OK')) {
+            throw "second verify did not return STATUS=OK"
         }
 
         $h1 = (Get-FileHash $axbc1 -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -210,10 +237,10 @@ $lines += "- Compiler: $CompilerExe"
 $lines += "- Engine lib dir: $EngineLibDir"
 $lines += "- Work dir: $workRoot"
 $lines += ""
-$lines += "| Example | Deterministic Hash | Output Match | Status | Detail |"
+$lines += "| Example | Verify1 | Verify2 | Deterministic Hash | Output Match | Status | Detail |"
 $lines += "| --- | --- | --- | --- | --- |"
 foreach ($row in $results) {
-    $lines += "| $($row.example) | $($row.deterministic_hash_match) | $($row.output_match) | $($row.status) | $($row.detail) |"
+    $lines += "| $($row.example) | $($row.verify_first_exit) | $($row.verify_second_exit) | $($row.deterministic_hash_match) | $($row.output_match) | $($row.status) | $($row.detail) |"
 }
 $lines -join "`n" | Set-Content -Path $mdPath -Encoding utf8
 

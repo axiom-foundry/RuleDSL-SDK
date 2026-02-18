@@ -1,6 +1,6 @@
 # Compiler Smoke Test
 
-`compiler_smoke_test.ps1` validates customer-facing compiler/evaluator workflow.
+`compiler_smoke_test.ps1` validates customer-facing compile -> verify -> compatibility-check -> evaluate workflow.
 
 ## Usage
 

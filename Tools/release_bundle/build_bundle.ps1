@@ -85,6 +85,8 @@ if ($EngineImportLib) {
 $docFiles = @(
     "docs/bytecode_workflow_v0_9.md",
     "docs/compiler/ruledslc_contract.md",
+    "docs/compiler/authenticity_policy.md",
+    "docs/compatibility_matrix.md",
     "docs/language/spec_v0_9.md",
     "docs/language/grammar_v0_9.md",
     "docs/language/lexical_core_v0_9.md",
