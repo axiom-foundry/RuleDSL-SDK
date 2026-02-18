@@ -9,6 +9,29 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+ $onWindows = ($env:OS -eq "Windows_NT")
+
+function Test-DependsOnDebugRuntime {
+    param([string]$BinaryPath)
+
+    if (-not $onWindows) {
+        return $false
+    }
+
+    $pattern = 'MSVCP140D\.dll|VCRUNTIME140D\.dll|VCRUNTIME140_1D\.dll|ucrtbased\.dll'
+    $dumpbin = Get-Command dumpbin.exe -ErrorAction SilentlyContinue
+    if ($dumpbin) {
+        $output = & $dumpbin.Source /dependents $BinaryPath 2>$null
+        $text = ($output -join "`n")
+        return ($text -match $pattern)
+    }
+
+    # Fallback: inspect binary bytes for debug runtime import names.
+    $bytes = [System.IO.File]::ReadAllBytes($BinaryPath)
+    $ascii = [System.Text.Encoding]::ASCII.GetString($bytes)
+    return ($ascii -match $pattern)
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 if (-not $Out) {
     $Out = Join-Path $repoRoot "bundle"
@@ -26,7 +49,18 @@ if (-not (Test-Path $EngineBin)) {
 if (-not (Test-Path $CompilerBin)) {
     throw "Compiler binary not found: $CompilerBin"
 }
+if ($EngineImportLib -and -not (Test-Path $EngineImportLib)) {
+    throw "Engine import library not found: $EngineImportLib"
+}
 
+$debugEngine = Test-DependsOnDebugRuntime -BinaryPath $EngineBin
+if ($debugEngine -eq $true) {
+    throw "Engine binary appears to depend on debug runtime; provide a release binary: $EngineBin"
+}
+$debugCompiler = Test-DependsOnDebugRuntime -BinaryPath $CompilerBin
+if ($debugCompiler -eq $true) {
+    throw "Compiler binary appears to depend on debug runtime; provide a release binary: $CompilerBin"
+}
 $outRoot = [System.IO.Path]::GetFullPath($Out)
 if (Test-Path $outRoot) {
     Remove-Item -Recurse -Force $outRoot
@@ -41,7 +75,8 @@ New-Item -ItemType Directory -Force -Path $includeOut, $binOut, $docsOut, $examp
 
 Copy-Item -Recurse -Force (Join-Path $repoRoot "include\*") $includeOut
 Copy-Item -Force $EngineBin (Join-Path $binOut ([System.IO.Path]::GetFileName($EngineBin)))
-Copy-Item -Force $CompilerBin (Join-Path $binOut "ruledslc$([System.IO.Path]::GetExtension($CompilerBin))")
+$compilerOutName = "ruledslc" + [System.IO.Path]::GetExtension($CompilerBin)
+Copy-Item -Force $CompilerBin (Join-Path $binOut $compilerOutName)
 
 if ($EngineImportLib) {
     Copy-Item -Force $EngineImportLib (Join-Path $binOut ([System.IO.Path]::GetFileName($EngineImportLib)))
@@ -86,10 +121,34 @@ foreach ($name in $exampleDirs) {
     }
 }
 
-$licensePath = Join-Path $outRoot "LICENSE"
-$noticePath = Join-Path $outRoot "NOTICE"
-"LICENSE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY" | Set-Content -Path $licensePath -Encoding utf8
-"NOTICE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY" | Set-Content -Path $noticePath -Encoding utf8
+"LICENSE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY" | Set-Content -Path (Join-Path $outRoot "LICENSE") -Encoding utf8
+"NOTICE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY" | Set-Content -Path (Join-Path $outRoot "NOTICE") -Encoding utf8
+
+# Final bundle validation guardrails.
+foreach ($requiredDir in @($includeOut, $binOut, $docsOut, $examplesOut)) {
+    if (-not (Test-Path $requiredDir)) {
+        throw "Bundle missing required directory: $requiredDir"
+    }
+}
+
+$forbiddenExt = @(".pdb", ".obj", ".ilk", ".idb", ".vcxproj", ".cmake")
+$forbiddenFiles = Get-ChildItem -Recurse -File $outRoot | Where-Object { $forbiddenExt -contains $_.Extension.ToLowerInvariant() }
+if ($forbiddenFiles) {
+    $list = ($forbiddenFiles | ForEach-Object { $_.FullName }) -join "; "
+    throw "Bundle contains forbidden build artifacts: $list"
+}
+
+$includeNonHeaders = Get-ChildItem -Recurse -File $includeOut | Where-Object { $_.Extension.ToLowerInvariant() -ne ".h" }
+if ($includeNonHeaders) {
+    $list = ($includeNonHeaders | ForEach-Object { $_.FullName }) -join "; "
+    throw "Bundle include/ contains non-header files: $list"
+}
+
+$exampleBuildArtifacts = Get-ChildItem -Recurse -Directory $examplesOut | Where-Object { $_.Name -ieq "build" }
+if ($exampleBuildArtifacts) {
+    $list = ($exampleBuildArtifacts | ForEach-Object { $_.FullName }) -join "; "
+    throw "Bundle examples include build directories: $list"
+}
 
 Write-Host "Bundle created: $outRoot"
 Write-Host "- include/: $(Join-Path $outRoot 'include')"

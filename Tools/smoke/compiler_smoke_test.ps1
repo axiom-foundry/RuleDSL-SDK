@@ -1,7 +1,8 @@
 param(
     [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
     [string]$CompilerBin = "ruledslc",
-    [string]$EngineLibDir = "",
+    [Parameter(Mandatory = $true)]
+    [string]$EngineLibDir,
     [string]$IncludeDir = "",
     [string]$ReportDir = ""
 )
@@ -10,6 +11,7 @@ $ErrorActionPreference = "Stop"
 
 function Resolve-Tool {
     param([string]$Candidate)
+
     if ([System.IO.Path]::IsPathRooted($Candidate)) {
         if (Test-Path $Candidate) {
             return (Resolve-Path $Candidate).Path
@@ -25,40 +27,27 @@ function Resolve-Tool {
     throw "Compiler binary '$Candidate' not found in PATH."
 }
 
-function Invoke-Step {
-    param([string]$Name, [scriptblock]$Body)
-    Write-Host "==> $Name"
-    & $Body
-}
-
 $RepoRoot = (Resolve-Path $RepoRoot).Path
+$EngineLibDir = (Resolve-Path $EngineLibDir).Path
 if (-not $IncludeDir) {
     $IncludeDir = Join-Path $RepoRoot "include"
 }
 if (-not $ReportDir) {
     $ReportDir = Join-Path $RepoRoot "reports"
 }
-if (-not $EngineLibDir) {
-    throw "-EngineLibDir is required (folder containing ruledsl_capi.lib and ruledsl_capi.dll)."
-}
-$EngineLibDir = (Resolve-Path $EngineLibDir).Path
-$CompilerExe = Resolve-Tool -Candidate $CompilerBin
-
-$engineImport = Join-Path $EngineLibDir "ruledsl_capi.lib"
-$engineDll = Join-Path $EngineLibDir "ruledsl_capi.dll"
-if (-not (Test-Path $engineImport)) {
-    throw "Missing $engineImport"
-}
-if (-not (Test-Path $engineDll)) {
-    throw "Missing $engineDll"
-}
 if (-not (Test-Path $IncludeDir)) {
     throw "Missing include dir: $IncludeDir"
 }
 
-$examples = @("01_risk_scoring", "02_threshold_gate", "03_temporal_rule")
-$results = @()
-$failed = $false
+$CompilerExe = Resolve-Tool -Candidate $CompilerBin
+$engineImport = Join-Path $EngineLibDir "ruledsl_capi.lib"
+$engineDll = Join-Path $EngineLibDir "ruledsl_capi.dll"
+if (-not (Test-Path $engineImport)) {
+    throw "Missing engine import library: $engineImport"
+}
+if (-not (Test-Path $engineDll)) {
+    throw "Missing engine runtime DLL: $engineDll"
+}
 
 $cl = Get-Command cl.exe -ErrorAction SilentlyContinue
 $gcc = Get-Command gcc -ErrorAction SilentlyContinue
@@ -70,21 +59,30 @@ if (-not $cl -and -not $gcc) {
     throw "No C compiler found (cl.exe/gcc) and VsDevCmd was not available."
 }
 
+New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+$workRoot = Join-Path $ReportDir "compiler_smoke_work"
+if (Test-Path $workRoot) {
+    Remove-Item -Recurse -Force $workRoot
+}
+New-Item -ItemType Directory -Force -Path $workRoot | Out-Null
+
+$examples = @("01_risk_scoring", "02_threshold_gate", "03_temporal_rule")
+$results = @()
+$failed = $false
+
 foreach ($name in $examples) {
     $exampleRoot = Join-Path $RepoRoot (Join-Path "examples" $name)
-    $buildDir = Join-Path $exampleRoot "build"
     $rulePath = Join-Path $exampleRoot "rules.rule"
-    $axbc1 = Join-Path $buildDir "rules_1.axbc"
-    $axbc2 = Join-Path $buildDir "rules_2.axbc"
-    $manifest1 = Join-Path $buildDir "compile_1.json"
-    $manifest2 = Join-Path $buildDir "compile_2.json"
     $sourcePath = Join-Path $exampleRoot "main.c"
     $expectedPath = Join-Path $exampleRoot "expected_output.txt"
-    $exePath = Join-Path $buildDir "example_eval.exe"
+    $exampleWork = Join-Path $workRoot $name
+    $axbc1 = Join-Path $exampleWork "rules_1.axbc"
+    $axbc2 = Join-Path $exampleWork "rules_2.axbc"
+    $manifest1 = Join-Path $exampleWork "compile_1.json"
+    $manifest2 = Join-Path $exampleWork "compile_2.json"
+    $exePath = Join-Path $exampleWork ("eval_" + $name + ".exe")
 
-    New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
-    Get-Process example_eval -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    Remove-Item -Force $exePath -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force -Path $exampleWork | Out-Null
 
     $row = [ordered]@{
         example = $name
@@ -98,6 +96,12 @@ foreach ($name in $examples) {
     }
 
     try {
+        foreach ($required in @($rulePath, $sourcePath, $expectedPath)) {
+            if (-not (Test-Path $required)) {
+                throw "Missing example file: $required"
+            }
+        }
+
         & $CompilerExe compile $rulePath -o $axbc1 --lang 0.9 --target axbc3 --emit-manifest $manifest1
         $row.compile_first_exit = $LASTEXITCODE
         if ($row.compile_first_exit -ne 0) {
@@ -122,21 +126,25 @@ foreach ($name in $examples) {
                 "/nologo",
                 "/W4",
                 "/I", $IncludeDir,
-                "/Fo$buildDir\",
+                "/Fo$exampleWork\\",
                 $sourcePath,
                 "/link",
                 "/LIBPATH:$EngineLibDir",
                 "ruledsl_capi.lib",
                 "/OUT:$exePath"
             )
+
             if ($cl.PSObject.Properties.Name -contains "UseVsDevCmd") {
-                $escaped = ($clArgs | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
+                $escaped = ($clArgs | ForEach-Object {
+                    if ($_ -match '\\s') { '"' + $_ + '"' } else { $_ }
+                }) -join ' '
                 $cmdLine = '"' + $vsDevCmd + '" -no_logo -arch=x64 >nul && cl.exe ' + $escaped
                 & cmd.exe /d /s /c $cmdLine | Out-Host
             }
             else {
                 & $cl.Source @clArgs | Out-Host
             }
+
             if ($LASTEXITCODE -ne 0) {
                 throw "cl compile/link failed with exit code $LASTEXITCODE"
             }
@@ -158,15 +166,7 @@ foreach ($name in $examples) {
             }
         }
 
-        $targetDll = Join-Path $buildDir "ruledsl_capi.dll"
-        try {
-            Copy-Item -Force $engineDll $targetDll
-        }
-        catch {
-            if (-not (Test-Path $targetDll)) {
-                throw
-            }
-        }
+        Copy-Item -Force $engineDll (Join-Path $exampleWork "ruledsl_capi.dll")
         $runOutput = & $exePath $axbc1 2>&1
         $row.run_exit = $LASTEXITCODE
         if ($row.run_exit -ne 0) {
@@ -189,7 +189,6 @@ foreach ($name in $examples) {
     $results += [pscustomobject]$row
 }
 
-New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 $jsonPath = Join-Path $ReportDir "compiler_smoke_report.json"
 $mdPath = Join-Path $ReportDir "compiler_smoke_report.md"
 
@@ -197,6 +196,7 @@ $summary = [ordered]@{
     status = if ($failed) { "FAIL" } else { "PASS" }
     compiler = $CompilerExe
     engine_lib_dir = $EngineLibDir
+    work_dir = $workRoot
     results = $results
 }
 
@@ -208,6 +208,7 @@ $lines += ""
 $lines += "- Status: **$($summary.status)**"
 $lines += "- Compiler: $CompilerExe"
 $lines += "- Engine lib dir: $EngineLibDir"
+$lines += "- Work dir: $workRoot"
 $lines += ""
 $lines += "| Example | Deterministic Hash | Output Match | Status | Detail |"
 $lines += "| --- | --- | --- | --- | --- |"
@@ -219,6 +220,9 @@ $lines -join "`n" | Set-Content -Path $mdPath -Encoding utf8
 Write-Host "Report: $mdPath"
 Write-Host "Summary: $jsonPath"
 if ($failed) {
+    foreach ($row in $results | Where-Object { $_.status -eq "FAIL" }) {
+        Write-Error ("Smoke failure in {0}: {1}" -f $row.example, $row.detail)
+    }
     exit 1
 }
 exit 0
