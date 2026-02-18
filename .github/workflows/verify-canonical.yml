@@ -12,11 +12,16 @@ jobs:
       - name: Checkout SDK repo
         uses: actions/checkout@v4
 
+      - name: Audit public bundle fixture layout
+        shell: pwsh
+        run: |
+          ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir ./Tools/release_bundle/fixtures/min_bundle
+
       - name: Checkout engine repo at canonical ref
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          ref: sdk-canonical-v1
+          ref: 827c4b059b633ce5b35d217166447626f9ee98e8
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
 

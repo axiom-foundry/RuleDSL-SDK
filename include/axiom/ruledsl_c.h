@@ -46,6 +46,14 @@ typedef enum AXErrorCode {
     AX_ERR_BAD_STRUCT_SIZE = 10,
     AX_ERR_RUNTIME = 11
 } AXErrorCode;
+typedef enum AXStatus {
+    AX_STATUS_OK = 0,
+    AX_STATUS_INVALID_ARGUMENT = 1,
+    AX_STATUS_BAD_STRUCT_SIZE = 2,
+    AX_STATUS_STRUCTURALLY_INVALID = 6,
+    AX_STATUS_UNSUPPORTED_VERSION = 7,
+    AX_STATUS_CORRUPTED_PAYLOAD = 8
+} AXStatus;
 
 #define AX_FIELD_NOW_UTC_MS "now_utc_ms"
 
@@ -90,13 +98,28 @@ typedef struct AXDecision {
     const char* rule_name;
     uint64_t reserved[4];
 } AXDecision;
+typedef struct AXCompatibilityInfo {
+    uint32_t struct_size;
+    uint32_t axbc_version;
+    uint16_t lang_major;
+    uint16_t lang_minor;
+    uint16_t minimum_engine_abi;
+    uint16_t flags;
+    AXStatus compatibility_status;
+    uint64_t reserved[4];
+} AXCompatibilityInfo;
 
 #define AX_EVAL_OPTIONS_INIT { sizeof(AXEvalOptions), NULL, NULL, {0, 0, 0, 0} }
 #define AX_DECISION_INIT { sizeof(AXDecision), 0, AX_ACTION_ALLOW, 0.0, NULL, 0.0, NULL, NULL, {0, 0, 0, 0} }
+#define AX_COMPATIBILITY_INFO_INIT { sizeof(AXCompatibilityInfo), 0, 0, 0, 0, 0, AX_STATUS_OK, {0, 0, 0, 0} }
 
 AXIOM_API AXCompiler* ax_compiler_create(void);
 AXIOM_API void ax_compiler_destroy(AXCompiler* compiler);
 AXIOM_API int ax_compiler_build(AXCompiler* compiler, char* err, size_t err_len);
+
+AXIOM_API AXStatus ax_check_bytecode_compatibility(const void* bytecode,
+                                                  size_t size,
+                                                  AXCompatibilityInfo* out_info);
 
 AXIOM_API int ax_compile_to_bytecode(AXCompiler* compiler,
                                      const char* input,

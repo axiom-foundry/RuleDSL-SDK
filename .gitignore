@@ -46,3 +46,9 @@ build.ninja
 Thumbs.db
 # Internal verification artifacts (keep local, not part of public surface)
 reports/
+
+# Keep fixture placeholder binaries tracked for public bundle audit in CI.
+!Tools/release_bundle/fixtures/min_bundle/bin/
+!Tools/release_bundle/fixtures/min_bundle/bin/*.exe
+!Tools/release_bundle/fixtures/min_bundle/bin/*.dll
+

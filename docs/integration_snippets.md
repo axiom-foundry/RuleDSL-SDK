@@ -56,6 +56,10 @@ int main(int argc, char** argv) {
     fields[1].value.type = AX_VALUE_NUMBER;
     fields[1].value.number = 1730000000000.0;
 
+    AXCompatibilityInfo compat = AX_COMPATIBILITY_INFO_INIT;
+    AXStatus compat_status = ax_check_bytecode_compatibility(bytecode.data, bytecode.size, &compat);
+    if (compat_status != AX_STATUS_OK) goto done;
+
     rc = ax_eval_bytecode(compiler, &bytecode, fields, 2, &opts, &decision, err, sizeof(err));
     if (rc == AX_ERR_OK) {
         printf("matched=%d action=%d rule=%s\n",

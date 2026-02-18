@@ -1,0 +1,9 @@
+RULE threshold_decline {
+  WHEN amount > 500;
+  THEN DECLINE;
+}
+
+RULE threshold_allow {
+  WHEN amount <= 500;
+  THEN ALLOW;
+}

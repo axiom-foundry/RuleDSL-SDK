@@ -13,7 +13,7 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Active profile: `decision-rules-v0.9`.
 - Strict conformance mode is available via `RULEDSL_CONFORMANCE_STRICT=1`.
 - Windows and Linux CI jobs validate strict conformance.
-- Snapshot: `docs/language/status_v0_9.md`
+- Snapshot: [docs/language/status_v0_9.md](docs/language/status_v0_9.md)
 
 ## Docs index
 
@@ -26,6 +26,16 @@ This repository provides the **public SDK surface** (headers + documentation) us
 - Bytecode lifecycle: [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md)
 - Release gate: [`docs/release_gate.md`](docs/release_gate.md)
 - Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
+- Compiler workflow contract: [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md)
+- Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
+- Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
+
+## Distribution & Verification
+
+- Distribution runbook: [`docs/distribution/runbook.md`](docs/distribution/runbook.md)
+- Bundle standard: [`docs/distribution/bundle_standard.md`](docs/distribution/bundle_standard.md)
+- Customer verification: [`docs/distribution/customer_verification.md`](docs/distribution/customer_verification.md)
+- Release notes template: [`docs/distribution/release_notes_template.md`](docs/distribution/release_notes_template.md)
 
 ## Language Specification
 
@@ -43,6 +53,8 @@ This repository provides the **public SDK surface** (headers + documentation) us
 ## Quickstart (integration)
 
 Runtime artifacts (compiled binaries) are required in addition to these headers.
+
+Customer workflow: **Write -> Compile -> Verify -> Evaluate** (`*.rule` -> `ruledslc compile` -> `ruledslc verify` -> C API evaluation).
 
 - Start here: [`docs/integration_snippets.md`](docs/integration_snippets.md)
 - Error handling contract: [`docs/errors.md`](docs/errors.md)
