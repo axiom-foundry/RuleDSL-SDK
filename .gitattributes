@@ -4,3 +4,9 @@
 *.cpp text eol=lf
 *.ps1 text eol=crlf
 *.bat text eol=crlf
+
+# --- Presentation governance (GitHub Linguist) ---
+*.ps1 linguist-detectable=false
+*.sh  linguist-detectable=false
+Tools/** linguist-vendored
+scripts/** linguist-vendored

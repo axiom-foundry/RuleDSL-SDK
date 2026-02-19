@@ -7,6 +7,12 @@ This repository provides the **public SDK surface** (headers + documentation) us
 > Binaries are provided separately as part of a commercial delivery packet.  
 > Verification of release artifacts (hashes and optional signature) is required before integration (see distribution policy below).
 
+## Tooling Scripts
+
+Tooling scripts are included to make builds, tests, and release checks reproducible.
+Scripts do not auto-run as part of normal repository use.
+Operators run scripts explicitly through documented commands.
+
 ## Language Contract (v0.9)
 
 - RuleDSL language surface is versioned and contract-driven.
