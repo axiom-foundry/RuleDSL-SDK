@@ -1,5 +1,8 @@
 # Conformance Map (v0.9)
 
+> **Publication status:** This is a public conformance map skeleton.
+> Rows marked `TBD` identify mappings not yet published in the public SDK.
+> This file maps requirement IDs to tests/evidence as they become publishable.
 This file maps language requirement IDs to tests or evidence artifacts.
 In the public SDK, this map may be partially published; some implementation-side evidence remains internal.
 
