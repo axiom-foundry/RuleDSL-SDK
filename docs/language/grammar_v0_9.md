@@ -40,12 +40,12 @@ This document defines syntax only. Semantic behavior is defined by language anne
 
 ### 2.2 Operator Precedence
 
-The following precedence levels SHALL apply:
+The following precedence levels apply:
 
-- PLUS and MINUS SHALL have additive precedence.
-- STAR, SLASH, and PERCENT SHALL have multiplicative precedence.
-- Multiplicative precedence SHALL be higher than additive precedence.
-- Binary operators at the same precedence level SHALL associate left-to-right.
+- PLUS and MINUS use additive precedence.
+- STAR, SLASH, and PERCENT use multiplicative precedence.
+- Multiplicative precedence is higher than additive precedence.
+- Binary operators at the same precedence level associate left-to-right.
 
 Note: This subsection defines parsing precedence classes. Token identity is defined in the Token Inventory.
 
