@@ -47,7 +47,7 @@ The following precedence levels SHALL apply:
 - Multiplicative precedence SHALL be higher than additive precedence.
 - Binary operators at the same precedence level SHALL associate left-to-right.
 
-Unary operators, if defined elsewhere, SHALL specify their own binding rules explicitly.
+Note: This subsection defines parsing precedence classes. Token identity is defined in the Token Inventory.
 
 ### 2.3 Profile Tokens (`decision-rules-v0.9`)
 
