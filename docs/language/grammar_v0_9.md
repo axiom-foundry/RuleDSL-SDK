@@ -17,11 +17,11 @@ This document defines syntax only. Semantic behavior is defined by language anne
 - [SYN-TOK-005] `rule` SHALL be recognized as a core keyword token.
 - [SYN-TOK-006] `when` SHALL be recognized as a core keyword token.
 - [SYN-TOK-007] `then` SHALL be recognized as a core keyword token.
-- [SYN-TOK-008] `+` SHALL be recognized as an additive operator token.
-- [SYN-TOK-009] `-` SHALL be recognized as an additive operator token.
-- [SYN-TOK-010] `*` SHALL be recognized as a multiplicative operator token.
-- [SYN-TOK-011] `/` SHALL be recognized as a multiplicative operator token.
-- [SYN-TOK-012] `%` SHALL be recognized as a multiplicative operator token.
+- [SYN-TOK-008] `+` SHALL be recognized as the PLUS token.
+- [SYN-TOK-009] `-` SHALL be recognized as the MINUS token.
+- [SYN-TOK-010] `*` SHALL be recognized as the STAR token.
+- [SYN-TOK-011] `/` SHALL be recognized as the SLASH token.
+- [SYN-TOK-012] `%` SHALL be recognized as the PERCENT token.
 - [SYN-TOK-013] `==` SHALL be recognized as an equality operator token.
 - [SYN-TOK-014] `!=` SHALL be recognized as an equality operator token.
 - [SYN-TOK-015] `<` SHALL be recognized as a relational operator token.
@@ -38,7 +38,18 @@ This document defines syntax only. Semantic behavior is defined by language anne
 - [SYN-TOK-026] `;` SHALL be recognized as punctuation token SEMICOLON.
 - [SYN-TOK-027] `,` SHALL be recognized as punctuation token COMMA.
 
-### 2.2 Profile Tokens (`decision-rules-v0.9`)
+### 2.2 Operator Precedence
+
+The following precedence levels SHALL apply:
+
+- PLUS and MINUS SHALL have additive precedence.
+- STAR, SLASH, and PERCENT SHALL have multiplicative precedence.
+- Multiplicative precedence SHALL be higher than additive precedence.
+- Binary operators at the same precedence level SHALL associate left-to-right.
+
+Unary operators, if defined elsewhere, SHALL specify their own binding rules explicitly.
+
+### 2.3 Profile Tokens (`decision-rules-v0.9`)
 
 - [SYN-TOK-028] `allow` SHALL be recognized as an active profile keyword token.
 - [SYN-TOK-029] `decline` SHALL be recognized as an active profile keyword token.
