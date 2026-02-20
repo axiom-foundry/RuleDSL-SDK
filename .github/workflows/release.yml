@@ -1,0 +1,195 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit public bundle fixture layout
+        shell: pwsh
+        run: |
+          ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir ./Tools/release_bundle/fixtures/min_bundle
+
+      - name: Forbidden token sweep
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGETS="README.md VERSION.txt MANIFEST.txt include docs examples"
+          DENYLIST="_ex2|_v2|has_ex2|legacy|experimental"
+
+          for path in $TARGETS; do
+            if [ -e "$path" ]; then
+              if grep -R -E "$DENYLIST" "$path"; then
+                echo "Forbidden token detected in $path"
+                exit 1
+              fi
+            fi
+          done
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Capture build metadata
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          {
+            echo "tag=${GITHUB_REF_NAME}"
+            echo "commit=${GITHUB_SHA}"
+          } > dist/build_metadata.txt
+
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-metadata
+          path: dist/build_metadata.txt
+          if-no-files-found: error
+
+  package:
+    name: package
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: build-metadata
+          path: dist
+
+      - name: Create deterministic release archives
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import gzip
+          import io
+          import os
+          import pathlib
+          import subprocess
+          import tarfile
+          import zipfile
+
+          root = pathlib.Path('.').resolve()
+          dist = root / 'dist'
+          dist.mkdir(parents=True, exist_ok=True)
+
+          tag = os.environ['GITHUB_REF_NAME']
+          prefix = f'RuleDSL-SDK-{tag}'
+          zip_path = dist / f'{prefix}.zip'
+          tar_path = dist / f'{prefix}.tar.gz'
+
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          tracked = sorted(p for p in tracked if p and not p.startswith('dist/'))
+
+          with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+              for rel in tracked:
+                  src = root / rel
+                  data = src.read_bytes()
+                  zi = zipfile.ZipInfo(f'{prefix}/{rel.replace(os.sep, "/")}')
+                  zi.date_time = (1980, 1, 1, 0, 0, 0)
+                  zi.compress_type = zipfile.ZIP_DEFLATED
+                  zi.external_attr = 0o100644 << 16
+                  zf.writestr(zi, data)
+
+          tar_tmp = dist / f'{prefix}.tar'
+          with tarfile.open(tar_tmp, 'w', format=tarfile.PAX_FORMAT) as tf:
+              for rel in tracked:
+                  src = root / rel
+                  data = src.read_bytes()
+                  ti = tarfile.TarInfo(name=f'{prefix}/{rel.replace(os.sep, "/")}')
+                  ti.size = len(data)
+                  ti.mtime = 0
+                  ti.mode = 0o644
+                  ti.uid = 0
+                  ti.gid = 0
+                  ti.uname = ''
+                  ti.gname = ''
+                  tf.addfile(ti, fileobj=io.BytesIO(data))
+
+          with tar_tmp.open('rb') as src, tar_path.open('wb') as dst:
+              with gzip.GzipFile(filename='', mode='wb', fileobj=dst, mtime=0) as gz:
+                  gz.write(src.read())
+          tar_tmp.unlink()
+
+          (dist / 'RELEASE_CONTENTS.txt').write_text('\n'.join(tracked) + '\n', encoding='utf-8', newline='\n')
+          PY
+
+      - name: Upload release archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: |
+            dist/RuleDSL-SDK-*.zip
+            dist/RuleDSL-SDK-*.tar.gz
+            dist/RELEASE_CONTENTS.txt
+            dist/build_metadata.txt
+          if-no-files-found: error
+
+  checksum:
+    name: checksum
+    runs-on: ubuntu-latest
+    needs: package
+    steps:
+      - name: Download release archives
+        uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
+
+      - name: Generate SHA256 checksums
+        run: |
+          set -euo pipefail
+          sha256sum dist/RuleDSL-SDK-*.zip dist/RuleDSL-SDK-*.tar.gz | sort > dist/SHA256SUMS.txt
+
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-checksums
+          path: dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    needs: checksum
+    steps:
+      - name: Download release archives
+        uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
+
+      - name: Download checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: release-checksums
+          path: dist
+
+      - name: Publish GitHub release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/RuleDSL-SDK-*.zip
+            dist/RuleDSL-SDK-*.tar.gz
+            dist/SHA256SUMS.txt
+            dist/RELEASE_CONTENTS.txt
+            dist/build_metadata.txt
+          fail_on_unmatched_files: true
