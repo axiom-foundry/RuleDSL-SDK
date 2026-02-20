@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://axiom-foundry.github.io/RuleDSL-SDK/docs/audit/audit_summary.schema.json",
+  "title": "ReleaseAuditSummary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tag", "commit", "run_id", "published_at", "assets"],
+  "properties": {
+    "tag": { "type": "string" },
+    "commit": { "type": "string" },
+    "run_id": { "type": "string" },
+    "published_at": { "type": ["string", "null"], "format": "date-time" },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "sha256", "size_bytes"],
+        "properties": {
+          "name": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "size_bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

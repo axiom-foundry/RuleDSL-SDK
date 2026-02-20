@@ -1,4 +1,9 @@
-﻿# Evidence Index
+# Evidence Index
+
+## Snapshot metadata
+
+Captured at commit: 589e042c22fe20f4a5541419eadf35091a7e3f01
+Captured on: 2026-02-20 (UTC)
 
 ## 1) Governance snapshots
 
