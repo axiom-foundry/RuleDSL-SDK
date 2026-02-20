@@ -159,6 +159,98 @@ jobs:
           set -euo pipefail
           sha256sum dist/RuleDSL-SDK-*.zip dist/RuleDSL-SDK-*.tar.gz | sort > dist/SHA256SUMS.txt
 
+      - name: Generate audit summary JSON
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          dist = Path("dist")
+          audit_dir = dist / "audit"
+          audit_dir.mkdir(parents=True, exist_ok=True)
+
+          def sha256_hex(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          assets = []
+          candidates = sorted(dist.glob("RuleDSL-SDK-*.zip")) + sorted(dist.glob("RuleDSL-SDK-*.tar.gz"))
+          candidates += [
+              dist / "SHA256SUMS.txt",
+              dist / "RELEASE_CONTENTS.txt",
+              dist / "build_metadata.txt",
+          ]
+
+          for path in candidates:
+              if not path.exists():
+                  raise SystemExit(f"missing expected asset for audit summary: {path}")
+              assets.append(
+                  {
+                      "name": path.name,
+                      "sha256": sha256_hex(path),
+                      "size_bytes": path.stat().st_size,
+                  }
+              )
+
+          summary = {
+              "tag": os.environ["GITHUB_REF_NAME"],
+              "commit": os.environ["GITHUB_SHA"],
+              "run_id": str(os.environ["GITHUB_RUN_ID"]),
+              "published_at": None,
+              "assets": assets,
+          }
+
+          output = audit_dir / "audit_summary.json"
+          output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+      - name: Validate audit summary shape
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          path = Path("dist/audit/audit_summary.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+
+          required = {"tag", "commit", "run_id", "published_at", "assets"}
+          missing = required - set(data.keys())
+          if missing:
+              raise SystemExit(f"missing keys: {sorted(missing)}")
+
+          if not isinstance(data["tag"], str):
+              raise SystemExit("tag must be string")
+          if not isinstance(data["commit"], str):
+              raise SystemExit("commit must be string")
+          if not isinstance(data["run_id"], str):
+              raise SystemExit("run_id must be string")
+          if data["published_at"] is not None and not isinstance(data["published_at"], str):
+              raise SystemExit("published_at must be string or null")
+          if not isinstance(data["assets"], list):
+              raise SystemExit("assets must be array")
+
+          hash_re = re.compile(r"^[a-f0-9]{64}$")
+          for item in data["assets"]:
+              if not isinstance(item, dict):
+                  raise SystemExit("asset entry must be object")
+              for key in ("name", "sha256", "size_bytes"):
+                  if key not in item:
+                      raise SystemExit(f"asset missing key: {key}")
+              if not isinstance(item["name"], str):
+                  raise SystemExit("asset.name must be string")
+              if not isinstance(item["sha256"], str) or not hash_re.match(item["sha256"]):
+                  raise SystemExit("asset.sha256 must be lowercase hex sha256")
+              if not isinstance(item["size_bytes"], int) or item["size_bytes"] < 0:
+                  raise SystemExit("asset.size_bytes must be non-negative integer")
+          PY
       - name: Upload checksum artifact
         uses: actions/upload-artifact@v4
         with:
@@ -166,6 +258,35 @@ jobs:
           path: dist/SHA256SUMS.txt
           if-no-files-found: error
 
+      - name: Upload audit summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-summary
+          path: dist/audit/audit_summary.json
+          if-no-files-found: error
+
+      - name: Summarize audit summary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("dist/audit/audit_summary.json").read_text(encoding="utf-8"))
+          first_assets = data["assets"][:2]
+          lines = [
+              "## Audit summary",
+              f"- Tag: {data['tag']}",
+              f"- Commit: {data['commit']}",
+              f"- Run ID: {data['run_id']}",
+              f"- Assets: {len(data['assets'])}",
+          ]
+          for asset in first_assets:
+              lines.append(f"- {asset['name']}: {asset['sha256']}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n")
+          PY
   publish:
     name: publish
     runs-on: ubuntu-latest
