@@ -1,4 +1,4 @@
-﻿# Release Audit Summary Plan
+# Release Audit Summary Plan
 
 This document proposes future CI work only.
 No CI, script, or tooling implementation is included in this change.
@@ -42,3 +42,8 @@ Generate the summary after `checksum` and before `publish` in the tag release wo
 ## Non-goal
 
 This document is a future-work note only; no implementation in this commit.
+## Example schema
+
+A minimal example schema is provided at `docs/audit/audit_summary.schema.json`.
+This schema is informational and intended to guide future implementation shape.
+It does not introduce workflow or tooling behavior in this change.
