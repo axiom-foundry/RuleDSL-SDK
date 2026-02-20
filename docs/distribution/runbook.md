@@ -67,3 +67,11 @@ ruledslc verify rules.axbc
 - `docs/distribution/bundle_standard.md`
 - `docs/distribution/customer_verification.md`
 - `docs/compatibility_matrix.md`
+## Release checklist (minimal)
+
+Before pushing a final tag (e.g., v1.0.0):
+
+- Governance: PR-only + squash-only + required status check `verify` (strict) is active (see `docs/evidence/governance_snapshot_*.json`).
+- Deterministic bundle: `MANIFEST.json` and `HASHES.txt` are byte-identical across two local bundle builds from the same commit.
+- CI release validation: `audit-summary` artifact is produced and contains asset SHA256 for the release set.
+  - Validated on tag `v1.0.0-rc.2`, run `22234987419` (success), commit `3aef8e5c2740c0f3e2de0029c3a4d107cdf3d8aa`.
