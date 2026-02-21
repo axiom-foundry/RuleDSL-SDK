@@ -39,6 +39,7 @@ Operators run scripts explicitly through documented commands.
 - Input canonicalization (v1.0): [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md)
 - Determinism evidence bundle (v1.0): [`docs/contracts/determinism_evidence_bundle_v1_0.md`](docs/contracts/determinism_evidence_bundle_v1_0.md)
 - AXErrorCode registry (v1.0): [`docs/contracts/error_codes_registry_v1_0.md`](docs/contracts/error_codes_registry_v1_0.md)
+- Error mapping annex (v1.0): [`docs/contracts/error_mapping_annex_v1_0.md`](docs/contracts/error_mapping_annex_v1_0.md)
 - Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
 
 ## Distribution & Verification
