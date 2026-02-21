@@ -44,6 +44,7 @@ Operators run scripts explicitly through documented commands.
 - Governance RFCs: [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md)
 - RFC-001 Test Matrix: [`docs/governance/rfc_001_test_matrix_v1.md`](docs/governance/rfc_001_test_matrix_v1.md)
 - RFC-002 Determinism Scope: [`docs/governance/rfc_002_determinism_scope_v1.md`](docs/governance/rfc_002_determinism_scope_v1.md)
+- RFC-002 Test Matrix: [`docs/governance/rfc_002_test_matrix_v1.md`](docs/governance/rfc_002_test_matrix_v1.md)
 - Audit answer template (replay proof): [`docs/governance/audit_answer_template_replay_proof_v1.md`](docs/governance/audit_answer_template_replay_proof_v1.md)
 - Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
 
