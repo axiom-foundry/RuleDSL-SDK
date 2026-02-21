@@ -34,4 +34,5 @@ RuleDSL 1.0 Determinism Guarantee: For identical bytecode, normalized input, and
 - Non-goals are defined in [`docs/contracts/determinism_non_goals_v1_0.md`](determinism_non_goals_v1_0.md).
 - Strict undefined behavior boundaries are defined in [`docs/contracts/undefined_behavior_v1_0.md`](undefined_behavior_v1_0.md).
 - Canonical input normalization rules are defined in [`docs/contracts/input_canonicalization_v1_0.md`](input_canonicalization_v1_0.md).
+- Determinism evidence bundle requirements are defined in [`docs/contracts/determinism_evidence_bundle_v1_0.md`](determinism_evidence_bundle_v1_0.md).
 - Requirement-to-evidence placeholders are defined in [`docs/contracts/conformance_matrix_v1_0.md`](conformance_matrix_v1_0.md).
