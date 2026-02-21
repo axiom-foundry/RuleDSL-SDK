@@ -7,7 +7,7 @@ Audience: SDK integrators, platform engineers, release/governance owners
 
 ## 1. Purpose
 
-This RFC defines the RuleDSL system boundary for v1.0 and the minimum contractual surface that MUST be treated as stable for deterministic decision execution.
+**[RFC001-REQ-001]** This RFC defines the RuleDSL system boundary for v1.0 and the minimum contractual surface that MUST be treated as stable for deterministic decision execution.
 
 ## 2. Definitions
 
@@ -19,23 +19,23 @@ This RFC defines the RuleDSL system boundary for v1.0 and the minimum contractua
 
 ## 3. Scope (what RuleDSL IS)
 
-- RuleDSL SHALL provide deterministic decision evaluation for the documented contract surface.
-- RuleDSL SHALL expose a stable public C ABI surface as documented in public headers and contract docs.
-- RuleDSL SHALL consume compiled RuleDSL bytecode artifacts and host-provided inputs/options.
-- RuleDSL SHALL produce decision outputs and stable numeric error/status codes on the supported surface.
+- **[RFC001-REQ-002]** RuleDSL SHALL provide deterministic decision evaluation for the documented contract surface.
+- **[RFC001-REQ-003]** RuleDSL SHALL expose a stable public C ABI surface as documented in public headers and contract docs.
+- **[RFC001-REQ-004]** RuleDSL SHALL consume compiled RuleDSL bytecode artifacts and host-provided inputs/options.
+- **[RFC001-REQ-005]** RuleDSL SHALL produce decision outputs and stable numeric error/status codes on the supported surface.
 
 ## 4. Non-Goals (out of scope)
 
-- RuleDSL MUST NOT be interpreted as a transport layer, API gateway, or network protocol.
-- RuleDSL MUST NOT be interpreted as a persistence, workflow, scheduling, or orchestration system.
-- RuleDSL MUST NOT be interpreted as a distributed consensus or multi-node state coordination system.
+- **[RFC001-REQ-006]** RuleDSL MUST NOT be interpreted as a transport layer, API gateway, or network protocol.
+- **[RFC001-REQ-007]** RuleDSL MUST NOT be interpreted as a persistence, workflow, scheduling, or orchestration system.
+- **[RFC001-REQ-008]** RuleDSL MUST NOT be interpreted as a distributed consensus or multi-node state coordination system.
 - RuleDSL SHOULD NOT be used as the source of truth for host identity, authentication, or policy distribution.
 
 ## 5. System Boundary
 
 Trust boundary:
 - Inputs, options, and bytecode provenance are host responsibilities until validated at the RuleDSL boundary.
-- RuleDSL SHALL validate contract-visible fields and SHALL reject malformed boundary inputs on detectable paths.
+- **[RFC001-REQ-009]** RuleDSL SHALL validate contract-visible fields and SHALL reject malformed boundary inputs on detectable paths.
 
 Execution boundary:
 - RuleDSL execution begins at public API entrypoints and ends at returned status/output artifacts.
@@ -50,20 +50,20 @@ Determinism is guaranteed only when all of the following hold:
 - supported platform scope (Windows x64, Linux x64),
 - defined contract-compliant usage.
 
-Undefined behavior is prohibited in the specified surface; behavior outside contract is unspecified.
+**[RFC001-REQ-010]** Undefined behavior is prohibited in the specified surface; behavior outside contract is unspecified.
 
 ## 7. Responsibility Matrix
 
 Engine responsibilities:
-- Engine MUST preserve stable meaning of documented error/status codes.
-- Engine MUST preserve deterministic evaluation semantics on the specified surface.
-- Engine SHALL reject malformed contract-visible artifacts on supported detection paths.
+- **[RFC001-REQ-011]** Engine MUST preserve stable meaning of documented error/status codes.
+- **[RFC001-REQ-012]** Engine MUST preserve deterministic evaluation semantics on the specified surface.
+- **[RFC001-REQ-013]** Engine SHALL reject malformed contract-visible artifacts on supported detection paths.
 
 Host responsibilities:
-- Host MUST provide canonicalized input and explicit evaluation options required by contract.
-- Host MUST treat unknown error/status codes as unknown failure states.
-- Host SHALL not infer control flow from non-contractual diagnostic message bytes.
-- Host SHALL manage integration lifecycle, retries, transport, persistence, and operational controls.
+- **[RFC001-REQ-014]** Host MUST provide canonicalized input and explicit evaluation options required by contract.
+- **[RFC001-REQ-015]** Host MUST treat unknown error/status codes as unknown failure states.
+- **[RFC001-REQ-016]** Host SHALL not infer control flow from non-contractual diagnostic message bytes.
+- **[RFC001-REQ-017]** Host SHALL manage integration lifecycle, retries, transport, persistence, and operational controls.
 
 ## 8. Failure Model
 
@@ -74,9 +74,9 @@ Host responsibilities:
 
 ## 9. Version Governance
 
-- Engine version, ABI level, and language version are separate governance axes and MUST be tracked independently.
-- Compatibility claims SHALL identify all three axes in evidence/manifest context.
-- Existing ABI elements MUST remain stable within major version unless explicitly versioned extensions are introduced.
+- **[RFC001-REQ-018]** Engine version, ABI level, and language version are separate governance axes and MUST be tracked independently.
+- **[RFC001-REQ-019]** Compatibility claims SHALL identify all three axes in evidence/manifest context.
+- **[RFC001-REQ-020]** Existing ABI elements MUST remain stable within major version unless explicitly versioned extensions are introduced.
 - New capabilities MAY be added without redefining existing contract meanings.
 
 ## 10. Conformance and Evidence Hooks
@@ -88,7 +88,7 @@ A conformance claim SHOULD be backed by evidence including:
 - decision output hash (or canonical compare artifact hash),
 - comparison report for cross-platform claims.
 
-Evidence artifacts SHALL be reproducible and verifier-checkable on the documented surface.
+**[RFC001-REQ-021]** Evidence artifacts SHALL be reproducible and verifier-checkable on the documented surface.
 
 ## 11. Security and Safety Notes
 
