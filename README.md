@@ -38,6 +38,7 @@ Operators run scripts explicitly through documented commands.
 - Determinism Contract (v1.0): [`docs/contracts/determinism_contract_v1_0.md`](docs/contracts/determinism_contract_v1_0.md)
 - Input canonicalization (v1.0): [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md)
 - Determinism evidence bundle (v1.0): [`docs/contracts/determinism_evidence_bundle_v1_0.md`](docs/contracts/determinism_evidence_bundle_v1_0.md)
+- Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
 
 ## Distribution & Verification
 
