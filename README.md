@@ -41,6 +41,7 @@ Operators run scripts explicitly through documented commands.
 - AXErrorCode registry (v1.0): [`docs/contracts/error_codes_registry_v1_0.md`](docs/contracts/error_codes_registry_v1_0.md)
 - Error mapping annex (v1.0): [`docs/contracts/error_mapping_annex_v1_0.md`](docs/contracts/error_mapping_annex_v1_0.md)
 - Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
+- Governance RFCs: [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md)
 
 ## Distribution & Verification
 
