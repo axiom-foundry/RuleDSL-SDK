@@ -1,0 +1,11 @@
+{
+  "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.0",
+  "abi_level": "2",
+  "bytecode_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "decision_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "error_code": 0,
+  "notes": "extended fixture base",
+  "timestamp_utc": "2026-02-21T00:00:00Z"
+}
