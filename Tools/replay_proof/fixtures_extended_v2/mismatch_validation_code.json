@@ -1,0 +1,13 @@
+{
+  "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.0",
+  "abi_level": "1",
+  "bytecode_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "options_hash": "9999999999999999999999999999999999999999999999999999999999999999",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "validation_outcome": "OK",
+  "validation_code": 7,
+  "decision_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "error_code": 0,
+  "notes": "v2 mismatch validation code"
+}

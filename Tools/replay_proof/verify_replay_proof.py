@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple
 
 SCHEMA_VERSION = "replay_proof_v1"
 REPORT_SCHEMA_VERSION = "replay_proof_report_v1"
-HASH_FIELDS = {"bytecode_hash", "decision_hash", "result_hash", "input_hash"}
+HASH_FIELDS = {"bytecode_hash", "decision_hash", "result_hash", "input_hash", "options_hash"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--a", required=True, type=Path, help="Record A JSON path")
     parser.add_argument("--b", required=True, type=Path, help="Record B JSON path")
     parser.add_argument("--out", type=Path, default=None, help="Optional output report JSON path")
-    parser.add_argument("--strict", action="store_true", help="Require strong input/error field parity")
+    parser.add_argument("--strict", action="store_true", help="Require strict parity for replay equality surface")
     return parser.parse_args()
 
 
@@ -39,17 +39,17 @@ def load_json(path: Path) -> Dict[str, Any]:
     return payload
 
 
-def get_effective_result_hash(record: Dict[str, Any]) -> str:
+def get_effective_result_hash(record: Dict[str, Any], label: str) -> str:
     decision_hash = record.get("decision_hash")
     result_hash = record.get("result_hash")
     if decision_hash is None and result_hash is None:
-        raise ValueError("record must provide decision_hash or result_hash")
+        raise ValueError(f"{label}: record must provide decision_hash or result_hash")
     if decision_hash is not None:
         if not isinstance(decision_hash, str):
-            raise ValueError("decision_hash must be a string")
+            raise ValueError(f"{label}: decision_hash must be a string")
         return decision_hash.lower()
     if not isinstance(result_hash, str):
-        raise ValueError("result_hash must be a string")
+        raise ValueError(f"{label}: result_hash must be a string")
     return result_hash.lower()
 
 
@@ -77,6 +77,16 @@ def validate_record(record: Dict[str, Any], label: str) -> Dict[str, Any]:
             if not isinstance(val, str) or not is_sha256_hex(val.lower()):
                 raise ValueError(f"{label}: {key} must be lowercase SHA-256 hex")
 
+    if "validation_outcome" in record and record["validation_outcome"] is not None:
+        validation_outcome = record["validation_outcome"]
+        if not isinstance(validation_outcome, str) or not validation_outcome.strip():
+            raise ValueError(f"{label}: validation_outcome must be a non-empty string when present")
+
+    if "validation_code" in record and record["validation_code"] is not None:
+        validation_code = record["validation_code"]
+        if not isinstance(validation_code, int):
+            raise ValueError(f"{label}: validation_code must be an integer when present")
+
     if "input_descriptor" in record and record["input_descriptor"] is not None and not isinstance(record["input_descriptor"], str):
         raise ValueError(f"{label}: input_descriptor must be string when present")
 
@@ -92,11 +102,21 @@ def validate_record(record: Dict[str, Any], label: str) -> Dict[str, Any]:
         "engine_version_string": engine,
         "abi_level": str(abi_level),
         "bytecode_hash": str(record["bytecode_hash"]).lower(),
-        "effective_result_hash": get_effective_result_hash(record),
+        "effective_result_hash": get_effective_result_hash(record, label),
         "input_hash": str(record["input_hash"]).lower() if record.get("input_hash") is not None else None,
+        "options_hash": str(record["options_hash"]).lower() if record.get("options_hash") is not None else None,
+        "validation_outcome": record.get("validation_outcome"),
+        "validation_code": record.get("validation_code"),
         "error_code": str(record["error_code"]) if record.get("error_code") is not None else None,
     }
     return normalized
+
+
+def ensure_strict_fields(a: Dict[str, Any], b: Dict[str, Any]) -> None:
+    required = ["input_hash", "options_hash", "validation_outcome", "validation_code"]
+    for field in required:
+        if a.get(field) is None or b.get(field) is None:
+            raise ValueError(f"strict mode requires {field} in both records")
 
 
 def compute_proof_hash(compared_fields: Dict[str, Dict[str, Any]]) -> str:
@@ -128,13 +148,22 @@ def compare_records(
     for field in base_fields:
         compared[field] = {"a": a[field], "b": b[field]}
 
-    if a.get("input_hash") is not None and b.get("input_hash") is not None:
-        compared["input_hash"] = {"a": a["input_hash"], "b": b["input_hash"]}
-    elif strict:
-        compared["input_hash"] = {"a": a.get("input_hash"), "b": b.get("input_hash")}
-        notes.append("strict mode requires input_hash in both records")
-    else:
-        notes.append("input_hash comparison skipped (missing on one or both records)")
+    def maybe_compare(field: str) -> None:
+        a_val = a.get(field)
+        b_val = b.get(field)
+        if strict:
+            compared[field] = {"a": a_val, "b": b_val}
+            return
+
+        if a_val is not None and b_val is not None:
+            compared[field] = {"a": a_val, "b": b_val}
+        else:
+            notes.append(f"{field} comparison skipped (missing on one or both records)")
+
+    maybe_compare("input_hash")
+    maybe_compare("options_hash")
+    maybe_compare("validation_outcome")
+    maybe_compare("validation_code")
 
     if a.get("error_code") is not None and b.get("error_code") is not None:
         compared["error_code"] = {"a": a["error_code"], "b": b["error_code"]}
@@ -162,6 +191,8 @@ def main() -> int:
         b_raw = load_json(args.b)
         a_norm = validate_record(a_raw, "A")
         b_norm = validate_record(b_raw, "B")
+        if args.strict:
+            ensure_strict_fields(a_norm, b_norm)
     except ValueError as exc:
         print(f"INVALID: {exc}")
         return 1
