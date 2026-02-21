@@ -43,6 +43,7 @@ Operators run scripts explicitly through documented commands.
 - Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
 - Governance RFCs: [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md)
 - RFC-001 Test Matrix: [`docs/governance/rfc_001_test_matrix_v1.md`](docs/governance/rfc_001_test_matrix_v1.md)
+- Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
 
 ## Distribution & Verification
 
