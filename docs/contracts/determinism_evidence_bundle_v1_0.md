@@ -41,6 +41,7 @@ Layout requirements:
 - `environment/` MUST contain:
   - Platform fingerprint file.
   - Tool/runtime version file.
+- `environment/platform_fingerprint.json` is informational and is not part of cross-platform bit-identical output equality claims.
 
 ## 4. Minimal `manifest.json` schema
 

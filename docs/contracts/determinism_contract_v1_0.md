@@ -36,3 +36,9 @@ RuleDSL 1.0 Determinism Guarantee: For identical bytecode, normalized input, and
 - Canonical input normalization rules are defined in [`docs/contracts/input_canonicalization_v1_0.md`](input_canonicalization_v1_0.md).
 - Determinism evidence bundle requirements are defined in [`docs/contracts/determinism_evidence_bundle_v1_0.md`](determinism_evidence_bundle_v1_0.md).
 - Requirement-to-evidence placeholders are defined in [`docs/contracts/conformance_matrix_v1_0.md`](conformance_matrix_v1_0.md).
+
+## 5. Evidence example (DET-001)
+
+- Comparison report path format: `reports/determinism_compare_v1/<date>/DET-001/<platform-a>__<platform-b>/comparison.json`.
+- Platform fingerprint artifacts and platform-specific manifest hashes may differ across platforms and are not part of DET equality checks.
+- Current DET-001 reference example demonstrates OS-level reproducibility on Windows x64 vs Linux x64 using WSL2 on one host; multi-host reproducibility evidence remains TBD.
