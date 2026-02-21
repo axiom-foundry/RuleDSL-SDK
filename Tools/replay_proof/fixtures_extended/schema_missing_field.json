@@ -1,0 +1,8 @@
+{
+  "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.0",
+  "abi_level": "1",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "decision_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "error_code": 0
+}

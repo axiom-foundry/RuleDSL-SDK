@@ -1,0 +1,10 @@
+{
+  "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.0",
+  "abi_level": "1",
+  "bytecode_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "decision_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "error_code": 0,
+  "notes": "fixture fail mismatch decision"
+}

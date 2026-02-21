@@ -35,6 +35,19 @@ Operators run scripts explicitly through documented commands.
 - Compiler workflow contract: [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md)
 - Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
 - Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
+- Determinism Contract (v1.0): [`docs/contracts/determinism_contract_v1_0.md`](docs/contracts/determinism_contract_v1_0.md)
+- Input canonicalization (v1.0): [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md)
+- Determinism evidence bundle (v1.0): [`docs/contracts/determinism_evidence_bundle_v1_0.md`](docs/contracts/determinism_evidence_bundle_v1_0.md)
+- AXErrorCode registry (v1.0): [`docs/contracts/error_codes_registry_v1_0.md`](docs/contracts/error_codes_registry_v1_0.md)
+- Error mapping annex (v1.0): [`docs/contracts/error_mapping_annex_v1_0.md`](docs/contracts/error_mapping_annex_v1_0.md)
+- Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
+- Governance RFCs: [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md)
+- RFC-001 Test Matrix: [`docs/governance/rfc_001_test_matrix_v1.md`](docs/governance/rfc_001_test_matrix_v1.md)
+- RFC-002 Determinism Scope: [`docs/governance/rfc_002_determinism_scope_v1.md`](docs/governance/rfc_002_determinism_scope_v1.md)
+- RFC-002 Test Matrix: [`docs/governance/rfc_002_test_matrix_v1.md`](docs/governance/rfc_002_test_matrix_v1.md)
+- Cross-platform determinism smoke: [`docs/governance/cross_platform_determinism_smoke_v1.md`](docs/governance/cross_platform_determinism_smoke_v1.md)
+- Audit answer template (replay proof): [`docs/governance/audit_answer_template_replay_proof_v1.md`](docs/governance/audit_answer_template_replay_proof_v1.md)
+- Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
 
 ## Distribution & Verification
 
