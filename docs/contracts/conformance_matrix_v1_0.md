@@ -5,21 +5,21 @@ Test and evidence columns are intentionally empty in this initial RFC and will b
 
 | Requirement ID | Contract reference | Test | Evidence |
 | --- | --- | --- | --- |
-| DET-001 | TBD |  |  |
-| DET-002 | TBD |  |  |
-| DET-003 | TBD |  |  |
-| DET-004 | TBD |  |  |
-| DET-005 | TBD |  |  |
-| DET-006 | TBD |  |  |
-| DET-007 | TBD |  |  |
-| DET-008 | TBD |  |  |
-| DET-009 | TBD |  |  |
-| DET-010 | TBD |  |  |
-| DET-011 | TBD |  |  |
-| DET-012 | TBD |  |  |
-| DET-013 | TBD |  |  |
-| DET-014 | TBD |  |  |
-| DET-015 | TBD |  |  |
+| DET-001 | determinism_contract_v1_0.md Section 3 [DET-001] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-001_smoke.json` |
+| DET-002 | determinism_contract_v1_0.md Section 3 [DET-002] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-002_locale_boundary.json` |
+| DET-003 | determinism_contract_v1_0.md Section 3 [DET-003] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-003_bytecode_binary.json` |
+| DET-004 | determinism_contract_v1_0.md Section 3 [DET-004] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-004_input_normalization.json` |
+| DET-005 | determinism_contract_v1_0.md Section 3 [DET-005] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-005_default_options.json` |
+| DET-006 | determinism_contract_v1_0.md Section 3 [DET-006] | TBD | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-006_platform_scope.md` |
+| DET-007 | determinism_contract_v1_0.md Section 3 [DET-007] | TBD | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-007_platform_constraints.md` |
+| DET-008 | determinism_contract_v1_0.md Section 3 [DET-008] | `verify` (GitHub Actions) | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-008_no_fs_enumeration.md` |
+| DET-009 | determinism_contract_v1_0.md Section 3 [DET-009] | TBD | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-009_reserved_options.md` |
+| DET-010 | determinism_contract_v1_0.md Section 3 [DET-010] | `audit-summary` artifact | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-010_violation_report.json` |
+| DET-011 | undefined_behavior_v1_0.md [DET-011] | `ruledslc verify` (malformed input cases) | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-011_malformed_bytecode.json` |
+| DET-012 | undefined_behavior_v1_0.md [DET-012] | `ax_check_bytecode_compatibility` integration checks | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-012_unsupported_version.json` |
+| DET-013 | undefined_behavior_v1_0.md [DET-013] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-013_non_normalized_input.json` |
+| DET-014 | undefined_behavior_v1_0.md [DET-014] | TBD | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-014_input_mutation_race.md` |
+| DET-015 | undefined_behavior_v1_0.md [DET-015] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/DET-015_invalid_args.json` |
 | DET-016 | TBD |  |  |
 | DET-017 | TBD |  |  |
 | DET-018 | TBD |  |  |

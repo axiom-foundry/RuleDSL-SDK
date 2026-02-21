@@ -11,7 +11,7 @@ RuleDSL 1.0 Determinism Guarantee: For identical bytecode, normalized input, and
 ## 2. Definitions
 
 - Identical bytecode: two bytecode inputs are identical only when their byte length and every byte value are equal.
-- Normalized input: a caller-provided evaluation payload in which the same logical fields, values, and ordering are used, without duplicate keys and without locale-dependent formatting.
+- Normalized input: a caller-provided evaluation payload canonicalized per [`docs/contracts/input_canonicalization_v1_0.md`](input_canonicalization_v1_0.md), including deterministic field ordering, duplicate-key rejection, and locale-independent formatting rules.
 - Evaluation options: explicit evaluation parameters that can alter behavior (for example policy flags); omitted options use documented defaults.
 - Bit-identical output: API-visible outputs are equal byte-for-byte, including status codes, decision values, and any output buffers defined by the API contract.
 - Supported platforms: Windows x64 and Linux x64 only.
@@ -33,4 +33,5 @@ RuleDSL 1.0 Determinism Guarantee: For identical bytecode, normalized input, and
 
 - Non-goals are defined in [`docs/contracts/determinism_non_goals_v1_0.md`](determinism_non_goals_v1_0.md).
 - Strict undefined behavior boundaries are defined in [`docs/contracts/undefined_behavior_v1_0.md`](undefined_behavior_v1_0.md).
+- Canonical input normalization rules are defined in [`docs/contracts/input_canonicalization_v1_0.md`](input_canonicalization_v1_0.md).
 - Requirement-to-evidence placeholders are defined in [`docs/contracts/conformance_matrix_v1_0.md`](conformance_matrix_v1_0.md).

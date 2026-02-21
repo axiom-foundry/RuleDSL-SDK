@@ -36,6 +36,7 @@ Operators run scripts explicitly through documented commands.
 - Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
 - Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
 - Determinism Contract (v1.0): [`docs/contracts/determinism_contract_v1_0.md`](docs/contracts/determinism_contract_v1_0.md)
+- Input canonicalization (v1.0): [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md)
 
 ## Distribution & Verification
 
