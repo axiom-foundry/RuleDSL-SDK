@@ -42,3 +42,15 @@ RuleDSL 1.0 Determinism Guarantee: For identical bytecode, normalized input, and
 - Comparison report path format: `reports/determinism_compare_v1/<date>/DET-001/<platform-a>__<platform-b>/comparison.json`.
 - Platform fingerprint artifacts and platform-specific manifest hashes may differ across platforms and are not part of DET equality checks.
 - Current DET-001 reference example demonstrates OS-level reproducibility on Windows x64 vs Linux x64 using WSL2 on one host; multi-host reproducibility evidence remains TBD.
+
+## 6. Evidence example (DET-002)
+
+- DET-002 evidence captures `env_a` and `env_b` requested/effective locale and timezone values in `DET-002_smoke.json`.
+- Locale provisioning is an environment prerequisite; missing locales are reported as `inconclusive` evidence rather than deterministic pass/fail proof.
+- Current reference evidence demonstrates single-host OS-level behavior (for example WSL2-backed Linux capture); multi-host reproducibility remains TBD.
+
+## 7. Evidence example (DET-003)
+
+- DET-003 evidence captures deterministic error-path behavior by comparing status code and error payload bytes across repeated invalid evaluations.
+- `outputs/DET-003_output.bin` is the canonical compare artifact for DET-003 and maps to run A error payload bytes.
+

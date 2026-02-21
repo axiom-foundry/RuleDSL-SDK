@@ -69,6 +69,7 @@ Each item in `requirements` MUST include:
 - Required pattern: `DET-xxx_<descriptor>.json`.
 - Example: `DET-001_smoke.json`.
 - The `requirements[].output_file` field in `manifest.json` MUST match the actual file name exactly.
+- Some DET requirements MAY designate a canonical compare artifact at `outputs/<DET-ID>_output.bin`; for DET-003 this canonical artifact maps to run A error payload bytes.
 
 ## 6. Bit-identical output comparison
 

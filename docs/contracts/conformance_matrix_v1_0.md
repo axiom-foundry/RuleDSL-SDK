@@ -3,12 +3,13 @@
 This matrix provides placeholder mapping for determinism requirements (DET-001..DET-050).
 Test and evidence columns are intentionally empty in this initial RFC and will be filled as conformance assets are published.
 Reference evidence paths in this matrix are examples for internal conformance capture and are not shipped in SDK release artifacts.
+DET-002 and DET-003 entries below use concrete reference example paths from internal evidence runs.
 
 | Requirement ID | Contract reference | Test | Evidence |
 | --- | --- | --- | --- |
 | DET-001 | determinism_contract_v1_0.md Section 3 [DET-001] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-001_smoke.json` (see `determinism_evidence_bundle_v1_0.md`); example compare report: `reports/determinism_compare_v1/2026-02-21/DET-001/windows-x64__linux-x64/comparison.json` |
-| DET-002 | determinism_contract_v1_0.md Section 3 [DET-002] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-002_locale_boundary.json` (see `determinism_evidence_bundle_v1_0.md`) |
-| DET-003 | determinism_contract_v1_0.md Section 3 [DET-003] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-003_bytecode_binary.json` (see `determinism_evidence_bundle_v1_0.md`) |
+| DET-002 | determinism_contract_v1_0.md Section 3 [DET-002] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/2026-02-21/linux-x64/release-local-det002/outputs/DET-002_smoke.json` (reference example; see `determinism_evidence_bundle_v1_0.md`) |
+| DET-003 | determinism_contract_v1_0.md Section 3 [DET-003] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_compare_v1/2026-02-21/DET-003/windows-x64__linux-x64/comparison.json` (reference example; see `determinism_evidence_bundle_v1_0.md`) |
 | DET-004 | determinism_contract_v1_0.md Section 3 [DET-004] | `axiom_ruledsl_identifier_class_conformance_tests` | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-004_input_normalization.json` (see `determinism_evidence_bundle_v1_0.md`) |
 | DET-005 | determinism_contract_v1_0.md Section 3 [DET-005] | `Tools/smoke/compiler_smoke_test.ps1` | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-005_default_options.json` (see `determinism_evidence_bundle_v1_0.md`) |
 | DET-006 | determinism_contract_v1_0.md Section 3 [DET-006] | TBD | `reports/determinism_v1_0/<date>/<platform>/<config>/outputs/DET-006_platform_scope.json` (see `determinism_evidence_bundle_v1_0.md`) |
