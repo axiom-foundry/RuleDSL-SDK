@@ -110,3 +110,22 @@ A delivery packet typically includes:
 - Not a hosted SaaS
 - Not an open-source engine implementation
 - Not a 24/7 managed service by default
+## Release model
+
+RuleDSL follows a three-lane release model:
+
+1) Stable releases (e.g. v1.0.0)  
+   - Marked as "Latest"  
+   - Represent ABI-stable, production-ready SDK states  
+
+2) Proofing releases (e.g. v1.0.1-proofing)  
+   - Marked as pre-release  
+   - Used for governance, determinism and tooling validation  
+   - No ABI-breaking changes allowed  
+
+3) Phase markers (e.g. governance-spine-v1)  
+   - Marked as pre-release  
+   - Architectural milestones  
+   - Do not represent product version increments  
+
+This separation keeps product stability independent from governance evolution.
