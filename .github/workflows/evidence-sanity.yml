@@ -1,0 +1,16 @@
+name: evidence-sanity
+
+on:
+  pull_request:
+
+jobs:
+  evidence-sanity:
+    name: evidence-sanity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+
+      - name: Run evidence sanity scanner
+        run: |
+          python Tools/evidence_sanity/scan_evidence.py
