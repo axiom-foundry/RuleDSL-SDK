@@ -1,0 +1,7 @@
+{
+  "schema_version": "replay_proof_v1",
+  "bytecode_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "decision_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "now_utc_ms": 1700000000000
+}

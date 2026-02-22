@@ -50,6 +50,7 @@ Operators run scripts explicitly through documented commands.
 - Evidence bundle index: [`docs/governance/evidence_index_v1.md`](docs/governance/evidence_index_v1.md)
 - Contract gate policy: [`docs/governance/contract_gate.md`](docs/governance/contract_gate.md)
 - Release model governance: [`docs/governance/release_model.md`](docs/governance/release_model.md)
+- ADR index: [`docs/adr/README.md`](docs/adr/README.md)
 - Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
 ## Architectural maturity (phase marker docs)
 
