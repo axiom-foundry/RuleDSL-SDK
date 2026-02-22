@@ -49,6 +49,11 @@ Operators run scripts explicitly through documented commands.
 - Audit answer template (replay proof): [`docs/governance/audit_answer_template_replay_proof_v1.md`](docs/governance/audit_answer_template_replay_proof_v1.md)
 - Evidence bundle index: [`docs/governance/evidence_index_v1.md`](docs/governance/evidence_index_v1.md)
 - Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
+## Architectural maturity (phase marker docs)
+
+- Architectural Freeze Charter v1.0: [`docs/architecture/architectural_freeze_charter_v1_0.md`](docs/architecture/architectural_freeze_charter_v1_0.md)
+- C API / ABI Evolution Contract v1: [`docs/architecture/c_api_abi_evolution_contract_v1.md`](docs/architecture/c_api_abi_evolution_contract_v1.md)
+- Replay / Evidence Contract v1: [`docs/architecture/replay_evidence_contract_v1.md`](docs/architecture/replay_evidence_contract_v1.md)
 
 ## Distribution & Verification
 
