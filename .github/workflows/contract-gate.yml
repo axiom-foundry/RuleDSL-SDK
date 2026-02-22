@@ -1,0 +1,25 @@
+name: contract-gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  contract-gate:
+    name: contract-gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Evaluate frozen-surface contract gate
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./Tools/contract_gate/check_contract_gate.ps1
