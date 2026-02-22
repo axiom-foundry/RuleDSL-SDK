@@ -1,7 +1,7 @@
 # Integration Snippets (C API)
 
 These snippets are intended as copy-paste starting points for host integrations.
-API names match `SDK/Include/axiom/ruledsl_c.h`.
+API names match `include/axiom/ruledsl_c.h`.
 
 ## 1) Minimal Happy Path (Load + Evaluate)
 
