@@ -1,0 +1,21 @@
+name: release-guard
+
+on:
+  release:
+    types: [published, edited]
+
+jobs:
+  release-guard:
+    name: release-guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+
+      - name: Validate release metadata rules
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python Tools/release_guard/check_release_guard.py
