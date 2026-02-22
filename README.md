@@ -49,6 +49,7 @@ Operators run scripts explicitly through documented commands.
 - Audit answer template (replay proof): [`docs/governance/audit_answer_template_replay_proof_v1.md`](docs/governance/audit_answer_template_replay_proof_v1.md)
 - Evidence bundle index: [`docs/governance/evidence_index_v1.md`](docs/governance/evidence_index_v1.md)
 - Contract gate policy: [`docs/governance/contract_gate.md`](docs/governance/contract_gate.md)
+- Release model governance: [`docs/governance/release_model.md`](docs/governance/release_model.md)
 - Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
 ## Architectural maturity (phase marker docs)
 
