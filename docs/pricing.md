@@ -1,94 +1,65 @@
-# RuleDSL — Pricing & Licensing
+# RuleDSL — Evaluation & Licensing
 
-## Licensing Model
+## Start with a Free Evaluation
 
-RuleDSL is licensed per-organization on an annual basis.
-Each license covers a defined deployment scope and includes support at the selected tier.
+Every engagement starts with a **30-day structured evaluation** at no cost.
+Full SDK functionality is available during evaluation — no feature gates, no limitations.
 
-## Tiers
+The goal is simple: validate that RuleDSL is the right fit for your use case before any commercial discussion.
 
-### Starter
+## How It Works
 
-For teams evaluating or deploying to a single application.
+1. **Request an evaluation packet** — reach out via the contact info below
+2. **Integrate and test** — follow the [evaluation playbook](evaluation_playbook.md) with your own data
+3. **Validate determinism** — confirm reproducible results across your target environments
+4. **Decide** — if it fits, we discuss terms tailored to your deployment scope
 
-| Item | Included |
-|------|----------|
-| Deployment scope | 1 application, 1 platform (Windows or Linux x64) |
-| SDK delivery | Versioned artifact packet (headers + binary + docs) |
-| Updates | Patch releases for the licensed MAJOR.MINOR line |
-| Support | Email, Sev3 response target (5 business days) |
-| Evaluation | 30-day structured evaluation included |
-
-### Professional
-
-For teams with production deployments across multiple applications or platforms.
+## What You Get During Evaluation
 
 | Item | Included |
 |------|----------|
-| Deployment scope | Up to 5 applications, both platforms (Windows + Linux x64) |
-| SDK delivery | Versioned artifact packet + determinism evidence bundle |
-| Updates | Patch + minor releases for the licensed MAJOR line |
-| Support | Email, Sev1-3 response targets (1/3/5 business days) |
-| Integration advisory | 4 hours of scheduled technical advisory per year |
-| Evaluation | 30-day structured evaluation included |
+| SDK delivery | Full versioned artifact packet (headers + binaries + docs) |
+| Language bindings | Python and C# wrappers included |
+| Examples | Working integration examples with expected outputs |
+| Documentation | Complete technical documentation set |
+| Support | Email-based technical support during evaluation |
 
-### Enterprise
+## Licensing
 
-For organizations with broad deployment, compliance requirements, or custom needs.
+Licensing terms are discussed after a successful evaluation, based on your specific deployment scope and needs.
 
-| Item | Included |
-|------|----------|
-| Deployment scope | Unlimited applications, both platforms |
-| SDK delivery | Full artifact packet + evidence bundle + signed releases |
-| Updates | All releases on the licensed MAJOR line + early access to next MAJOR |
-| Support | Priority email, Sev1-3 response targets (1/3/5 business days) |
-| Integration advisory | 8 hours of scheduled technical advisory per year |
-| Custom | Language binding support, extended conformance evidence |
-| Evaluation | 30-day structured evaluation included |
+Factors that shape the license:
+- Number of applications using the SDK
+- Target platforms (Windows, Linux, or both)
+- Support level required
+- Whether redistribution rights are needed
 
-## What is NOT included (any tier)
+We offer annual per-organization licensing. No per-seat or per-CPU charges.
 
-- 24/7 on-call support (available as a separate add-on)
-- Custom engine modifications
+## Early Adopter Program
+
+We are actively seeking pilot partners for early adoption.
+Early adopters receive preferential terms and direct access to the development team during integration.
+
+If your team is evaluating embedded rule engines for production use, we would like to hear from you.
+
+## What is NOT included
+
+- Engine source code
+- 24/7 on-call support (negotiable separately)
 - Managed hosting or SaaS operation
-- On-site consulting (available separately)
-
-## Evaluation Period
-
-All tiers include a 30-day evaluation at no cost.
-During evaluation, the full SDK functionality is available.
-Evaluation terms are defined in [`EVALUATION_TERMS.md`](../EVALUATION_TERMS.md).
-
-The evaluation process follows the structured playbook in [`docs/evaluation_playbook.md`](evaluation_playbook.md).
-
-## How to Start
-
-1. Request an evaluation packet via the contact information below
-2. Complete the 30-day structured evaluation
-3. Review the commercial handoff checklist ([`docs/commercial_handoff.md`](commercial_handoff.md))
-4. Select a tier and sign the license agreement
+- Custom engine modifications (scope discussed case by case)
 
 ## Contact
 
-For evaluation requests and pricing inquiries:
+For evaluation requests and partnership inquiries:
 
 - GitHub: [github.com/axiom-foundry/RuleDSL-SDK](https://github.com/axiom-foundry/RuleDSL-SDK)
 - Email: See repository contact information
 
-## FAQ
+## References
 
-**Can I switch tiers later?**
-Yes. Tier upgrades take effect at the next billing cycle or immediately upon request.
-
-**What happens when my license expires?**
-The SDK continues to function (no kill-switch). You lose access to updates and support.
-Renewal restores full access to the current release line.
-
-**Do you offer multi-year discounts?**
-Yes. Contact us for 2-year and 3-year pricing.
-
-**Is there a per-seat or per-CPU charge?**
-No. Licensing is per-organization, scoped by application count and platform.
-
-**Can I redistribute the SDK to my customers?**
-Not under standard tiers. Redistribution licensing is available separately under Enterprise.
+- Evaluation terms: [`EVALUATION_TERMS.md`](../EVALUATION_TERMS.md)
+- Evaluation playbook: [`docs/evaluation_playbook.md`](evaluation_playbook.md)
+- Commercial handoff checklist: [`docs/commercial_handoff.md`](commercial_handoff.md)
+- Support policy: [`docs/support_policy.md`](support_policy.md)
