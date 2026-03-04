@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuleDSL Language Reference</title>
+    <meta name="description" content="RuleDSL language reference — syntax, operators, decisions, and examples for writing deterministic business rules.">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3a;
+            --text: #e4e6ed;
+            --muted: #8b8fa3;
+            --accent: #6c8cff;
+            --accent2: #4ecdc4;
+            --warn: #e8a56d;
+            --code-bg: #141620;
+            --max-w: 800px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+        /* Nav */
+        nav {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .logo span { color: var(--muted); font-weight: 400; }
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.9rem;
+        }
+        nav a:hover { color: var(--text); }
+
+        /* Hero */
+        .hero {
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero h1 {
+            font-size: 2rem;
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+        .hero p {
+            color: var(--muted);
+            font-size: 1.05rem;
+            max-width: 600px;
+        }
+
+        /* Section */
+        section {
+            padding: 48px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        section:last-of-type { border-bottom: none; }
+        section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        section h3 {
+            font-size: 1.1rem;
+            margin: 28px 0 12px;
+        }
+        section h3:first-child { margin-top: 0; }
+        section p, section li {
+            color: var(--muted);
+            font-size: 0.93rem;
+        }
+        section p { margin-bottom: 12px; }
+        section ul, section ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+        section li { margin-bottom: 4px; }
+
+        /* Code */
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.88rem;
+            color: var(--accent2);
+        }
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.86rem;
+            line-height: 1.7;
+            margin: 16px 0;
+        }
+        pre .kw { color: var(--accent); }
+        pre .str { color: var(--accent2); }
+        pre .num { color: var(--warn); }
+        pre .cmt { color: #5a6270; }
+        pre .op { color: var(--text); }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td { color: var(--muted); }
+        td code { background: none; padding: 0; color: var(--accent2); }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card h4 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+        .card p {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        /* Note */
+        .note {
+            background: var(--surface);
+            border-left: 3px solid var(--accent);
+            padding: 14px 18px;
+            border-radius: 0 6px 6px 0;
+            margin: 16px 0;
+            font-size: 0.9rem;
+        }
+        .note strong { color: var(--text); }
+
+        /* Anchor links */
+        h2 a, h3 a {
+            color: inherit;
+            text-decoration: none;
+        }
+        h2 a:hover, h3 a:hover {
+            text-decoration: underline;
+        }
+
+        /* TOC */
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin: 24px 0;
+        }
+        .toc h3 {
+            margin: 0 0 12px;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .toc ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .toc li {
+            margin-bottom: 4px;
+        }
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .toc a:hover { text-decoration: underline; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.5rem; }
+            pre { padding: 14px; font-size: 0.82rem; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="../" class="logo">RuleDSL <span>Language</span></a>
+        <div>
+            <a href="#structure">Structure</a>
+            <a href="#expressions">Expressions</a>
+            <a href="#decisions">Decisions</a>
+            <a href="#examples">Examples</a>
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="container">
+        <h1>Language Reference</h1>
+        <p>Everything you need to write deterministic business rules. No prior DSL experience required.</p>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="toc">
+        <h3>Contents</h3>
+        <ol>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#structure">Rule Structure</a></li>
+            <li><a href="#expressions">Expressions & Operators</a></li>
+            <li><a href="#decisions">Decision Types</a></li>
+            <li><a href="#data-types">Data Types</a></li>
+            <li><a href="#assignments">Assignments & Computed Values</a></li>
+            <li><a href="#lists">Lists & Pattern Matching</a></li>
+            <li><a href="#time">Time & Velocity Limits</a></li>
+            <li><a href="#missing">Missing Values</a></li>
+            <li><a href="#determinism">Determinism Guarantees</a></li>
+            <li><a href="#examples">Complete Examples</a></li>
+            <li><a href="#reference">Quick Reference</a></li>
+        </ol>
+    </div>
+
+<!-- 1. Overview -->
+<section id="overview">
+    <h2><a href="#overview">Overview</a></h2>
+    <p>RuleDSL is a purpose-built language for writing business decision rules. It compiles to bytecode that evaluates deterministically: same input, same bytecode, same decision &mdash; every time, on every platform.</p>
+    <p>A rule file contains one or more named rules. Each rule has a condition (<code>when</code>) and an action (<code>then</code>). Rules are evaluated in priority order. The first rule whose condition matches produces the decision.</p>
+    <div class="note">
+        <strong>Design philosophy:</strong> The engine decides. The host application computes.
+        RuleDSL deliberately excludes aggregation, date arithmetic, and string manipulation.
+        These belong in your application. The engine evaluates the fields you provide and returns a decision.
+    </div>
+</section>
+
+<!-- 2. Rule Structure -->
+<section id="structure">
+    <h2><a href="#structure">Rule Structure</a></h2>
+    <p>Every rule follows this pattern:</p>
+<pre><span class="kw">rule</span> <span class="str">rule_name</span> <span class="kw">priority</span> <span class="num">100</span> {
+  <span class="kw">when</span> <span class="op">&lt;condition&gt;</span>;
+  <span class="kw">then</span> <span class="op">&lt;actions&gt;</span>;
+}</pre>
+
+    <h3>Components</h3>
+    <table>
+        <tr><th>Part</th><th>Required</th><th>Description</th></tr>
+        <tr><td><code>rule</code></td><td>Yes</td><td>Keyword. Starts a rule block.</td></tr>
+        <tr><td><code>rule_name</code></td><td>Yes</td><td>Identifier. Appears in decision results.</td></tr>
+        <tr><td><code>priority N</code></td><td>No</td><td>Higher number = evaluated first. Default is 0.</td></tr>
+        <tr><td><code>when</code></td><td>Yes</td><td>Condition expression. Must resolve to true/false.</td></tr>
+        <tr><td><code>then</code></td><td>Yes</td><td>One or more actions, separated by commas.</td></tr>
+    </table>
+
+    <h3>Evaluation Order</h3>
+    <p>Rules are evaluated by priority (highest first). Among rules with equal priority, source order applies. The <strong>first match wins</strong> &mdash; no further rules are evaluated after a decision is reached.</p>
+</section>
+
+<!-- 3. Expressions -->
+<section id="expressions">
+    <h2><a href="#expressions">Expressions & Operators</a></h2>
+
+    <h3>Comparison Operators</h3>
+    <table>
+        <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>==</code></td><td>Equal</td><td><code>currency == "USD"</code></td></tr>
+        <tr><td><code>!=</code></td><td>Not equal</td><td><code>status != "blocked"</code></td></tr>
+        <tr><td><code>&lt;</code></td><td>Less than</td><td><code>amount &lt; 100</code></td></tr>
+        <tr><td><code>&lt;=</code></td><td>Less than or equal</td><td><code>amount &lt;= 500</code></td></tr>
+        <tr><td><code>&gt;</code></td><td>Greater than</td><td><code>amount &gt; 1000</code></td></tr>
+        <tr><td><code>&gt;=</code></td><td>Greater than or equal</td><td><code>risk_score &gt;= 80</code></td></tr>
+    </table>
+
+    <h3>Logical Operators</h3>
+    <table>
+        <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>and</code></td><td>Both must be true</td><td><code>amount &gt; 1000 and currency == "USD"</code></td></tr>
+        <tr><td><code>or</code></td><td>Either can be true</td><td><code>country == "US" or country == "GB"</code></td></tr>
+        <tr><td><code>not</code></td><td>Negation</td><td><code>not is_verified</code></td></tr>
+    </table>
+    <p>Use parentheses to control evaluation order: <code>(a or b) and c</code></p>
+
+    <h3>Arithmetic Operators</h3>
+    <table>
+        <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>+</code></td><td>Addition</td><td><code>amount + fee</code></td></tr>
+        <tr><td><code>-</code></td><td>Subtraction</td><td><code>balance - amount</code></td></tr>
+        <tr><td><code>*</code></td><td>Multiplication</td><td><code>rate * 100</code></td></tr>
+        <tr><td><code>/</code></td><td>Division</td><td><code>amount / 100</code></td></tr>
+    </table>
+    <p>Standard precedence: <code>*</code> and <code>/</code> bind tighter than <code>+</code> and <code>-</code>. Use parentheses when in doubt.</p>
+
+    <h3>Operator Precedence (Highest to Lowest)</h3>
+    <table>
+        <tr><th>Level</th><th>Operators</th><th>Associativity</th></tr>
+        <tr><td>1</td><td><code>not</code>, unary <code>-</code></td><td>Right</td></tr>
+        <tr><td>2</td><td><code>*</code> <code>/</code></td><td>Left</td></tr>
+        <tr><td>3</td><td><code>+</code> <code>-</code></td><td>Left</td></tr>
+        <tr><td>4</td><td><code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>Left</td></tr>
+        <tr><td>5</td><td><code>==</code> <code>!=</code></td><td>Left</td></tr>
+        <tr><td>6</td><td><code>and</code></td><td>Left</td></tr>
+        <tr><td>7</td><td><code>or</code></td><td>Left</td></tr>
+    </table>
+</section>
+
+<!-- 4. Decisions -->
+<section id="decisions">
+    <h2><a href="#decisions">Decision Types</a></h2>
+    <div class="card-grid">
+        <div class="card">
+            <h4 style="color: var(--accent2);">allow</h4>
+            <p>Approve the request. Transaction proceeds.</p>
+        </div>
+        <div class="card">
+            <h4 style="color: #e05c5c;">decline</h4>
+            <p>Reject the request. Transaction is blocked.</p>
+        </div>
+        <div class="card">
+            <h4 style="color: var(--warn);">review</h4>
+            <p>Flag for manual review. Requires human decision.</p>
+        </div>
+        <div class="card">
+            <h4 style="color: var(--accent);">limit</h4>
+            <p>Apply a velocity cap. E.g., max 200 USD per day.</p>
+        </div>
+    </div>
+<pre><span class="cmt"># Simple decisions</span>
+<span class="kw">then</span> <span class="kw">allow</span>;
+<span class="kw">then</span> <span class="kw">decline</span>;
+<span class="kw">then</span> <span class="kw">review</span>;
+
+<span class="cmt"># Velocity limit (requires now_utc_ms in input)</span>
+<span class="kw">then</span> <span class="kw">limit</span> <span class="num">200</span> USD <span class="kw">per</span> <span class="num">1</span> D;</pre>
+</section>
+
+<!-- 5. Data Types -->
+<section id="data-types">
+    <h2><a href="#data-types">Data Types</a></h2>
+    <table>
+        <tr><th>Type</th><th>Literal Example</th><th>Description</th></tr>
+        <tr><td>Number</td><td><code>1200.0</code>, <code>100 USD</code></td><td>IEEE 754 binary64. Optional currency tag.</td></tr>
+        <tr><td>String</td><td><code>"USD"</code>, <code>"hello"</code></td><td>Double-quoted. Used in comparisons and MATCH.</td></tr>
+        <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td><td>Used in conditions directly.</td></tr>
+        <tr><td>Identifier</td><td><code>amount</code>, <code>customer.level</code></td><td>References input fields. Dotted paths supported.</td></tr>
+        <tr><td>Missing</td><td>&mdash;</td><td>Field not provided. Operations on missing safely fail.</td></tr>
+    </table>
+
+    <h3>Currency-Tagged Numbers</h3>
+    <p>Append a 3-letter currency code to a numeric literal for currency-aware comparisons:</p>
+<pre><span class="kw">when</span> amount &gt;= <span class="num">10000</span> USD;   <span class="cmt"># only matches USD transactions</span>
+<span class="kw">when</span> amount &gt;= <span class="num">8000</span> EUR;    <span class="cmt"># only matches EUR transactions</span></pre>
+
+    <h3>Dotted Paths</h3>
+    <p>Access nested fields with dot notation:</p>
+<pre><span class="kw">when</span> customer.risk_level &gt; <span class="num">70</span> <span class="kw">and</span> merchant.category == <span class="str">"gambling"</span>;</pre>
+</section>
+
+<!-- 6. Assignments -->
+<section id="assignments">
+    <h2><a href="#assignments">Assignments & Computed Values</a></h2>
+    <p>The <code>then</code> clause can set output fields alongside the decision. These appear in the result and can be used by downstream systems.</p>
+<pre><span class="kw">rule</span> fraud_signal <span class="kw">priority</span> <span class="num">100</span> {
+  <span class="kw">when</span> amount &gt; <span class="num">3000</span> <span class="kw">and</span> ip_country <span class="kw">in</span> [NG, RU];
+  <span class="kw">then</span> risk_score = <span class="num">95</span>,
+       reason = <span class="str">"multi_signal_fraud"</span>,
+       category = <span class="str">"high_risk"</span>,
+       <span class="kw">decline</span>;
+}</pre>
+    <p>Assignments support arithmetic expressions:</p>
+<pre><span class="kw">then</span> risk_score = (amount / <span class="num">100</span>) + velocity_1h, <span class="kw">review</span>;</pre>
+</section>
+
+<!-- 7. Lists & Pattern Matching -->
+<section id="lists">
+    <h2><a href="#lists">Lists & Pattern Matching</a></h2>
+
+    <h3>IN Lists</h3>
+    <p>Check if a value is a member of a list:</p>
+<pre><span class="kw">when</span> ip_country <span class="kw">in</span> [TR, NG, RU, KP];
+<span class="kw">when</span> channel <span class="kw">in</span> [ECOM, APP, WEB];</pre>
+    <p>List items can be identifiers (bare words) or strings.</p>
+
+    <h3>MATCH (Pattern Matching)</h3>
+    <p>Check if a text field contains a pattern:</p>
+<pre><span class="kw">when</span> email <span class="kw">match</span> <span class="str">"@example.com"</span>;
+<span class="kw">when</span> card_bin <span class="kw">match</span> <span class="str">"^4[0-9]{5}"</span>;</pre>
+    <div class="note">
+        <strong>Safety:</strong> Applying MATCH to a non-text field (e.g., a number) produces a runtime diagnostic and the condition resolves to <code>false</code>. The rule simply does not match &mdash; no crash, no undefined behavior.
+    </div>
+</section>
+
+<!-- 8. Time & Velocity -->
+<section id="time">
+    <h2><a href="#time">Time & Velocity Limits</a></h2>
+    <p>The <code>limit</code> decision enforces velocity caps over time windows:</p>
+<pre><span class="kw">then</span> <span class="kw">limit</span> <span class="num">500</span> USD <span class="kw">per</span> <span class="num">1</span> D;    <span class="cmt"># max 500 USD per day</span>
+<span class="kw">then</span> <span class="kw">limit</span> <span class="num">3</span> TRY <span class="kw">per</span> <span class="num">1</span> H;      <span class="cmt"># max 3 transactions per hour</span></pre>
+
+    <h3>Time Units</h3>
+    <table>
+        <tr><th>Code</th><th>Unit</th></tr>
+        <tr><td><code>S</code></td><td>Second</td></tr>
+        <tr><td><code>M</code></td><td>Minute</td></tr>
+        <tr><td><code>H</code></td><td>Hour</td></tr>
+        <tr><td><code>D</code></td><td>Day</td></tr>
+    </table>
+
+    <div class="note">
+        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided as <code>now_utc_ms</code> in the input context. The Python and C# bindings auto-inject this; the C API requires explicit injection.
+    </div>
+</section>
+
+<!-- 9. Missing Values -->
+<section id="missing">
+    <h2><a href="#missing">Missing Values</a></h2>
+    <p>If a referenced field is not provided in the input, it resolves to <code>missing</code>.</p>
+    <ul>
+        <li><code>missing</code> is a distinct value &mdash; not null, not zero, not empty string.</li>
+        <li>Comparisons involving <code>missing</code> produce a runtime diagnostic and the condition evaluates to <code>false</code>.</li>
+        <li>The rule simply does not match. No crash. No undefined behavior.</li>
+    </ul>
+    <p>This means you do not need defensive null checks. If a field might not exist, the rule safely skips:</p>
+<pre><span class="cmt"># If customer.loyalty_tier is not in the input, this rule is skipped</span>
+<span class="kw">rule</span> vip_bypass {
+  <span class="kw">when</span> customer.loyalty_tier == <span class="str">"platinum"</span>;
+  <span class="kw">then</span> <span class="kw">allow</span>;
+}</pre>
+</section>
+
+<!-- 10. Determinism -->
+<section id="determinism">
+    <h2><a href="#determinism">Determinism Guarantees</a></h2>
+    <p>RuleDSL is deterministic by contract. These are not aspirational goals &mdash; they are enforced by the engine architecture:</p>
+    <div class="card-grid">
+        <div class="card">
+            <h4>No implicit time</h4>
+            <p>The engine never reads the system clock. Time is explicitly injected via <code>now_utc_ms</code>.</p>
+        </div>
+        <div class="card">
+            <h4>Stable evaluation order</h4>
+            <p>Rules are evaluated by priority, then source order. No randomness, no hash-map iteration artifacts.</p>
+        </div>
+        <div class="card">
+            <h4>IEEE 754 numeric behavior</h4>
+            <p>All arithmetic uses binary64. No fast-math. No platform-dependent rounding. NaN and Inf are rejected.</p>
+        </div>
+        <div class="card">
+            <h4>No locale dependency</h4>
+            <p>Identifiers use raw UTF-8 octet matching. No Unicode normalization. No collation surprises.</p>
+        </div>
+    </div>
+    <p style="margin-top: 16px;">The result: same bytecode + same input + same engine version = same decision. Always. On every platform.</p>
+</section>
+
+<!-- 11. Examples -->
+<section id="examples">
+    <h2><a href="#examples">Complete Examples</a></h2>
+
+    <h3>Transaction Risk Scoring</h3>
+<pre><span class="kw">rule</span> block_sanctioned <span class="kw">priority</span> <span class="num">200</span> {
+  <span class="kw">when</span> ip_country <span class="kw">in</span> [KP, IR, SY];
+  <span class="kw">then</span> reason = <span class="str">"sanctioned"</span>, <span class="kw">decline</span>;
+}
+
+<span class="kw">rule</span> high_risk_geo <span class="kw">priority</span> <span class="num">100</span> {
+  <span class="kw">when</span> amount &gt; <span class="num">5000</span> <span class="kw">and</span> ip_country <span class="kw">in</span> [NG, RU];
+  <span class="kw">then</span> risk_score = <span class="num">90</span>, reason = <span class="str">"geo_high"</span>, <span class="kw">decline</span>;
+}
+
+<span class="kw">rule</span> review_medium <span class="kw">priority</span> <span class="num">50</span> {
+  <span class="kw">when</span> amount &gt; <span class="num">1000</span> <span class="kw">and</span> amount &lt;= <span class="num">5000</span>;
+  <span class="kw">then</span> risk_score = <span class="num">60</span>, reason = <span class="str">"medium_amount"</span>, <span class="kw">review</span>;
+}
+
+<span class="kw">rule</span> allow_default {
+  <span class="kw">when</span> <span class="num">true</span>;
+  <span class="kw">then</span> risk_score = <span class="num">10</span>, reason = <span class="str">"baseline"</span>, <span class="kw">allow</span>;
+}</pre>
+
+    <h3>Spending Limits with Device Trust</h3>
+<pre><span class="kw">rule</span> block_new_device_high <span class="kw">priority</span> <span class="num">100</span> {
+  <span class="kw">when</span> is_new_device <span class="kw">and</span> amount &gt; <span class="num">2000</span>;
+  <span class="kw">then</span> reason = <span class="str">"new_device_risk"</span>, <span class="kw">decline</span>;
+}
+
+<span class="kw">rule</span> limit_daily <span class="kw">priority</span> <span class="num">50</span> {
+  <span class="kw">when</span> amount &gt; <span class="num">1000</span>;
+  <span class="kw">then</span> reason = <span class="str">"daily_cap"</span>, <span class="kw">limit</span> <span class="num">500</span> USD <span class="kw">per</span> <span class="num">1</span> D;
+}
+
+<span class="kw">rule</span> trusted_device <span class="kw">priority</span> <span class="num">10</span> {
+  <span class="kw">when</span> card_present <span class="kw">and</span> <span class="kw">not</span> is_new_device;
+  <span class="kw">then</span> reason = <span class="str">"trusted"</span>, <span class="kw">allow</span>;
+}
+
+<span class="kw">rule</span> default_review {
+  <span class="kw">when</span> <span class="num">true</span>;
+  <span class="kw">then</span> <span class="kw">review</span>;
+}</pre>
+
+    <h3>Email & Channel Controls</h3>
+<pre><span class="kw">rule</span> flag_internal_email <span class="kw">priority</span> <span class="num">100</span> {
+  <span class="kw">when</span> email <span class="kw">match</span> <span class="str">"@internal\\.corp$"</span>;
+  <span class="kw">then</span> reason = <span class="str">"internal_email"</span>, <span class="kw">review</span>;
+}
+
+<span class="kw">rule</span> block_risky_channel <span class="kw">priority</span> <span class="num">50</span> {
+  <span class="kw">when</span> channel <span class="kw">in</span> [ECOM, APP] <span class="kw">and</span> amount &gt; <span class="num">1000</span>;
+  <span class="kw">then</span> reason = <span class="str">"risky_channel"</span>, <span class="kw">decline</span>;
+}
+
+<span class="kw">rule</span> allow_other {
+  <span class="kw">when</span> <span class="num">true</span>;
+  <span class="kw">then</span> <span class="kw">allow</span>;
+}</pre>
+</section>
+
+<!-- 12. Reference -->
+<section id="reference">
+    <h2><a href="#reference">Quick Reference</a></h2>
+
+    <h3>Keywords</h3>
+    <table>
+        <tr><th>Keyword</th><th>Context</th></tr>
+        <tr><td><code>rule</code></td><td>Starts a rule block</td></tr>
+        <tr><td><code>priority</code></td><td>Sets evaluation order (optional)</td></tr>
+        <tr><td><code>when</code></td><td>Begins condition expression</td></tr>
+        <tr><td><code>then</code></td><td>Begins action clause</td></tr>
+        <tr><td><code>and</code> <code>or</code> <code>not</code></td><td>Logical operators</td></tr>
+        <tr><td><code>in</code></td><td>List membership check</td></tr>
+        <tr><td><code>match</code></td><td>Pattern match on text fields</td></tr>
+        <tr><td><code>allow</code> <code>decline</code> <code>review</code></td><td>Decision outcomes</td></tr>
+        <tr><td><code>limit</code> <code>per</code></td><td>Velocity limit decision</td></tr>
+        <tr><td><code>true</code> <code>false</code></td><td>Boolean literals</td></tr>
+    </table>
+    <p>Keywords are case-insensitive: <code>WHEN</code>, <code>When</code>, and <code>when</code> are equivalent.</p>
+
+    <h3>Reserved Input Field</h3>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Required For</th></tr>
+        <tr><td><code>now_utc_ms</code></td><td>Number (epoch milliseconds)</td><td><code>limit ... per</code> rules</td></tr>
+    </table>
+
+    <h3>Further Reading</h3>
+    <ul>
+        <li><a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/rule_cookbook.md">Rule Cookbook</a> &mdash; 12 copy-paste examples by business scenario</li>
+        <li><a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/spec_v0_9.md">Language Specification v0.9</a> &mdash; formal normative reference</li>
+        <li><a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/errors.md">Error Reference</a> &mdash; all 12 error codes with resolution steps</li>
+        <li><a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/bindings/python/README.md">Python Binding</a> &mdash; quickstart for Python developers</li>
+        <li><a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/bindings/csharp/README.md">C# Binding</a> &mdash; quickstart for .NET developers</li>
+    </ul>
+</section>
+
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Axiom Foundry. RuleDSL Language v0.9</p>
+        <p style="margin-top: 8px;">
+            <a href="../">Home</a> &middot;
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a> &middot;
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/rule_cookbook.md">Cookbook</a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>
