@@ -32,8 +32,15 @@ ruledslc verify rules.axbc
 Minimal C integration:
 
 ```c
+#include "axiom/ruledsl_c.h"
+
+char err[256] = {0};
 AXCompiler* c = ax_compiler_create();
 ax_compiler_build(c, err, sizeof(err));
+
+// Load bytecode from file (see examples/c/minimal_eval.c for full load_file helper)
+AXBytecode bc = {0};
+// ... load .axbc file into bc.data / bc.size ...
 
 AXField fields[] = {
     { "amount",     { AX_VALUE_NUMBER, .number = 1200.0 } },
@@ -64,6 +71,15 @@ A delivery packet includes:
 | `manifest.json` + `SHA256SUMS.txt` | Integrity verification |
 | Documentation | This repository |
 | Examples | `examples/` directory |
+
+## Language bindings
+
+Not a C developer? Use the ready-made wrappers:
+
+| Language | Location | Dependencies |
+|----------|----------|-------------|
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) | None (pure ctypes) |
+| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke) |
 
 ## Essential docs
 

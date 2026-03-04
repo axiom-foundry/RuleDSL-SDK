@@ -26,4 +26,13 @@ examples/c/minimal_eval.c
 include/axiom/export.h
 include/axiom/ruledsl_c.h
 include/axiom/version.h
-reports/public_repo_polish_report.md
+bindings/python/ruledsl.py
+bindings/python/README.md
+bindings/csharp/RuleDSL.cs
+bindings/csharp/README.md
+docs/errors.md
+docs/troubleshooting.md
+docs/support_policy.md
+docs/version_policy.md
+CLAUDE.md
+RELEASE_NOTES.md

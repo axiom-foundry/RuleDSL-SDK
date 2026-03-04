@@ -1,7 +1,7 @@
 # Integration Snippets (C API)
 
 These snippets are intended as copy-paste starting points for host integrations.
-API names match `SDK/Include/axiom/ruledsl_c.h`.
+API names match `include/axiom/ruledsl_c.h`.
 
 ## 1) Minimal Happy Path (Load + Evaluate)
 
@@ -125,6 +125,8 @@ int eval_checked(AXCompiler* compiler,
 ```
 
 ## 3) Release Artifact Intake (Operational Safety)
+
+> **Note**: This snippet references `Tools/release_gate/release_gate.py` which is planned but not yet included in the SDK. For current release verification, use the SHA256SUMS.txt manual check described in [`docs/distribution/customer_verification.md`](distribution/customer_verification.md).
 
 ```c
 #include <axiom/ruledsl_c.h>

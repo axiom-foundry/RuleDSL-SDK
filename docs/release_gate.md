@@ -20,8 +20,14 @@ Required output location:
 
 Example (PowerShell):
 
+> **Note**: The `release_gate.py` tool is planned but not yet included. For current verification, use the bundle audit tool: `./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir <path>` and the SHA-256 checks described in [`docs/distribution/customer_verification.md`](distribution/customer_verification.md).
+
 ```powershell
-python Tools/release_gate/release_gate.py --release-dir C:\path\to\RuleDSL-1.0.0 --out-dir reports/release_gate/1.0.0
+# Planned CLI (not yet available):
+# python Tools/release_gate/release_gate.py --release-dir C:\path\to\RuleDSL-1.0.0 --out-dir reports/release_gate/1.0.0
+
+# Current alternative:
+./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir C:\path\to\RuleDSL-1.0.0
 ```
 
 ## C) Checklist items (MUST)
