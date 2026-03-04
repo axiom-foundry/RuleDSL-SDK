@@ -8,5 +8,10 @@
 # --- Presentation governance (GitHub Linguist) ---
 *.ps1 linguist-detectable=false
 *.sh  linguist-detectable=false
+*.py  linguist-detectable=false
+*.cs  linguist-detectable=false
+*.html linguist-documentation
 Tools/** linguist-vendored
 scripts/** linguist-vendored
+site/** linguist-documentation
+bindings/** linguist-vendored
