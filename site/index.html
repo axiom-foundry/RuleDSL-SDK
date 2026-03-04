@@ -164,40 +164,7 @@
         .step h4 { margin-bottom: 6px; }
         .step p { color: var(--muted); font-size: 0.85rem; }
 
-        /* Pricing */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
-            margin-top: 32px;
-        }
-        .price-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 32px 24px;
-            text-align: center;
-        }
-        .price-card.featured {
-            border-color: var(--accent);
-        }
-        .price-card h3 { margin-bottom: 8px; }
-        .price-card .scope {
-            color: var(--muted);
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-        .price-card ul {
-            list-style: none;
-            text-align: left;
-            font-size: 0.88rem;
-            color: var(--muted);
-        }
-        .price-card ul li {
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .price-card ul li:last-child { border-bottom: none; }
+        /* Contact */
         .check { color: var(--accent2); margin-right: 6px; }
 
         /* Use cases */
@@ -231,7 +198,6 @@
         @media (max-width: 700px) {
             .hero h1 { font-size: 1.8rem; }
             .steps { grid-template-columns: repeat(2, 1fr); }
-            .pricing-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -244,7 +210,7 @@
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="language/">Language</a>
-            <a href="#pricing">Get Started</a>
+            <a href="#contact">Contact</a>
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a>
         </div>
     </div>
@@ -356,37 +322,16 @@ decision = engine.evaluate(bytecode, {<span class="string">"amount"</span>: <spa
     </div>
 </section>
 
-<section id="pricing" style="border-top: 1px solid var(--border);">
+<section id="contact" style="border-top: 1px solid var(--border);">
     <div class="container">
-        <h2>Get Started</h2>
-        <div class="pricing-grid" style="grid-template-columns: 1fr 1fr; max-width: 700px; margin: 32px auto 0;">
-            <div class="price-card featured">
-                <h3>30-Day Free Evaluation</h3>
-                <div class="scope">Full SDK, no limitations</div>
-                <ul>
-                    <li><span class="check">&#10003;</span> Complete SDK delivery packet</li>
-                    <li><span class="check">&#10003;</span> Python and C# bindings</li>
-                    <li><span class="check">&#10003;</span> Full documentation + examples</li>
-                    <li><span class="check">&#10003;</span> Email support during evaluation</li>
-                    <li><span class="check">&#10003;</span> No commitment required</li>
-                </ul>
-            </div>
-            <div class="price-card">
-                <h3>Early Adopter Program</h3>
-                <div class="scope">Seeking pilot partners</div>
-                <ul>
-                    <li><span class="check">&#10003;</span> Preferential licensing terms</li>
-                    <li><span class="check">&#10003;</span> Direct access to dev team</li>
-                    <li><span class="check">&#10003;</span> Priority feature requests</li>
-                    <li><span class="check">&#10003;</span> Shape the product roadmap</li>
-                    <li><span class="check">&#10003;</span> Annual per-org licensing</li>
-                </ul>
-            </div>
-        </div>
-        <p style="text-align: center; color: var(--muted); margin-top: 24px; font-size: 0.9rem;">
-            No per-seat or per-CPU charges. Licensing terms discussed after successful evaluation.<br>
-            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">Request an evaluation</a> to get started.
+        <h2>Get In Touch</h2>
+        <p style="text-align: center; color: var(--muted); max-width: 540px; margin: 0 auto 32px; font-size: 1.05rem;">
+            Interested in evaluating RuleDSL for your project?<br>
+            We are looking for pilot partners in fintech, compliance, and risk management.
         </p>
+        <div style="text-align: center;">
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Contact Us on GitHub</a>
+        </div>
     </div>
 </section>
 
@@ -396,7 +341,6 @@ decision = engine.evaluate(bytecode, {<span class="string">"amount"</span>: <spa
         <p style="margin-top: 8px;">
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a> &middot;
             <a href="language/">Language Reference</a> &middot;
-            <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/pricing.md">Pricing</a> &middot;
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/troubleshooting.md">Troubleshooting</a>
         </p>
     </div>
