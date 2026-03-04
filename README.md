@@ -85,6 +85,7 @@ Not a C developer? Use the ready-made wrappers:
 
 | Topic | Document |
 |-------|----------|
+| **Rule cookbook** | [`docs/rule_cookbook.md`](docs/rule_cookbook.md) |
 | Integration examples | [`docs/integration_snippets.md`](docs/integration_snippets.md) |
 | Error handling | [`docs/errors.md`](docs/errors.md) |
 | Troubleshooting | [`docs/troubleshooting.md`](docs/troubleshooting.md) |

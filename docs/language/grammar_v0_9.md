@@ -21,7 +21,7 @@ This document defines syntax only. Semantic behavior is defined by language anne
 - [SYN-TOK-009] `-` SHALL be recognized as the MINUS token.
 - [SYN-TOK-010] `*` SHALL be recognized as the STAR token.
 - [SYN-TOK-011] `/` SHALL be recognized as the SLASH token.
-- [SYN-TOK-012] `%` SHALL be recognized as the PERCENT token.
+- [SYN-TOK-012] _Reserved — removed from v0.9 baseline._
 - [SYN-TOK-013] `==` SHALL be recognized as an equality operator token.
 - [SYN-TOK-014] `!=` SHALL be recognized as an equality operator token.
 - [SYN-TOK-015] `<` SHALL be recognized as a relational operator token.
@@ -43,7 +43,7 @@ This document defines syntax only. Semantic behavior is defined by language anne
 The following precedence levels apply:
 
 - PLUS and MINUS use additive precedence.
-- STAR, SLASH, and PERCENT use multiplicative precedence.
+- STAR and SLASH use multiplicative precedence.
 - Multiplicative precedence is higher than additive precedence.
 - Binary operators at the same precedence level associate left-to-right.
 
@@ -62,7 +62,7 @@ Note: This subsection defines parsing precedence classes. Token identity is defi
 Highest to lowest precedence:
 
 - [SYN-PREC-001] Unary logical negation (`not`) SHALL bind at the highest precedence and SHALL be right-associative.
-- [SYN-PREC-002] Multiplicative operators (`*`, `/`, `%`) SHALL be left-associative.
+- [SYN-PREC-002] Multiplicative operators (`*`, `/`) SHALL be left-associative.
 - [SYN-PREC-003] Additive operators (`+`, `-`) SHALL be left-associative.
 - [SYN-PREC-004] Relational operators (`<`, `<=`, `>`, `>=`) SHALL be left-associative.
 - [SYN-PREC-005] Equality operators (`==`, `!=`) SHALL be left-associative.
@@ -104,7 +104,7 @@ Condition contexts reference `Expression`; type and coercion constraints are def
 `Additive ::= Multiplicative { ( "+" | "-" ) Multiplicative } ;`
 
 `[SYN-GRAM-011]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
-`Multiplicative ::= Unary { ( "*" | "/" | "%" ) Unary } ;`
+`Multiplicative ::= Unary { ( "*" | "/" ) Unary } ;`
 
 `[SYN-GRAM-012]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
 `Unary ::= "not" Unary | "-" Unary | Primary ;`
