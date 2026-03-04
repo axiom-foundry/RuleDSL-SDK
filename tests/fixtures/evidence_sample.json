@@ -1,5 +1,7 @@
 {
   "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.0 (abi=1)",
+  "abi_level": "1",
   "bytecode_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "input_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "decision_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",

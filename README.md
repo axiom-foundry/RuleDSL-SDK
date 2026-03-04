@@ -1,139 +1,154 @@
 # RuleDSL SDK (C API)
 
-RuleDSL is a deterministic rule-evaluation engine embedded via a stable C ABI.
-This repository provides the **public SDK surface** (headers + documentation) used to integrate RuleDSL into host applications.
+RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
+Same input, same bytecode, same decision — guaranteed across supported platforms.
 
-> Distribution model: controlled delivery of versioned release artifacts (headers + compiled binaries).  
-> Binaries are provided separately as part of a commercial delivery packet.  
-> Verification of release artifacts (hashes and optional signature) is required before integration (see distribution policy below).
+**Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation.
 
-## Tooling Scripts
+**What it is**: an in-process library (`.dll` / `.so`). No daemon, no network hop, no database dependency.
 
-Tooling scripts are included to make builds, tests, and release checks reproducible.
-Scripts do not auto-run as part of normal repository use.
-Operators run scripts explicitly through documented commands.
+**What it is not**: not a SaaS, not an open-source engine, not a 24/7 managed service.
 
-## Language Contract (v0.9)
+## Quickstart
 
-- RuleDSL language surface is versioned and contract-driven.
-- Active profile: `decision-rules-v0.9`.
-- Strict conformance mode is available via `RULEDSL_CONFORMANCE_STRICT=1`.
-- Windows and Linux CI jobs validate strict conformance.
-- Snapshot: [docs/language/status_v0_9.md](docs/language/status_v0_9.md)
+Customer workflow: **Write -> Compile -> Verify -> Evaluate**
 
-## Docs index
+```
+# 1. Write a rule
+rule high_risk {
+    when amount > 1000 and currency == "USD";
+    then decline;
+}
 
-- Start here (integration): [`docs/integration_snippets.md`](docs/integration_snippets.md)
-- Error contract: [`docs/errors.md`](docs/errors.md)
-- Versioning: [`docs/version_policy.md`](docs/version_policy.md)
-- Support: [`docs/support_policy.md`](docs/support_policy.md)
-- Distribution + verification: [`docs/distribution.md`](docs/distribution.md)
-- Evaluation workflow: [`docs/evaluation_playbook.md`](docs/evaluation_playbook.md)
-- Bytecode lifecycle: [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md)
-- Release gate: [`docs/release_gate.md`](docs/release_gate.md)
-- Signing: [`docs/signing_policy.md`](docs/signing_policy.md), [`docs/signing_runbook.md`](docs/signing_runbook.md)
-- Compiler workflow contract: [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md)
-- Compiler authenticity policy: [`docs/compiler/authenticity_policy.md`](docs/compiler/authenticity_policy.md)
-- Compatibility matrix: [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md)
-- Determinism Contract (v1.0): [`docs/contracts/determinism_contract_v1_0.md`](docs/contracts/determinism_contract_v1_0.md)
-- Input canonicalization (v1.0): [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md)
-- Determinism evidence bundle (v1.0): [`docs/contracts/determinism_evidence_bundle_v1_0.md`](docs/contracts/determinism_evidence_bundle_v1_0.md)
-- AXErrorCode registry (v1.0): [`docs/contracts/error_codes_registry_v1_0.md`](docs/contracts/error_codes_registry_v1_0.md)
-- Error mapping annex (v1.0): [`docs/contracts/error_mapping_annex_v1_0.md`](docs/contracts/error_mapping_annex_v1_0.md)
-- Published evidence index (v1.0): [`docs/contracts/published_evidence_index_v1_0.md`](docs/contracts/published_evidence_index_v1_0.md)
-- Governance RFCs: [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md)
-- RFC-001 Test Matrix: [`docs/governance/rfc_001_test_matrix_v1.md`](docs/governance/rfc_001_test_matrix_v1.md)
-- RFC-002 Determinism Scope: [`docs/governance/rfc_002_determinism_scope_v1.md`](docs/governance/rfc_002_determinism_scope_v1.md)
-- RFC-002 Test Matrix: [`docs/governance/rfc_002_test_matrix_v1.md`](docs/governance/rfc_002_test_matrix_v1.md)
-- Cross-platform determinism smoke: [`docs/governance/cross_platform_determinism_smoke_v1.md`](docs/governance/cross_platform_determinism_smoke_v1.md)
-- Audit answer template (replay proof): [`docs/governance/audit_answer_template_replay_proof_v1.md`](docs/governance/audit_answer_template_replay_proof_v1.md)
-- Evidence bundle index: [`docs/governance/evidence_index_v1.md`](docs/governance/evidence_index_v1.md)
-- Contract gate policy: [`docs/governance/contract_gate.md`](docs/governance/contract_gate.md)
-- Release model governance: [`docs/governance/release_model.md`](docs/governance/release_model.md)
-- ADR index: [`docs/adr/README.md`](docs/adr/README.md)
-- Replay proof verifier (tool): [`Tools/replay_proof/README.md`](Tools/replay_proof/README.md)
-## Architectural maturity (phase marker docs)
+# 2. Compile to bytecode
+ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
 
-- Architectural Freeze Charter v1.0: [`docs/architecture/architectural_freeze_charter_v1_0.md`](docs/architecture/architectural_freeze_charter_v1_0.md)
-- C API / ABI Evolution Contract v1: [`docs/architecture/c_api_abi_evolution_contract_v1.md`](docs/architecture/c_api_abi_evolution_contract_v1.md)
-- Replay / Evidence Contract v1: [`docs/architecture/replay_evidence_contract_v1.md`](docs/architecture/replay_evidence_contract_v1.md)
+# 3. Verify bytecode integrity
+ruledslc verify rules.axbc
 
-## Distribution & Verification
+# 4. Evaluate via C API (see examples/)
+```
 
-- Distribution runbook: [`docs/distribution/runbook.md`](docs/distribution/runbook.md)
-- Bundle standard: [`docs/distribution/bundle_standard.md`](docs/distribution/bundle_standard.md)
-- Customer verification: [`docs/distribution/customer_verification.md`](docs/distribution/customer_verification.md)
-- Release notes template: [`docs/distribution/release_notes_template.md`](docs/distribution/release_notes_template.md)
+Minimal C integration:
 
-## Language Specification
+```c
+#include "axiom/ruledsl_c.h"
 
-- Contract snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
-- Bytecode Workflow (v0.9): [`docs/bytecode_workflow_v0_9.md`](docs/bytecode_workflow_v0_9.md)
+char err[256] = {0};
+AXCompiler* c = ax_compiler_create();
+ax_compiler_build(c, err, sizeof(err));
 
-### Core Language Documents (v0.9)
+// Load bytecode from file (see examples/c/minimal_eval.c for full load_file helper)
+AXBytecode bc = {0};
+// ... load .axbc file into bc.data / bc.size ...
 
-- Full Specification: [`docs/language/spec_v0_9.md`](docs/language/spec_v0_9.md)
-- Grammar Definition: [`docs/language/grammar_v0_9.md`](docs/language/grammar_v0_9.md)
-- Lexical Core: [`docs/language/lexical_core_v0_9.md`](docs/language/lexical_core_v0_9.md)
-- Numeric Model: [`docs/language/numeric_model_v0_9.md`](docs/language/numeric_model_v0_9.md)
-- Status Snapshot: [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md)
+AXField fields[] = {
+    { "amount",     { AX_VALUE_NUMBER, .number = 1200.0 } },
+    { "currency",   { AX_VALUE_STRING, .text = "USD" } },
+    { "now_utc_ms", { AX_VALUE_NUMBER, .number = 1700000000000.0 } },
+};
 
-## Quickstart (integration)
+AXEvalOptions opts = AX_EVAL_OPTIONS_INIT;
+AXDecision dec = AX_DECISION_INIT;
 
-Runtime artifacts (compiled binaries) are required in addition to these headers.
+AXErrorCode code = ax_eval_bytecode(c, &bc, fields, 3, &opts, &dec, err, sizeof(err));
+if (code == AX_ERR_OK && dec.matched) {
+    printf("Decision: %d\n", dec.action_type);  // AX_ACTION_DECLINE
+}
 
-Customer workflow: **Write -> Compile -> Verify -> Evaluate** (`*.rule` -> `ruledslc compile` -> `ruledslc verify` -> C API evaluation).
+ax_decision_reset(&dec);
+ax_compiler_destroy(c);
+```
 
-- Start here: [`docs/integration_snippets.md`](docs/integration_snippets.md)
-- Error handling contract: [`docs/errors.md`](docs/errors.md)
+## What you receive
 
-## Core policies (operational contract)
+A delivery packet includes:
 
-These documents define the compatibility, support, and distribution guarantees:
+| Content | Source |
+|---------|--------|
+| `include/` C headers | This repository |
+| `bin/` compiled binaries | Provided separately |
+| `manifest.json` + `SHA256SUMS.txt` | Integrity verification |
+| Documentation | This repository |
+| Examples | `examples/` directory |
 
-- Version & compatibility: [`docs/version_policy.md`](docs/version_policy.md)
-- Support scope & response targets: [`docs/support_policy.md`](docs/support_policy.md)
-- Distribution + artifact verification: [`docs/distribution.md`](docs/distribution.md)
-- Evaluation workflow + bug bundle expectations: [`docs/evaluation_playbook.md`](docs/evaluation_playbook.md)
-- Bytecode lifecycle & rollout/rollback: [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md)
+## Language bindings
 
-## Release verification (recommended)
+Not a C developer? Use the ready-made wrappers:
 
-- Release gate (hash + manifest + optional signature verification): [`docs/release_gate.md`](docs/release_gate.md)
-- Signing policy & runbook:
-  - [`docs/signing_policy.md`](docs/signing_policy.md)
-  - [`docs/signing_runbook.md`](docs/signing_runbook.md)
+| Language | Location | Dependencies |
+|----------|----------|-------------|
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) | None (pure ctypes) |
+| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke) |
 
-## What you receive in a delivery packet
+## Essential docs
 
-A delivery packet typically includes:
+| Topic | Document |
+|-------|----------|
+| Integration examples | [`docs/integration_snippets.md`](docs/integration_snippets.md) |
+| Error handling | [`docs/errors.md`](docs/errors.md) |
+| Troubleshooting | [`docs/troubleshooting.md`](docs/troubleshooting.md) |
+| Version policy | [`docs/version_policy.md`](docs/version_policy.md) |
+| Support policy | [`docs/support_policy.md`](docs/support_policy.md) |
+| Compatibility matrix | [`docs/compatibility_matrix.md`](docs/compatibility_matrix.md) |
+| Distribution + verification | [`docs/distribution.md`](docs/distribution.md) |
 
-- `include/` headers (this repository)
-- `bin/` compiled binaries (provided separately)
-- `manifest.json` + `SHA256SUMS.txt` (+ optional detached signature)
-- Links to the policy documents above
+## Language specification (v0.9)
 
-## What this is not
+| Document | Link |
+|----------|------|
+| Full specification | [`docs/language/spec_v0_9.md`](docs/language/spec_v0_9.md) |
+| Grammar (EBNF) | [`docs/language/grammar_v0_9.md`](docs/language/grammar_v0_9.md) |
+| Lexical core | [`docs/language/lexical_core_v0_9.md`](docs/language/lexical_core_v0_9.md) |
+| Numeric model | [`docs/language/numeric_model_v0_9.md`](docs/language/numeric_model_v0_9.md) |
+| Conformance status | [`docs/language/status_v0_9.md`](docs/language/status_v0_9.md) |
 
-- Not a hosted SaaS
-- Not an open-source engine implementation
-- Not a 24/7 managed service by default
+## Contracts (frozen v1.0)
+
+| Contract | Link |
+|----------|------|
+| Determinism | [`docs/contracts/determinism_contract_v1_0.md`](docs/contracts/determinism_contract_v1_0.md) |
+| Error codes registry | [`docs/contracts/error_codes_registry_v1_0.md`](docs/contracts/error_codes_registry_v1_0.md) |
+| Input canonicalization | [`docs/contracts/input_canonicalization_v1_0.md`](docs/contracts/input_canonicalization_v1_0.md) |
+| Evidence bundle | [`docs/contracts/determinism_evidence_bundle_v1_0.md`](docs/contracts/determinism_evidence_bundle_v1_0.md) |
+| Error mapping annex | [`docs/contracts/error_mapping_annex_v1_0.md`](docs/contracts/error_mapping_annex_v1_0.md) |
+
+## Operational docs
+
+| Topic | Link |
+|-------|------|
+| Evaluation playbook (30-day) | [`docs/evaluation_playbook.md`](docs/evaluation_playbook.md) |
+| Bytecode lifecycle | [`docs/bytecode_lifecycle.md`](docs/bytecode_lifecycle.md) |
+| Release gate | [`docs/release_gate.md`](docs/release_gate.md) |
+| Signing policy | [`docs/signing_policy.md`](docs/signing_policy.md) |
+| Compiler contract | [`docs/compiler/ruledslc_contract.md`](docs/compiler/ruledslc_contract.md) |
+
+## Distribution & verification
+
+| Document | Link |
+|----------|------|
+| Distribution runbook | [`docs/distribution/runbook.md`](docs/distribution/runbook.md) |
+| Bundle standard | [`docs/distribution/bundle_standard.md`](docs/distribution/bundle_standard.md) |
+| Customer verification | [`docs/distribution/customer_verification.md`](docs/distribution/customer_verification.md) |
+
+## Architecture & governance
+
+| Document | Link |
+|----------|------|
+| Freeze charter | [`docs/architecture/architectural_freeze_charter_v1_0.md`](docs/architecture/architectural_freeze_charter_v1_0.md) |
+| ABI evolution contract | [`docs/architecture/c_api_abi_evolution_contract_v1.md`](docs/architecture/c_api_abi_evolution_contract_v1.md) |
+| ADR index | [`docs/adr/README.md`](docs/adr/README.md) |
+| Contract gate policy | [`docs/governance/contract_gate.md`](docs/governance/contract_gate.md) |
+| Release model | [`docs/governance/release_model.md`](docs/governance/release_model.md) |
+| RFC-001 System boundary | [`docs/governance/rfc_001_system_boundary_v1.md`](docs/governance/rfc_001_system_boundary_v1.md) |
+| RFC-002 Determinism scope | [`docs/governance/rfc_002_determinism_scope_v1.md`](docs/governance/rfc_002_determinism_scope_v1.md) |
+
 ## Release model
 
 RuleDSL follows a three-lane release model:
 
-1) Stable releases (e.g. v1.0.0)  
-   - Marked as "Latest"  
-   - Represent ABI-stable, production-ready SDK states  
-
-2) Proofing releases (e.g. v1.0.1-proofing)  
-   - Marked as pre-release  
-   - Used for governance, determinism and tooling validation  
-   - No ABI-breaking changes allowed  
-
-3) Phase markers (e.g. governance-spine-v1)  
-   - Marked as pre-release  
-   - Architectural milestones  
-   - Do not represent product version increments  
+1. **Stable** (e.g. `v1.0.0`) — ABI-stable, production-ready, marked as "Latest"
+2. **Proofing** (e.g. `v1.0.1-proofing`) — governance and tooling validation, pre-release only
+3. **Phase markers** (e.g. `governance-spine-v1`) — architectural milestones, pre-release only
 
 This separation keeps product stability independent from governance evolution.

@@ -12,7 +12,7 @@ This surface is contract-critical and MUST remain synchronized with:
 
 - `docs/architecture/c_api_abi_evolution_contract_v1.md`
 - `docs/architecture/architectural_freeze_charter_v1_0.md`
-- `docs/governance/contract_change_policy.md` (when applicable)
+- `docs/governance/contract_gate.md` (contract change declaration policy)
 
 ## Contract declaration rule
 
