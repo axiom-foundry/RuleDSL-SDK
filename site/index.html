@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuleDSL — Deterministic Rule Engine SDK</title>
+    <meta name="description" content="Embedded, deterministic business rule engine with a stable C ABI. Same input, same decision — guaranteed. For risk scoring, compliance, and policy enforcement.">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3a;
+            --text: #e4e6ed;
+            --muted: #8b8fa3;
+            --accent: #6c8cff;
+            --accent2: #4ecdc4;
+            --code-bg: #141620;
+            --max-w: 960px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+        /* Nav */
+        nav {
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .logo span { color: var(--muted); font-weight: 400; }
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.9rem;
+        }
+        nav a:hover { color: var(--text); }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            color: var(--accent);
+        }
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .hero-cta {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+        .hero-cta.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            padding: 40px 0 60px;
+        }
+        .feature {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px;
+        }
+        .feature h3 {
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        .feature p {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        /* Section */
+        section { padding: 60px 0; }
+        section h2 {
+            font-size: 1.6rem;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        /* Code block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+        .code-block .comment { color: #5a6270; }
+        .code-block .keyword { color: var(--accent); }
+        .code-block .string { color: var(--accent2); }
+        .code-block .number { color: #e8a56d; }
+
+        /* How it works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 32px;
+        }
+        .step {
+            text-align: center;
+            padding: 20px;
+        }
+        .step-num {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .step h4 { margin-bottom: 6px; }
+        .step p { color: var(--muted); font-size: 0.85rem; }
+
+        /* Pricing */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+        .price-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px 24px;
+            text-align: center;
+        }
+        .price-card.featured {
+            border-color: var(--accent);
+        }
+        .price-card h3 { margin-bottom: 8px; }
+        .price-card .scope {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .price-card ul {
+            list-style: none;
+            text-align: left;
+            font-size: 0.88rem;
+            color: var(--muted);
+        }
+        .price-card ul li {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .price-card ul li:last-child { border-bottom: none; }
+        .check { color: var(--accent2); margin-right: 6px; }
+
+        /* Use cases */
+        .use-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .use-case {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            font-size: 0.92rem;
+        }
+        .use-case strong { display: block; margin-bottom: 4px; }
+        .use-case span { color: var(--muted); font-size: 0.85rem; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .hero h1 { font-size: 1.8rem; }
+            .steps { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="#" class="logo">RuleDSL <span>SDK</span></a>
+        <div>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="container">
+        <h1>Deterministic rules.<br><em>Embedded in your app.</em></h1>
+        <p>A business rule engine with a stable C ABI. Same input, same bytecode, same decision — guaranteed across platforms. No SaaS, no network hop, no surprises.</p>
+        <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Get Started</a>
+        <a href="#how-it-works" class="hero-cta secondary">How It Works</a>
+    </div>
+</header>
+
+<section id="features">
+    <div class="container">
+        <div class="features">
+            <div class="feature">
+                <h3>Deterministic by Contract</h3>
+                <p>Same engine + same bytecode + same inputs = same output. Always. No hidden time sources, no locale drift, no randomness. Auditable and reproducible.</p>
+            </div>
+            <div class="feature">
+                <h3>Zero Dependencies</h3>
+                <p>In-process library. No database, no message broker, no sidecar. Link .dll or .so into your app and call the C API. Sub-millisecond evaluation.</p>
+            </div>
+            <div class="feature">
+                <h3>Stable ABI</h3>
+                <p>Forward-compatible struct design with struct_size + reserved fields. Upgrade the engine without recompiling your application. Error codes are frozen.</p>
+            </div>
+            <div class="feature">
+                <h3>Language Bindings</h3>
+                <p>C API at the core, with ready-made Python and C# wrappers. No C expertise required. More languages coming based on demand.</p>
+            </div>
+            <div class="feature">
+                <h3>Self-Service Errors</h3>
+                <p>12 stable error codes with actionable diagnostic messages. Troubleshooting guide covers every scenario. Designed for minimal vendor support.</p>
+            </div>
+            <div class="feature">
+                <h3>Update Rules Without Redeploying</h3>
+                <p>Write rules in RuleDSL, compile to bytecode, load at runtime. Change business logic without touching application code or restarting services.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works" style="border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2>How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h4>Write</h4>
+                <p>Define rules in RuleDSL — a simple, readable DSL for business decisions</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h4>Compile</h4>
+                <p>Compile to bytecode with the CLI compiler. Deterministic output, every time.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h4>Verify</h4>
+                <p>Verify bytecode integrity and compatibility before loading into production.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <h4>Evaluate</h4>
+                <p>Call the API with your data. Get a decision. ALLOW, DECLINE, REVIEW, or LIMIT.</p>
+            </div>
+        </div>
+
+        <div class="code-block" style="margin-top: 40px;">
+<span class="comment"># Define a rule</span>
+<span class="keyword">rule</span> high_risk_transaction {
+    <span class="keyword">when</span> amount > <span class="number">1000</span> <span class="keyword">and</span> currency == <span class="string">"USD"</span>;
+    <span class="keyword">then</span> decline;
+}
+
+<span class="comment"># Python (3 lines to evaluate)</span>
+engine = RuleDSL(<span class="string">"ruledsl_capi.dll"</span>)
+bytecode = engine.compile(rule_source)
+decision = engine.evaluate(bytecode, {<span class="string">"amount"</span>: <span class="number">1200.0</span>, <span class="string">"currency"</span>: <span class="string">"USD"</span>})
+<span class="comment"># decision.action == "DECLINE"</span>
+        </div>
+    </div>
+</section>
+
+<section id="use-cases" style="border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2>Use Cases</h2>
+        <div class="use-cases">
+            <div class="use-case">
+                <strong>Transaction Risk</strong>
+                <span>Score and gate transactions in real-time. Decline, review, or apply limits based on amount, currency, geography.</span>
+            </div>
+            <div class="use-case">
+                <strong>Spending Limits</strong>
+                <span>Enforce velocity limits: "max 3 transactions per hour" or "max $5000 per day per customer."</span>
+            </div>
+            <div class="use-case">
+                <strong>Compliance Gates</strong>
+                <span>Deterministic compliance checks for regulated industries. Audit-ready with replay proof.</span>
+            </div>
+            <div class="use-case">
+                <strong>Offer Eligibility</strong>
+                <span>Real-time pricing rules, promotion eligibility, and feature gating without redeployment.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="pricing" style="border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2>Pricing</h2>
+        <p style="text-align: center; color: var(--muted); margin-bottom: 8px;">All tiers include a 30-day free evaluation.</p>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>Starter</h3>
+                <div class="scope">1 app, 1 platform</div>
+                <ul>
+                    <li><span class="check">&#10003;</span> Versioned SDK delivery</li>
+                    <li><span class="check">&#10003;</span> Patch updates</li>
+                    <li><span class="check">&#10003;</span> Email support (5 bd)</li>
+                    <li><span class="check">&#10003;</span> 30-day evaluation</li>
+                </ul>
+            </div>
+            <div class="price-card featured">
+                <h3>Professional</h3>
+                <div class="scope">Up to 5 apps, both platforms</div>
+                <ul>
+                    <li><span class="check">&#10003;</span> SDK + evidence bundle</li>
+                    <li><span class="check">&#10003;</span> Patch + minor updates</li>
+                    <li><span class="check">&#10003;</span> Priority support (1/3/5 bd)</li>
+                    <li><span class="check">&#10003;</span> 4h/yr integration advisory</li>
+                    <li><span class="check">&#10003;</span> 30-day evaluation</li>
+                </ul>
+            </div>
+            <div class="price-card">
+                <h3>Enterprise</h3>
+                <div class="scope">Unlimited apps + platforms</div>
+                <ul>
+                    <li><span class="check">&#10003;</span> Full packet + signed releases</li>
+                    <li><span class="check">&#10003;</span> All updates + early access</li>
+                    <li><span class="check">&#10003;</span> Priority support (1/3/5 bd)</li>
+                    <li><span class="check">&#10003;</span> 8h/yr integration advisory</li>
+                    <li><span class="check">&#10003;</span> Binding support + custom</li>
+                </ul>
+            </div>
+        </div>
+        <p style="text-align: center; color: var(--muted); margin-top: 24px; font-size: 0.9rem;">
+            Annual per-organization licensing. No per-seat or per-CPU charges.<br>
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">Contact us</a> for pricing details.
+        </p>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Axiom Foundry. RuleDSL SDK v1.0.0</p>
+        <p style="margin-top: 8px;">
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a> &middot;
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/pricing.md">Pricing</a> &middot;
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/troubleshooting.md">Troubleshooting</a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>
