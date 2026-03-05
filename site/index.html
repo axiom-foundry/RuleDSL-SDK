@@ -198,6 +198,7 @@
         @media (max-width: 700px) {
             .hero h1 { font-size: 1.8rem; }
             .steps { grid-template-columns: repeat(2, 1fr); }
+            .code-pair { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
@@ -282,18 +283,30 @@
             </div>
         </div>
 
-        <div class="code-block" style="margin-top: 40px;">
-<span class="comment"># Define a rule</span>
-<span class="keyword">rule</span> high_risk_transaction {
-    <span class="keyword">when</span> amount > <span class="number">1000</span> <span class="keyword">and</span> currency == <span class="string">"USD"</span>;
-    <span class="keyword">then</span> decline;
-}
+        <div class="code-pair" style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <div>
+                <div style="color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">rules.rule</div>
+                <pre class="code-block" style="margin: 0; max-width: none;"><span class="keyword">rule</span> high_risk {
+  <span class="keyword">when</span> amount &gt; <span class="number">1000</span>
+       <span class="keyword">and</span> country == <span class="string">"USD"</span>;
+  <span class="keyword">then</span> risk_score = <span class="number">90</span>,
+       reason = <span class="string">"high_amount"</span>,
+       <span class="keyword">decline</span>;
+}</pre>
+            </div>
+            <div>
+                <div style="color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">evaluate.py</div>
+                <pre class="code-block" style="margin: 0; max-width: none;"><span class="keyword">from</span> ruledsl <span class="keyword">import</span> RuleDSL
 
-<span class="comment"># Python (3 lines to evaluate)</span>
 engine = RuleDSL(<span class="string">"ruledsl_capi.dll"</span>)
-bytecode = engine.compile(rule_source)
-decision = engine.evaluate(bytecode, {<span class="string">"amount"</span>: <span class="number">1200.0</span>, <span class="string">"currency"</span>: <span class="string">"USD"</span>})
-<span class="comment"># decision.action == "DECLINE"</span>
+bc = engine.compile(<span class="string">"rules.rule"</span>)
+
+decision = engine.evaluate(bc, {
+  <span class="string">"amount"</span>: <span class="number">1200.0</span>,
+  <span class="string">"currency"</span>: <span class="string">"USD"</span>
+})
+<span class="comment"># decision.action == "DECLINE"</span></pre>
+            </div>
         </div>
     </div>
 </section>
@@ -327,10 +340,10 @@ decision = engine.evaluate(bytecode, {<span class="string">"amount"</span>: <spa
         <h2>Get In Touch</h2>
         <p style="text-align: center; color: var(--muted); max-width: 540px; margin: 0 auto 32px; font-size: 1.05rem;">
             Interested in evaluating RuleDSL for your project?<br>
-            We are looking for pilot partners in fintech, compliance, and risk management.
+            I am looking for pilot partners in fintech, compliance, and risk management.
         </p>
         <div style="text-align: center;">
-            <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Contact Us on GitHub</a>
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Contact Me on GitHub</a>
         </div>
     </div>
 </section>
