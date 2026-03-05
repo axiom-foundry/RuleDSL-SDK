@@ -10,21 +10,21 @@
 | Troubleshooting | [`troubleshooting.md`](troubleshooting.md) |
 | Evaluation playbook | [`evaluation_playbook.md`](evaluation_playbook.md) |
 
-## Language Specification (v0.9)
+## Language Specification (v1.0)
 
 | Document | Link |
 |----------|------|
-| Full specification | [`language/spec_v0_9.md`](language/spec_v0_9.md) |
-| Grammar (EBNF) | [`language/grammar_v0_9.md`](language/grammar_v0_9.md) |
-| Lexical core | [`language/lexical_core_v0_9.md`](language/lexical_core_v0_9.md) |
-| Numeric model | [`language/numeric_model_v0_9.md`](language/numeric_model_v0_9.md) |
-| Boolean model | [`language/boolean_model_v0_9.md`](language/boolean_model_v0_9.md) |
-| Ordering model | [`language/ordering_model_v0_9.md`](language/ordering_model_v0_9.md) |
-| String lexing | [`language/string_lexing_v0_9.md`](language/string_lexing_v0_9.md) |
-| Identifier & missing semantics | [`language/identifier_missing_v0_9.md`](language/identifier_missing_v0_9.md) |
-| Decision rules profile | [`language/profile_decision_rules_v0_9.md`](language/profile_decision_rules_v0_9.md) |
+| Full specification | [`language/spec_v1_0.md`](language/spec_v1_0.md) |
+| Grammar (EBNF) | [`language/grammar_v1_0.md`](language/grammar_v1_0.md) |
+| Lexical core | [`language/lexical_core_v1_0.md`](language/lexical_core_v1_0.md) |
+| Numeric model | [`language/numeric_model_v1_0.md`](language/numeric_model_v1_0.md) |
+| Boolean model | [`language/boolean_model_v1_0.md`](language/boolean_model_v1_0.md) |
+| Ordering model | [`language/ordering_model_v1_0.md`](language/ordering_model_v1_0.md) |
+| String lexing | [`language/string_lexing_v1_0.md`](language/string_lexing_v1_0.md) |
+| Identifier & missing semantics | [`language/identifier_missing_v1_0.md`](language/identifier_missing_v1_0.md) |
+| Decision rules profile | [`language/profile_decision_rules_v1_0.md`](language/profile_decision_rules_v1_0.md) |
 | Conformance map | [`language/conformance_map.md`](language/conformance_map.md) |
-| Contract status | [`language/status_v0_9.md`](language/status_v0_9.md) |
+| Contract status | [`language/status_v1_0.md`](language/status_v1_0.md) |
 
 ## Contracts (Frozen v1.0)
 

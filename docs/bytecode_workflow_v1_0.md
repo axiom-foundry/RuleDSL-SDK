@@ -1,4 +1,4 @@
-# RuleDSL Bytecode Workflow (v0.9)
+# RuleDSL Bytecode Workflow (v1.0)
 
 ## 1. Overview
 
@@ -24,7 +24,7 @@ ruledslc verify
 C API (ax_check_bytecode_compatibility -> ax_eval_bytecode)
 ```
 
-This flow is the supported producer/consumer path for v0.9 distribution.
+This flow is the supported producer/consumer path for v1.0 distribution.
 Public documentation defines behavior and compatibility expectations, not byte-level encoding details.
 
 ## 3. Determinism Model
@@ -37,7 +37,7 @@ Deterministic semantics do not imply a stable byte-level binary layout across di
 
 Bytecode interoperability is governed by multiple version dimensions:
 
-- Language version (`v0.9`) defines the rule language contract.
+- Language version (`v1.0`) defines the rule language contract.
 - Compiler version defines the producer behavior for bytecode artifacts.
 - Engine version defines the consumer behavior for loading and evaluation.
 - Bytecode version is embedded in the artifact and validated by the engine.

@@ -13,7 +13,7 @@ No engine source code exists here.
 - **Target market**: SMB companies needing embedded policy/rule evaluation
 - **Distribution**: Commercial SDK — headers + compiled binaries delivered as versioned packets
 - **Private repo**: `C:\dev\AXIOM` (engine source, compiler, tests — NEVER referenced in public commits)
-- **Current version**: 1.0.0 (SDK), language v0.9, ABI level 1
+- **Current version**: 1.0.0 (SDK), language v1.0, ABI level 1
 
 ---
 
@@ -25,7 +25,7 @@ include/axiom/          # Public C API headers (frozen ABI surface)
   export.h              # AXIOM_API visibility macros
   version.h             # Version constants (1.0.0)
 docs/                   # All public documentation
-  language/             # RuleDSL v0.9 spec, grammar, lexical, numeric model
+  language/             # RuleDSL v1.0 spec, grammar, lexical, numeric model
   contracts/            # Determinism, error codes, canonicalization (frozen v1.0)
   governance/           # ADRs, RFCs, contract gates, release model
   architecture/         # Freeze charter, ABI evolution, replay/evidence

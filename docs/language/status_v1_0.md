@@ -1,8 +1,8 @@
-# RuleDSL Language v0.9 - Contract Status Snapshot
+# RuleDSL Language v1.0 - Contract Status Snapshot
 
 ## 1. Scope
-- Active profile: `decision-rules-v0.9`
-- Language version: `v0.9`
+- Active profile: `decision-rules-v1.0`
+- Language version: `v1.0`
 - Engine implementation: private
 - Language specification: versioned and normative
 
@@ -10,9 +10,9 @@
 - Identifiers are ASCII-only.
 - Keyword matching is ASCII case-insensitive.
 - Logical operators are keyword-only: `and`, `or`, `not`.
-- Numeric exponent literals (`e`/`E`) are OUT-OF-CONTRACT in v0.9.
+- Numeric exponent literals (`e`/`E`) are OUT-OF-CONTRACT in v1.0.
 - Implicit coercions are not allowed.
-- Operator precedence is deterministic and fixed by the v0.9 grammar table.
+- Operator precedence is deterministic and fixed by the v1.0 grammar table.
 
 ## 3. Determinism Guarantees
 - Lexical classification is locale-independent and ASCII-explicit.
@@ -34,5 +34,5 @@
 
 ## 5. Enforcement Model
 - OBSERVE mode (default): tests collect evidence and emit JSON reports.
-- STRICT mode: tests enforce locked v0.9 contract decisions and fail on drift.
+- STRICT mode: tests enforce locked v1.0 contract decisions and fail on drift.
 - CI uploads conformance JSON reports as artifacts for review and traceability.

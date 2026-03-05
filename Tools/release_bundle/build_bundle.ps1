@@ -200,15 +200,15 @@ if ($EngineImportLib) {
 }
 
 $docFiles = @(
-    "docs/bytecode_workflow_v0_9.md",
+    "docs/bytecode_workflow_v1_0.md",
     "docs/compiler/ruledslc_contract.md",
     "docs/compiler/authenticity_policy.md",
     "docs/compatibility_matrix.md",
-    "docs/language/spec_v0_9.md",
-    "docs/language/grammar_v0_9.md",
-    "docs/language/lexical_core_v0_9.md",
-    "docs/language/numeric_model_v0_9.md",
-    "docs/language/status_v0_9.md"
+    "docs/language/spec_v1_0.md",
+    "docs/language/grammar_v1_0.md",
+    "docs/language/lexical_core_v1_0.md",
+    "docs/language/numeric_model_v1_0.md",
+    "docs/language/status_v1_0.md"
 )
 
 foreach ($rel in $docFiles) {
@@ -222,7 +222,7 @@ foreach ($rel in $docFiles) {
     Copy-Item -Force $src $dst
 }
 
-$exampleDirs = @("01_risk_scoring", "02_threshold_gate", "03_temporal_rule")
+$exampleDirs = @("01_risk_scoring", "02_threshold_gate", "03_temporal_rule", "04_kyc_compliance", "05_velocity_limit")
 $exampleFiles = @("rules.rule", "main.c", "README.md", "expected_output.txt")
 foreach ($name in $exampleDirs) {
     $src = Join-Path $repoRoot (Join-Path "examples" $name)

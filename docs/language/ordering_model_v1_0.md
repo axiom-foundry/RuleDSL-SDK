@@ -1,6 +1,6 @@
-# RuleDSL v0.9 Ordering and Comparison Model Annex
+# RuleDSL v1.0 Ordering and Comparison Model Annex
 
-This annex defines ordering semantics for `<`, `>`, `<=`, and `>=` in v0.9.
+This annex defines ordering semantics for `<`, `>`, `<=`, and `>=` in v1.0.
 
 ## 1) Operand Type Rule
 
@@ -9,7 +9,7 @@ This annex defines ordering semantics for `<`, `>`, `<=`, and `>=` in v0.9.
 
 ## 2) Numeric Ordering Semantics
 
-`NaN` and infinities are handled by `docs/language/numeric_model_v0_9.md` and are not valid language-level numeric operands for ordering.
+`NaN` and infinities are handled by `docs/language/numeric_model_v1_0.md` and are not valid language-level numeric operands for ordering.
 
 - [SEM-0022] Numeric ordering SHALL use IEEE 754 binary64 comparison semantics over finite values, and `-0.0` and `+0.0` SHALL compare as equal.
 

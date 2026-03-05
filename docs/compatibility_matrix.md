@@ -8,7 +8,7 @@ This matrix defines the supported compile-to-evaluate path for the public SDK co
 
 ## Interpretation
 
-- `ruledslc compile` MUST target `--lang 0.9 --target axbc3` for this line.
+- `ruledslc compile` MUST target `--lang 1.0 --target axbc3` for this line.
 - `ruledslc verify` MUST report `STATUS=OK` before evaluation.
 - `ax_check_bytecode_compatibility` MUST return `AX_STATUS_OK` before calling `ax_eval_bytecode`.
 - If compiler/engine contract versions differ from this table, treat the artifact as incompatible until an updated matrix is published.

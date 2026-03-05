@@ -1,6 +1,6 @@
-# RuleDSL v0.9 Boolean and Equality Model Annex
+# RuleDSL v1.0 Boolean and Equality Model Annex
 
-This annex defines boolean-domain, condition-context, and equality semantics for v0.9.
+This annex defines boolean-domain, condition-context, and equality semantics for v1.0.
 
 ## 1) Boolean Type Contract
 
