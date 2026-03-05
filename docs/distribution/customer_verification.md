@@ -22,7 +22,7 @@ Canonical line format:
 ## 3) Compile -> verify -> evaluate
 
 ```text
-ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+ruledslc compile rules.rule -o rules.axbc --lang 1.0 --target axbc3
 ruledslc verify rules.axbc
 # then evaluate using the RuleDSL C API
 ```

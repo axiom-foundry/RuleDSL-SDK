@@ -29,7 +29,7 @@ pwsh Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir <bundle-dir>
 3. Compile rules:
 
 ```text
-ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+ruledslc compile rules.rule -o rules.axbc --lang 1.0 --target axbc3
 ```
 
 4. Verify bytecode:

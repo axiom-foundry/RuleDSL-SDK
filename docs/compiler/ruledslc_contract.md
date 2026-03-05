@@ -8,7 +8,7 @@ The compiler is distributed as a licensed binary for local customer use.
 ## Stable CLI Surface (MVP)
 
 ```text
-ruledslc compile <input.rule> -o <output.axbc> [--lang 0.9] [--target axbc3] [--emit-manifest <path.json>]
+ruledslc compile <input.rule> -o <output.axbc> [--lang 1.0] [--target axbc3] [--emit-manifest <path.json>]
 ruledslc verify <input.axbc>
 ruledslc license --status
 ruledslc --version

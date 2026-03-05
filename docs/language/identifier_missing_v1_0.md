@@ -1,6 +1,6 @@
-# RuleDSL v0.9 Identifier and Missing Semantics Annex
+# RuleDSL v1.0 Identifier and Missing Semantics Annex
 
-This annex defines identifier resolution and missing-value behavior for v0.9.
+This annex defines identifier resolution and missing-value behavior for v1.0.
 
 ## 1) Identifier Role
 
@@ -18,8 +18,8 @@ This annex defines identifier resolution and missing-value behavior for v0.9.
 
 ## 4) Operation Constraints for `missing` and `identifier`
 
-Condition-context rules are defined by `docs/language/boolean_model_v0_9.md`.
-Ordering rules are defined by `docs/language/ordering_model_v0_9.md`.
+Condition-context rules are defined by `docs/language/boolean_model_v1_0.md`.
+Ordering rules are defined by `docs/language/ordering_model_v1_0.md`.
 
 - [SEM-0027] Value-consuming operations SHALL require resolved concrete operands; unresolved `identifier` operands are not valid operation inputs.
 - [ERR-0020] If an operation requiring a concrete operand receives `missing`, evaluation SHALL raise `ERR.RUNTIME.MISSING_OPERAND`; classification is runtime error and identifier meaning SHALL remain stable across compatible versions.
@@ -33,7 +33,7 @@ Ordering rules are defined by `docs/language/ordering_model_v0_9.md`.
 ## 6) Runtime Error Taxonomy
 
 - [ERR-0019] Identifier/missing runtime error identifiers SHALL use the `ERR.RUNTIME.<TOKEN>` namespace and SHALL preserve identifier meaning across compatible versions.
-- [ERR-0022] `ERR.RUNTIME.UNRESOLVED_IDENTIFIER` SHALL be treated as deprecated in v0.9 and SHALL NOT be emitted by compliant evaluators.
+- [ERR-0022] `ERR.RUNTIME.UNRESOLVED_IDENTIFIER` SHALL be treated as deprecated in v1.0 and SHALL NOT be emitted by compliant evaluators.
 
 Taxonomy entries:
 
@@ -42,6 +42,6 @@ Taxonomy entries:
   - Classification: runtime error.
   - Stability: symbolic identifier meaning is stable across compatible versions.
 
-Deprecated identifier (not emitted in v0.9):
+Deprecated identifier (not emitted in v1.0):
 
 - `ERR.RUNTIME.UNRESOLVED_IDENTIFIER`

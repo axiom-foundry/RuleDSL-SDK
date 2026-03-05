@@ -122,7 +122,7 @@ foreach ($name in $examples) {
             }
         }
 
-        & $CompilerExe compile $rulePath -o $axbc1 --lang 0.9 --target axbc3 --emit-manifest $manifest1
+        & $CompilerExe compile $rulePath -o $axbc1 --lang 1.0 --target axbc3 --emit-manifest $manifest1
         $row.compile_first_exit = $LASTEXITCODE
         if ($row.compile_first_exit -ne 0) {
             throw "first compile failed with exit code $($row.compile_first_exit)"
@@ -137,7 +137,7 @@ foreach ($name in $examples) {
             throw "first verify did not return STATUS=OK"
         }
 
-        & $CompilerExe compile $rulePath -o $axbc2 --lang 0.9 --target axbc3 --emit-manifest $manifest2
+        & $CompilerExe compile $rulePath -o $axbc2 --lang 1.0 --target axbc3 --emit-manifest $manifest2
         $row.compile_second_exit = $LASTEXITCODE
         if ($row.compile_second_exit -ne 0) {
             throw "second compile failed with exit code $($row.compile_second_exit)"

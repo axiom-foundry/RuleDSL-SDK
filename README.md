@@ -21,7 +21,7 @@ rule high_risk {
 }
 
 # 2. Compile to bytecode
-ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+ruledslc compile rules.rule -o rules.axbc --lang 1.0 --target axbc3
 
 # 3. Verify bytecode integrity
 ruledslc verify rules.axbc

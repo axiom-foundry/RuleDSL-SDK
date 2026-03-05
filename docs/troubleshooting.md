@@ -70,7 +70,7 @@ These macros set `struct_size = sizeof(...)` and zero-initialize reserved fields
    - Unsupported keywords or operators for language version 0.9
 3. Validate your `.rule` file with the CLI first:
    ```
-   ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+   ruledslc compile rules.rule -o rules.axbc --lang 1.0 --target axbc3
    ```
    The CLI will print the exact line and column of the error.
 

@@ -1,10 +1,10 @@
-# RuleDSL Language Specification v0.9 (Draft)
+# RuleDSL Language Specification v1.0 (Draft)
 
 ## 1) Scope and Non-goals
 
-This document defines the normative language baseline for v0.9 under freeze governance.
+This document defines the normative language baseline for v1.0 under freeze governance.
 
-- [VER-0002] v0.9 SHALL introduce no new language features, operators, or implicit runtime dependencies beyond the freeze baseline.
+- [VER-0002] v1.0 SHALL introduce no new language features, operators, or implicit runtime dependencies beyond the freeze baseline.
 - [VER-0006] Clarifications and defect corrections SHALL preserve observable language behavior for previously valid programs.
 
 ## 2) Normative Keywords
@@ -17,11 +17,11 @@ The keywords `MUST`, `SHALL`, and `MAY` are interpreted as normative requirement
 
 RuleDSL evaluates compiled programs against caller-provided inputs and options.
 
-The v0.9 baseline profile is defined by `docs/language/profile_decision_rules_v0_9.md`.
+The v1.0 baseline profile is defined by `docs/language/profile_decision_rules_v1_0.md`.
 
-String literal source encoding, delimiters, and escape decoding are defined by `docs/language/string_lexing_v0_9.md`.
+String literal source encoding, delimiters, and escape decoding are defined by `docs/language/string_lexing_v1_0.md`.
 
-Whitespace/comments, identifier+keyword tokenization, and numeric-literal lexical forms are defined by `docs/language/lexical_core_v0_9.md`.
+Whitespace/comments, identifier+keyword tokenization, and numeric-literal lexical forms are defined by `docs/language/lexical_core_v1_0.md`.
 
 - [SEM-0001] Program evaluation SHALL be a pure function of language version, bytecode artifact, explicit inputs, and explicit options.
 - [SEM-0002] Evaluation SHALL yield either a defined decision result or a defined error outcome.
@@ -39,11 +39,11 @@ This section locks core execution semantics.
 
 This section defines the high-level typing contract.
 
-Boolean type-domain, condition-context, truthiness, and equality semantics are defined by `docs/language/boolean_model_v0_9.md`.
+Boolean type-domain, condition-context, truthiness, and equality semantics are defined by `docs/language/boolean_model_v1_0.md`.
 
-Ordering semantics for `<`, `>`, `<=`, and `>=` are defined by `docs/language/ordering_model_v0_9.md`.
+Ordering semantics for `<`, `>`, `<=`, and `>=` are defined by `docs/language/ordering_model_v1_0.md`.
 
-Identifier resolution and missing-value semantics are defined by `docs/language/identifier_missing_v0_9.md`.
+Identifier resolution and missing-value semantics are defined by `docs/language/identifier_missing_v1_0.md`.
 
 - [TYP-0001] Values SHALL belong to the public language type categories: number, string, identifier, boolean, and missing.
 - [TYP-0002] Implicit coercion SHALL be forbidden unless a normative clause explicitly defines it.
@@ -56,7 +56,7 @@ This section binds numeric semantics to a concrete annex.
 
 Numeric error taxonomy and compile-time constant-folding constraints are defined by the annex.
 
-- [SEM-0007] Numeric semantics SHALL conform to `docs/language/numeric_model_v0_9.md`.
+- [SEM-0007] Numeric semantics SHALL conform to `docs/language/numeric_model_v1_0.md`.
 - [SEM-0008] Handling of non-finite values, overflow, underflow, and subnormal values SHALL follow the annex.
 - [DET-0010] Determinism-critical arithmetic environment constraints SHALL follow the annex.
 
@@ -82,7 +82,7 @@ This section binds language behavior to artifact/version compatibility.
 
 - [BC-0001] Bytecode artifacts SHALL expose schema/version metadata sufficient for deterministic compatibility validation.
 - [BC-0002] Runtime SHALL reject bytecode outside the supported compatibility window with a defined error outcome.
-- [VER-0001] v0.9 semantics SHALL remain compatible with the planned v1.0 baseline contract.
+- [VER-0001] v1.0 semantics SHALL remain compatible with the planned v1.0 baseline contract.
 - [VER-0003] A breaking change SHALL include any parse, type, semantic, determinism, or public error-code compatibility break for previously valid programs.
 
 ## 10) Conformance Mapping Guidance

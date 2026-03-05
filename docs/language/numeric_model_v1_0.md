@@ -1,11 +1,11 @@
-# RuleDSL v0.9 Numeric Model Annex
+# RuleDSL v1.0 Numeric Model Annex
 
-This annex defines concrete numeric behavior for v0.9 and binds section 6 of `docs/language/spec_v0_9.md`.
+This annex defines concrete numeric behavior for v1.0 and binds section 6 of `docs/language/spec_v1_0.md`.
 
 ## 1) Number Representation
 
 - [SEM-0009] The language Number value SHALL be IEEE 754 binary64.
-- [SEM-0017] Exponent-form numeric literals (`e`/`E`) SHALL NOT be part of the v0.9 language surface and SHALL be rejected at compile time.
+- [SEM-0017] Exponent-form numeric literals (`e`/`E`) SHALL NOT be part of the v1.0 language surface and SHALL be rejected at compile time.
 
 ## 2) Rounding and Arithmetic Environment
 

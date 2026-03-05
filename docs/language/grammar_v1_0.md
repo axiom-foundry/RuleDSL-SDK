@@ -1,8 +1,8 @@
-# RuleDSL Language Grammar v0.9
+# RuleDSL Language Grammar v1.0
 
 ## 1. Status & Scope
 
-This grammar defines the syntactic surface for language version v0.9 with active profile `decision-rules-v0.9`.
+This grammar defines the syntactic surface for language version v1.0 with active profile `decision-rules-v1.0`.
 
 This document defines syntax only. Semantic behavior is defined by language annexes, and determinism constraints remain binding. Keyword spellings shown here are canonical forms; lexical matching follows ASCII case-insensitive keyword rules.
 
@@ -37,8 +37,17 @@ This document defines syntax only. Semantic behavior is defined by language anne
 - [SYN-TOK-025] `}` SHALL be recognized as punctuation token RBRACE.
 - [SYN-TOK-026] `;` SHALL be recognized as punctuation token SEMICOLON.
 - [SYN-TOK-027] `,` SHALL be recognized as punctuation token COMMA.
+- [SYN-TOK-028] `=` SHALL be recognized as the assignment operator token.
+- [SYN-TOK-029] `[` SHALL be recognized as punctuation token LBRACKET.
+- [SYN-TOK-030] `]` SHALL be recognized as punctuation token RBRACKET.
 
-### 2.2 Operator Precedence
+### 2.2 Core Keyword Tokens
+
+- [SYN-TOK-040] `priority` SHALL be recognized as a core keyword token.
+- [SYN-TOK-041] `in` SHALL be recognized as a core keyword token.
+- [SYN-TOK-042] `match` SHALL be recognized as a core keyword token.
+
+### 2.3 Operator Precedence
 
 The following precedence levels apply:
 
@@ -49,13 +58,13 @@ The following precedence levels apply:
 
 Note: This subsection defines parsing precedence classes. Token identity is defined in the Token Inventory.
 
-### 2.3 Profile Tokens (`decision-rules-v0.9`)
+### 2.4 Profile Tokens (`decision-rules-v1.0`)
 
-- [SYN-TOK-028] `allow` SHALL be recognized as an active profile keyword token.
-- [SYN-TOK-029] `decline` SHALL be recognized as an active profile keyword token.
-- [SYN-TOK-030] `review` SHALL be recognized as an active profile keyword token.
-- [SYN-TOK-031] `limit` SHALL be recognized as an active profile keyword token.
-- [SYN-TOK-032] `per` SHALL be recognized as an active profile keyword token.
+- [SYN-TOK-050] `allow` SHALL be recognized as an active profile keyword token.
+- [SYN-TOK-051] `decline` SHALL be recognized as an active profile keyword token.
+- [SYN-TOK-052] `review` SHALL be recognized as an active profile keyword token.
+- [SYN-TOK-053] `limit` SHALL be recognized as an active profile keyword token.
+- [SYN-TOK-054] `per` SHALL be recognized as an active profile keyword token.
 
 ## 3. Operator Precedence and Associativity
 
@@ -65,57 +74,92 @@ Highest to lowest precedence:
 - [SYN-PREC-002] Multiplicative operators (`*`, `/`) SHALL be left-associative.
 - [SYN-PREC-003] Additive operators (`+`, `-`) SHALL be left-associative.
 - [SYN-PREC-004] Relational operators (`<`, `<=`, `>`, `>=`) SHALL be left-associative.
-- [SYN-PREC-005] Equality operators (`==`, `!=`) SHALL be left-associative.
-- [SYN-PREC-006] Logical AND (`and`) SHALL be left-associative.
-- [SYN-PREC-007] Logical OR (`or`) SHALL be left-associative and SHALL have the lowest precedence.
+- [SYN-PREC-005] Membership (`in`) and pattern (`match`) operators SHALL be non-associative.
+- [SYN-PREC-006] Equality operators (`==`, `!=`) SHALL be left-associative.
+- [SYN-PREC-007] Logical AND (`and`) SHALL be left-associative.
+- [SYN-PREC-008] Logical OR (`or`) SHALL be left-associative and SHALL have the lowest precedence.
 
 ## 4. EBNF Grammar
 
 Condition contexts reference `Expression`; type and coercion constraints are defined outside this grammar.
 
-`[SYN-GRAM-001]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-001]`
 `Program ::= { RuleBlock } ;`
 
-`[SYN-GRAM-002]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
-`RuleBlock ::= "rule" IDENTIFIER "{" "when" Expression ";" "then" DecisionStatement [ "," LimitClause ] ";" "}" ;`
+`[SYN-GRAM-002]`
+`RuleBlock ::= "rule" IDENTIFIER [ "priority" NUMBER ] "{" "when" Expression ";" "then" ThenClause ";" "}" ;`
 
-`[SYN-GRAM-003]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-003]`
+`ThenClause ::= ThenItem { "," ThenItem } ;`
+
+`[SYN-GRAM-004]`
+`ThenItem ::= Assignment | DecisionStatement | LimitClause ;`
+
+`[SYN-GRAM-005]`
+`Assignment ::= IDENTIFIER "=" Expression ;`
+
+`[SYN-GRAM-006]`
 `DecisionStatement ::= "allow" | "decline" | "review" ;`
 
-`[SYN-GRAM-004]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
-`LimitClause ::= "limit" NUMBER "per" IDENTIFIER ;`
+`[SYN-GRAM-007]`
+`LimitClause ::= "limit" NUMBER [ IDENTIFIER ] "per" NUMBER IDENTIFIER ;`
 
-`[SYN-GRAM-005]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-008]`
 `Expression ::= LogicalOr ;`
 
-`[SYN-GRAM-006]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-009]`
 `LogicalOr ::= LogicalAnd { "or" LogicalAnd } ;`
 
-`[SYN-GRAM-007]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-010]`
 `LogicalAnd ::= Equality { "and" Equality } ;`
 
-`[SYN-GRAM-008]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
-`Equality ::= Relational { ( "==" | "!=" ) Relational } ;`
+`[SYN-GRAM-011]`
+`Equality ::= Membership { ( "==" | "!=" ) Membership } ;`
 
-`[SYN-GRAM-009]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-012]`
+`Membership ::= Relational [ "in" ListLiteral | "match" Primary ] ;`
+
+`[SYN-GRAM-013]`
 `Relational ::= Additive { ( "<" | "<=" | ">" | ">=" ) Additive } ;`
 
-`[SYN-GRAM-010]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-014]`
 `Additive ::= Multiplicative { ( "+" | "-" ) Multiplicative } ;`
 
-`[SYN-GRAM-011]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-015]`
 `Multiplicative ::= Unary { ( "*" | "/" ) Unary } ;`
 
-`[SYN-GRAM-012]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
+`[SYN-GRAM-016]`
 `Unary ::= "not" Unary | "-" Unary | Primary ;`
 
-`[SYN-GRAM-013]` (Conformance placeholder: see `docs/language/conformance_map.md`)  
-`Primary ::= NUMBER | STRING | BOOLEAN | IDENTIFIER | "(" Expression ")" ;`
+`[SYN-GRAM-017]`
+`Primary ::= NUMBER [ IDENTIFIER ] | STRING | BOOLEAN | IDENTIFIER | "(" Expression ")" ;`
+
+`[SYN-GRAM-018]`
+`ListLiteral ::= "[" ListElement { "," ListElement } "]" ;`
+
+`[SYN-GRAM-019]`
+`ListElement ::= IDENTIFIER | STRING | NUMBER ;`
 
 ## 5. Profile -> Grammar Mapping Appendix
 
 - `allow` maps to `DecisionStatement(kind=ALLOW)`.
 - `decline` maps to `DecisionStatement(kind=DECLINE)`.
 - `review` maps to `DecisionStatement(kind=REVIEW)`.
-- `limit` + `per` map to `LimitClause` (`limit` quantity and `per` scope identifier).
-- Only keywords in `decision-rules-v0.9` participate in these mappings for v0.9 baseline grammar.
+- `limit` + `per` map to `LimitClause` (`limit` quantity with optional currency tag and `per` window with time-unit identifier).
+- `priority` maps to optional priority annotation on `RuleBlock`.
+- `in` maps to `Membership` list-membership test.
+- `match` maps to `Membership` pattern-match test.
+- Only keywords in `decision-rules-v1.0` participate in these mappings for v1.0 grammar.
+
+## 6. Currency and Time-Unit Conventions (Non-normative)
+
+Currency tags on numeric literals (e.g., `1000 USD`) follow the `NUMBER [ IDENTIFIER ]` production in `Primary`. The identifier is interpreted as an ISO 4217 currency code by the runtime.
+
+Time-unit identifiers in `LimitClause` (e.g., `1 D`) use the following conventions:
+
+| Code | Unit |
+|------|------|
+| `S` | Second |
+| `M` | Minute |
+| `H` | Hour |
+| `D` | Day |
