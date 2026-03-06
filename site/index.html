@@ -83,6 +83,12 @@
             max-width: 600px;
             margin: 0 auto 32px;
         }
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
         .hero-cta {
             display: inline-block;
             background: var(--accent);
@@ -91,7 +97,6 @@
             border-radius: 6px;
             text-decoration: none;
             font-weight: 600;
-            margin-right: 12px;
         }
         .hero-cta.secondary {
             background: transparent;
@@ -230,8 +235,10 @@
     <div class="container">
         <h1>Deterministic rules.<br><em>Embedded in your app.</em></h1>
         <p>A business rule engine with a stable C ABI. Same input, same bytecode, same decision — guaranteed across platforms. No SaaS, no network hop, no surprises.</p>
-        <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Get Started</a>
-        <a href="#how-it-works" class="hero-cta secondary">How It Works</a>
+        <div class="hero-buttons">
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Get Started</a>
+            <a href="#how-it-works" class="hero-cta secondary">How It Works</a>
+        </div>
     </div>
 </header>
 
