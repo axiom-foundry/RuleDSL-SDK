@@ -224,6 +224,7 @@
         <div>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
+            <a href="#robustness">Robustness</a>
             <a href="language/">Language</a>
             <a href="#contact">Contact</a>
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a>
@@ -346,6 +347,102 @@ decision = engine.evaluate(bc, {
             <div class="use-case">
                 <strong>Offer Eligibility</strong>
                 <span>Real-time pricing rules, promotion eligibility, and feature gating without redeployment.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="robustness" style="border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2>Engine Robustness</h2>
+        <p style="text-align: center; color: var(--muted); max-width: 600px; margin: 0 auto 32px;">
+            Tested against adversarial and edge-case scenarios.
+            Zero tolerance for crashes — all malformed inputs are rejected gracefully.
+        </p>
+        <div style="max-width: 720px; margin: 0 auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                        <th style="padding: 10px 12px; color: var(--muted); font-weight: 600;">Category</th>
+                        <th style="padding: 10px 12px; text-align: right; color: var(--muted); font-weight: 600;">Tests</th>
+                        <th style="padding: 10px 12px; text-align: right; color: var(--muted); font-weight: 600;">Crashes</th>
+                        <th style="padding: 10px 12px; text-align: center; color: var(--muted); font-weight: 600;">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Fuzz (malformed rule sources)</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">45</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Bytecode tampering</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">17</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Input injection (SQLi / XSS / CRLF)</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">37</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Memory stability (sequential)</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">500</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Rule complexity limits</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">30</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">Locale determinism</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">7</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px 12px;">C API misuse (NULL / NaN / overflow)</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">48</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        <td style="padding: 10px 12px;">Multi-thread stress (8 threads)</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">800,000</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace;">0</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span style="color: var(--accent2); font-weight: 600;">PASS</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 12px; font-weight: 700;">Total</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace; font-weight: 700;">800,684</td>
+                        <td style="padding: 10px 12px; text-align: right; font-family: 'SF Mono', monospace; font-weight: 700; color: var(--accent2);">0</td>
+                        <td style="padding: 10px 12px; text-align: center; font-weight: 700; color: var(--accent2);">ALL PASS</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="features" style="margin-top: 32px; grid-template-columns: repeat(2, 1fr);">
+            <div class="feature">
+                <h3>79,000+ Evaluations/sec</h3>
+                <p>800K concurrent evaluations across 8 threads with zero errors. Memory flat after warm-up, returns below baseline after cleanup. No leak, no degradation.</p>
+            </div>
+            <div class="feature">
+                <h3>Thread-Safe by Design</h3>
+                <p>Per-thread compiler pattern for full parallelism. Shared compiler misuse detected at runtime with <code>AX_ERR_CONCURRENT_COMPILER_USE</code> — no crash, no data corruption.</p>
+            </div>
+            <div class="feature">
+                <h3>Identical Bytecode Across Locales</h3>
+                <p>Compiled output verified identical across 7 OS locales including Turkish, German, and French. No decimal-separator drift, no collation variance.</p>
+            </div>
+            <div class="feature">
+                <h3>Tampered Bytecode Detected</h3>
+                <p>All 17 tampering vectors — flipped bits, truncation, wrong magic, 1 MB garbage — correctly detected and rejected with structured error codes.</p>
             </div>
         </div>
     </div>

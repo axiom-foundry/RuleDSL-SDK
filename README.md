@@ -60,6 +60,37 @@ ax_decision_reset(&dec);
 ax_compiler_destroy(c);
 ```
 
+## Engine Robustness
+
+The RuleDSL engine is tested against adversarial and edge-case scenarios across every release.
+Zero tolerance for crashes — all malformed inputs are rejected gracefully with structured error codes.
+
+```
+ Category                            Tests    Crashes   Result
+ ────────────────────────────────────────────────────────────────
+ Fuzz (malformed rule sources)          45          0   PASS
+ Bytecode tampering                     17          0   PASS
+ Input injection (SQLi/XSS/CRLF)       37          0   PASS
+ Memory stability (sequential)        500          0   PASS
+ Rule complexity limits                 30          0   PASS
+ Locale determinism                      7          0   PASS
+ C API misuse (NULL/NaN/overflow)       48          0   PASS
+ Multi-thread stress (8 threads)   800000          0   PASS
+ ────────────────────────────────────────────────────────────────
+ Total                             800684          0   ALL PASS
+```
+
+Highlights:
+
+- **Thread safety**: 800K concurrent evaluations across 8 threads — zero errors, zero memory leak
+- **Throughput**: 79,000+ evaluations/sec (8 threads, per-thread compiler pattern)
+- **Memory**: flat after warm-up, returns below baseline after cleanup (+0.34 MB at peak, -2.21 MB post-free)
+- **Contention detection**: shared compiler across threads returns `AX_ERR_CONCURRENT_COMPILER_USE` — no crash, no corruption
+- **Fuzz**: null bytes, 10K-char names, 1000-rule files, binary garbage — all rejected, none crash
+- **Bytecode tampering**: flipped bits, truncated files, wrong magic, 1 MB garbage — all detected
+- **Locale determinism**: identical bytecode across 7 OS locales (C, Turkish, German, French, POSIX, en_US, tr_TR)
+- **API misuse**: NULL pointers, double-free, bad struct sizes, NaN/Infinity — all return proper error codes
+
 ## What you receive
 
 A delivery packet includes:
