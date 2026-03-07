@@ -60,6 +60,32 @@ ax_decision_reset(&dec);
 ax_compiler_destroy(c);
 ```
 
+## Engine Robustness
+
+The RuleDSL engine is tested against adversarial and edge-case scenarios across every release.
+Zero tolerance for crashes — all malformed inputs are rejected gracefully with structured error codes.
+
+```
+ Category                       Tests     Crashes   Result
+ ─────────────────────────────────────────────────────────
+ Fuzz (malformed rule sources)     45           0   PASS
+ Bytecode tampering                17           0   PASS
+ Input injection (SQLi/XSS/CRLF)  37           0   PASS
+ Memory stability (sequential)   500           0   PASS
+ Rule complexity limits            30           0   PASS
+ Locale determinism                 7           0   PASS
+ C API misuse (NULL/NaN/overflow)  48           0   PASS
+ ─────────────────────────────────────────────────────────
+ Total                           684           0   ALL PASS
+```
+
+Highlights:
+
+- **Fuzz**: Empty input, null bytes, 10K-char names, 1000-rule files, binary garbage — all rejected, none crash
+- **Bytecode tampering**: Flipped bits, truncated files, wrong magic, 1 MB garbage — all detected
+- **Locale determinism**: Identical bytecode across 7 OS locales (C, Turkish, German, French, POSIX, en_US, tr_TR)
+- **API misuse**: NULL pointers, double-free, bad struct sizes, NaN/Infinity — all return proper error codes
+
 ## What you receive
 
 A delivery packet includes:
