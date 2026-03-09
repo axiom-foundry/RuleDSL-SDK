@@ -34,5 +34,4 @@ docs/errors.md
 docs/troubleshooting.md
 docs/support_policy.md
 docs/version_policy.md
-CLAUDE.md
 RELEASE_NOTES.md
