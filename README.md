@@ -9,6 +9,8 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 
 **What it is not**: not a SaaS, not an open-source engine, not a 24/7 managed service.
 
+> **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
+
 ## Quickstart
 
 Customer workflow: **Write -> Compile -> Verify -> Evaluate**
