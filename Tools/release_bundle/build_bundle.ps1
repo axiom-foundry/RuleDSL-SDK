@@ -186,9 +186,10 @@ $includeOut = Join-Path $outRoot "include"
 $binOut = Join-Path $outRoot "bin"
 $docsOut = Join-Path $outRoot "docs"
 $examplesOut = Join-Path $outRoot "examples"
+$bindingsOut = Join-Path $outRoot "bindings"
 $manifestsOut = Join-Path $outRoot "manifests"
 
-New-Item -ItemType Directory -Force -Path $includeOut, $binOut, $docsOut, $examplesOut | Out-Null
+New-Item -ItemType Directory -Force -Path $includeOut, $binOut, $docsOut, $examplesOut, $bindingsOut | Out-Null
 
 Copy-Item -Recurse -Force (Join-Path $repoRoot "include\*") $includeOut
 Copy-Item -Force $EngineBin (Join-Path $binOut ([System.IO.Path]::GetFileName($EngineBin)))
@@ -200,6 +201,10 @@ if ($EngineImportLib) {
 }
 
 $docFiles = @(
+    "docs/rule_cookbook.md",
+    "docs/quickstart.md",
+    "docs/errors.md",
+    "docs/troubleshooting.md",
     "docs/bytecode_workflow_v1_0.md",
     "docs/compiler/ruledslc_contract.md",
     "docs/compiler/authenticity_policy.md",
@@ -238,6 +243,56 @@ foreach ($name in $exampleDirs) {
         }
         Copy-Item -Force $filePath (Join-Path $dstRoot $file)
     }
+}
+
+# --- Bindings ---
+
+$pythonOut = Join-Path $bindingsOut "python"
+$pythonExamplesOut = Join-Path $pythonOut "examples"
+New-Item -ItemType Directory -Force -Path $pythonOut, $pythonExamplesOut | Out-Null
+
+$pythonFiles = @(
+    @{ src = "bindings/python/ruledsl.py";              dst = "ruledsl.py" },
+    @{ src = "bindings/python/README.md";               dst = "README.md" }
+)
+foreach ($f in $pythonFiles) {
+    $src = Join-Path $repoRoot $f.src
+    if (-not (Test-Path $src)) { throw "Missing required binding file: $src" }
+    Copy-Item -Force $src (Join-Path $pythonOut $f.dst)
+}
+
+$pythonExampleFiles = @(
+    @{ src = "bindings/python/examples/quick_test.py";    dst = "quick_test.py" },
+    @{ src = "bindings/python/examples/risk_scoring.py";  dst = "risk_scoring.py" }
+)
+foreach ($f in $pythonExampleFiles) {
+    $src = Join-Path $repoRoot $f.src
+    if (-not (Test-Path $src)) { throw "Missing required binding example: $src" }
+    Copy-Item -Force $src (Join-Path $pythonExamplesOut $f.dst)
+}
+
+$csharpOut = Join-Path $bindingsOut "csharp"
+$csharpExamplesOut = Join-Path $csharpOut "examples"
+New-Item -ItemType Directory -Force -Path $csharpOut, $csharpExamplesOut | Out-Null
+
+$csharpFiles = @(
+    @{ src = "bindings/csharp/RuleDSL.cs";              dst = "RuleDSL.cs" },
+    @{ src = "bindings/csharp/README.md";                dst = "README.md" }
+)
+foreach ($f in $csharpFiles) {
+    $src = Join-Path $repoRoot $f.src
+    if (-not (Test-Path $src)) { throw "Missing required binding file: $src" }
+    Copy-Item -Force $src (Join-Path $csharpOut $f.dst)
+}
+
+$csharpExampleFiles = @(
+    @{ src = "bindings/csharp/examples/RiskScoring.cs";     dst = "RiskScoring.cs" },
+    @{ src = "bindings/csharp/examples/RiskScoring.csproj"; dst = "RiskScoring.csproj" }
+)
+foreach ($f in $csharpExampleFiles) {
+    $src = Join-Path $repoRoot $f.src
+    if (-not (Test-Path $src)) { throw "Missing required binding example: $src" }
+    Copy-Item -Force $src (Join-Path $csharpExamplesOut $f.dst)
 }
 
 if ($BundleType -eq "Commercial") {
@@ -324,7 +379,7 @@ if ($EmitManifests) {
 }
 
 # Final bundle validation guardrails.
-foreach ($requiredDir in @($includeOut, $binOut, $docsOut, $examplesOut)) {
+foreach ($requiredDir in @($includeOut, $binOut, $docsOut, $examplesOut, $bindingsOut)) {
     if (-not (Test-Path $requiredDir)) {
         throw "Bundle missing required directory: $requiredDir"
     }
@@ -366,6 +421,7 @@ Write-Host "- include/: $(Join-Path $outRoot 'include')"
 Write-Host "- bin/: $(Join-Path $outRoot 'bin')"
 Write-Host "- docs/: $(Join-Path $outRoot 'docs')"
 Write-Host "- examples/: $(Join-Path $outRoot 'examples')"
+Write-Host "- bindings/: $(Join-Path $outRoot 'bindings')"
 if ($EmitManifests) {
     Write-Host "- manifests/: $(Join-Path $outRoot 'manifests')"
 }
