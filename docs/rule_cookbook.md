@@ -324,6 +324,7 @@ This separation keeps the engine deterministic and auditable.
 | Boolean logic | `and`, `or`, `not` | [Example 9](#9-boolean-logic-with-not) |
 | List membership | `field in [A, B, C]` | [Example 3](#3-geo-blocking-with-in-lists) |
 | Substring match | `field match "substring"` | [Example 5](#5-email-domain-check-with-match) |
+| Numeric literal | `1000`, `1.5`, `1e6`, `2.5e-3` | Integer, decimal, exponent forms |
 | Currency literal | `1000 USD` | [Example 6](#6-currency-aware-thresholds) |
 | Arithmetic | `+`, `-`, `*`, `/` | [Example 8](#8-computed-risk-score) |
 | Assignment | `field = expr` | [Example 11](#11-multi-action-rules) |

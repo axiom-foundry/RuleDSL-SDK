@@ -27,9 +27,9 @@ Profile keywords for the v1.0 baseline are canonically defined by `docs/language
 
 ## 4) Numeric Literal Lexical Forms
 
-- [SYN-0015] Numeric literals in v1.0 SHALL use only these lexical forms: decimal integer (`[0-9]+`) and decimal fraction (`[0-9]+\.[0-9]+`). Exponent forms (`e`/`E`) are out-of-contract for v1.0 and SHALL be rejected at compile time.
+- [SYN-0015] Numeric literals in v1.0 SHALL use these lexical forms: decimal integer (`[0-9]+`), decimal fraction (`[0-9]+\.[0-9]+`), and exponent form (`[0-9]+[eE][+-]?[0-9]+` or `[0-9]+\.[0-9]+[eE][+-]?[0-9]+`). The exponent marker is case-insensitive (`e` or `E`).
 - [SYN-0016] Leading sign characters (`+` or `-`) SHALL NOT be part of a numeric literal token and SHALL be parsed by expression grammar as unary operators.
-- [ERR-0027] Malformed numeric literal text and unsupported exponent-form literals SHALL cause compile-time failure with `ERR.COMPILE.INVALID_NUMERIC_LITERAL`; identifier meaning SHALL remain stable across compatible versions.
+- [ERR-0027] Malformed numeric literal text SHALL cause compile-time failure with `ERR.COMPILE.INVALID_NUMERIC_LITERAL`; identifier meaning SHALL remain stable across compatible versions.
 
 ## 5) Generic Lexical Error Handling
 

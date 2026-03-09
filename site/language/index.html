@@ -401,17 +401,24 @@
     <h2><a href="#data-types">Data Types</a></h2>
     <table>
         <tr><th>Type</th><th>Literal Example</th><th>Description</th></tr>
-        <tr><td>Number</td><td><code>1200.0</code>, <code>100 USD</code></td><td>IEEE 754 binary64. Optional currency tag.</td></tr>
+        <tr><td>Number</td><td><code>1200.0</code>, <code>1e6</code>, <code>100 USD</code></td><td>IEEE 754 binary64. Integer, decimal, and exponent forms. Optional currency tag.</td></tr>
         <tr><td>String</td><td><code>"USD"</code>, <code>"hello"</code></td><td>Double-quoted. Used in comparisons and MATCH.</td></tr>
         <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td><td>Used in conditions directly.</td></tr>
         <tr><td>Identifier</td><td><code>amount</code>, <code>customer.level</code></td><td>References input fields. Dotted paths supported.</td></tr>
         <tr><td>Missing</td><td>&mdash;</td><td>Field not provided. Operations on missing safely fail.</td></tr>
     </table>
 
+    <h3>Numeric Literals</h3>
+    <p>Numbers support integer, decimal, and scientific notation:</p>
+<pre><span class="kw">when</span> amount &gt; <span class="num">10000</span>;        <span class="cmt"># integer</span>
+<span class="kw">when</span> rate &gt; <span class="num">0.05</span>;           <span class="cmt"># decimal</span>
+<span class="kw">when</span> amount &gt; <span class="num">1e6</span>;          <span class="cmt"># scientific notation (1,000,000)</span>
+<span class="kw">when</span> rate &gt; <span class="num">2.5e-3</span>;         <span class="cmt"># decimal + exponent (0.0025)</span></pre>
+
     <h3>Currency-Tagged Numbers</h3>
     <p>Append a 3-letter currency code to a numeric literal for currency-aware comparisons:</p>
-<pre><span class="kw">when</span> amount &gt;= <span class="num">10000</span> USD;   <span class="cmt"># only matches USD transactions</span>
-<span class="kw">when</span> amount &gt;= <span class="num">8000</span> EUR;    <span class="cmt"># only matches EUR transactions</span></pre>
+<pre><span class="kw">when</span> amount &gt;= <span class="num">1e4</span> USD;     <span class="cmt"># 10,000 USD</span>
+<span class="kw">when</span> amount &gt;= <span class="num">8000</span> EUR;    <span class="cmt"># 8,000 EUR</span></pre>
 
     <h3>Dotted Paths</h3>
     <p>Access nested fields with dot notation:</p>

@@ -10,7 +10,7 @@
 - Identifiers are ASCII-only.
 - Keyword matching is ASCII case-insensitive.
 - Logical operators are keyword-only: `and`, `or`, `not`.
-- Numeric exponent literals (`e`/`E`) are OUT-OF-CONTRACT in v1.0.
+- Numeric exponent literals (`e`/`E`) are supported (e.g., `1e6`, `1.5e-3`).
 - Implicit coercions are not allowed.
 - Operator precedence is deterministic and fixed by the v1.0 grammar table.
 

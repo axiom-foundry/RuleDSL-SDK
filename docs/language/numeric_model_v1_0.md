@@ -5,7 +5,7 @@ This annex defines concrete numeric behavior for v1.0 and binds section 6 of `do
 ## 1) Number Representation
 
 - [SEM-0009] The language Number value SHALL be IEEE 754 binary64.
-- [SEM-0017] Exponent-form numeric literals (`e`/`E`) SHALL NOT be part of the v1.0 language surface and SHALL be rejected at compile time.
+- [SEM-0017] Exponent-form numeric literals (`e`/`E`) SHALL be accepted as syntactic sugar for the equivalent decimal value (e.g., `1e6` is equivalent to `1000000`). The parsed value SHALL be IEEE 754 binary64.
 
 ## 2) Rounding and Arithmetic Environment
 
