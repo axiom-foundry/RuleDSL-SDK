@@ -39,6 +39,14 @@ build.ninja
 .ninja_deps
 .ninja_log
 
+# Python
+__pycache__/
+*.pyc
+
+# .NET
+bin/obj/
+*.nupkg
+
 # OS/editor
 .vs/
 .vscode/

@@ -85,7 +85,7 @@ bytecode = Bytecode.from_file("rules.axbc")
 info = engine.check_compatibility(bytecode)
 print(info["compatible"])      # True
 print(info["axbc_version"])    # 3
-print(info["lang_major"])      # 0
+print(info["lang_major"])      # 1
 ```
 
 ## Error Handling

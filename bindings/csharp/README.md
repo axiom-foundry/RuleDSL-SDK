@@ -86,6 +86,14 @@ catch (EvalException ex)
 }
 ```
 
+## Running the Example
+
+```
+cd bindings/csharp/examples
+# Copy ruledsl_capi.dll into the examples directory, then:
+dotnet run
+```
+
 ## Library Resolution
 
 The binding expects `ruledsl_capi` to be resolvable by the .NET runtime:

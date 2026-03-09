@@ -107,16 +107,16 @@ namespace Axiom.RuleDSL
         public AXActionType ActionType { get; }
         public string Action { get; }
         public double Amount { get; }
-        public string Currency { get; }
+        public string? Currency { get; }
         public double WindowCount { get; }
-        public string WindowUnit { get; }
-        public string RuleName { get; }
+        public string? WindowUnit { get; }
+        public string? RuleName { get; }
 
         private static readonly string[] ActionNames = { "ALLOW", "DECLINE", "REVIEW", "LIMIT" };
 
         internal Decision(bool matched, AXActionType actionType, double amount,
-                          string currency, double windowCount, string windowUnit,
-                          string ruleName)
+                          string? currency, double windowCount, string? windowUnit,
+                          string? ruleName)
         {
             Matched = matched;
             ActionType = actionType;
@@ -449,7 +449,7 @@ namespace Axiom.RuleDSL
         public string Version()
         {
             var ptr = NativeMethods.ax_version_string();
-            return ptr != IntPtr.Zero ? Marshal.PtrToStringUTF8(ptr) : "unknown";
+            return ptr != IntPtr.Zero ? Marshal.PtrToStringUTF8(ptr) ?? "unknown" : "unknown";
         }
 
         // -- IDisposable ------------------------------------------------------

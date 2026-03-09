@@ -6,6 +6,8 @@
 |-------|----------|
 | Rule cookbook | [`rule_cookbook.md`](rule_cookbook.md) |
 | Integration snippets (C) | [`integration_snippets.md`](integration_snippets.md) |
+| Python binding | [`../bindings/python/README.md`](../bindings/python/README.md) |
+| C# binding | [`../bindings/csharp/README.md`](../bindings/csharp/README.md) |
 | Error handling | [`errors.md`](errors.md) |
 | Troubleshooting | [`troubleshooting.md`](troubleshooting.md) |
 | Evaluation playbook | [`evaluation_playbook.md`](evaluation_playbook.md) |

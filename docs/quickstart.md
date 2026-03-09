@@ -74,6 +74,23 @@ Decision: matched=1 action_type=0
 DETERMINISTIC_OK
 ```
 
+## Python / C# (No Compilation Needed)
+
+If you prefer Python or C#, skip the C build steps and use the ready-made bindings:
+
+```
+# Python
+cd bindings/python/examples
+python quick_test.py path/to/ruledsl_capi.dll
+
+# C#
+cd bindings/csharp/examples
+# Copy ruledsl_capi.dll into the directory, then:
+dotnet run
+```
+
+See [`bindings/python/README.md`](../bindings/python/README.md) and [`bindings/csharp/README.md`](../bindings/csharp/README.md) for full documentation.
+
 ## Troubleshooting
 
 - `lib/` missing: this public repo does not include binaries by default; request evaluation binaries or use published release assets.
