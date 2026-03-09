@@ -541,6 +541,9 @@ class RuleDSL:
     def _load_library(path):
         """Load the shared library."""
         if path:
+            resolved = Path(path).resolve()
+            if resolved.exists():
+                return ctypes.CDLL(str(resolved))
             return ctypes.CDLL(str(path))
 
         # Auto-discovery

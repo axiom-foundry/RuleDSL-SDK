@@ -48,6 +48,26 @@ with RuleDSL("ruledsl_capi.dll") as engine:
     print(result)  # Decision(matched=True, action='REVIEW')
 ```
 
+## Priority and LIMIT
+
+Rules support priority ordering and rate-limit actions:
+
+```python
+bytecode = engine.compile("""
+    rule high_risk priority 10 {
+        when amount > 5000;
+        then decline;
+    }
+    rule spending_cap priority 5 {
+        when amount > 500;
+        then limit 1000 USD per 1 d;
+    }
+""")
+```
+
+Priority goes between the rule name and opening brace. Higher priority is evaluated first.
+Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensitive.
+
 ## Field Types
 
 | Python type | RuleDSL type | Example |
@@ -113,6 +133,13 @@ print(decision.outputs["reason"])      # "multi_signal"
 
 Output field values are typed: numbers return as `float`, strings as `str`, booleans as `bool`.
 If no rule matches or the matching rule has no assignments, `outputs` is an empty dict.
+
+## Decision Behavior
+
+When a rule matches, `decision.matched` is `True` and `decision.action` reflects the matched rule's action.
+When no rule matches, `decision.matched` is `False`, `decision.outputs` is empty, and the `action` field should not be relied upon.
+
+Always check `decision.matched` before reading `decision.action`.
 
 ## Error Handling
 
