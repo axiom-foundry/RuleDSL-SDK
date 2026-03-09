@@ -177,6 +177,7 @@ class _AXCompatibilityInfo(ctypes.Structure):
 _VALUE_MISSING = 0
 _VALUE_NUMBER = 1
 _VALUE_STRING = 2
+_VALUE_IDENT = 3
 _VALUE_BOOL = 4
 
 # Action type names
@@ -426,7 +427,7 @@ class RuleDSL:
                 name_str = out_name.value.decode("utf-8")
                 if out_value.type == _VALUE_NUMBER:
                     outputs[name_str] = out_value.number
-                elif out_value.type == _VALUE_STRING:
+                elif out_value.type == _VALUE_STRING or out_value.type == _VALUE_IDENT:
                     outputs[name_str] = out_value.text.decode("utf-8") if out_value.text else ""
                 elif out_value.type == _VALUE_BOOL:
                     outputs[name_str] = bool(out_value.boolean)

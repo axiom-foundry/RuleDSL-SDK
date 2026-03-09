@@ -445,7 +445,7 @@ namespace Axiom.RuleDSL
                             object? value = (AXValueType)val.type switch
                             {
                                 AXValueType.Number => val.number,
-                                AXValueType.String => val.text != IntPtr.Zero
+                                AXValueType.String or AXValueType.Ident => val.text != IntPtr.Zero
                                     ? Marshal.PtrToStringUTF8(val.text) : "",
                                 AXValueType.Bool => val.boolean_ != 0,
                                 _ => null,

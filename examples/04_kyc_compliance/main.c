@@ -84,11 +84,11 @@ int main(int argc, char** argv)
 
     fields[1].name = "ip_country";
     fields[1].value.type = AX_VALUE_STRING;
-    fields[1].value.string = "US";
+    fields[1].value.text = "US";
 
     fields[2].name = "email";
     fields[2].value.type = AX_VALUE_STRING;
-    fields[2].value.string = "user@company.com";
+    fields[2].value.text = "user@company.com";
 
     fields[3].name = "is_new_device";
     fields[3].value.type = AX_VALUE_BOOL;
