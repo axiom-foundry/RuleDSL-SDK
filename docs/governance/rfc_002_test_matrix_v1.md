@@ -41,13 +41,13 @@
 
 ## Priority Backlog (Top 10)
 
-1. Add generated replay-record integration test from real engine run artifacts and verify strict equality (`private repo`, cross-platform, smoke).
-2. Add mismatch fixtures for each precondition field (engine/abi/bytecode/input/options) (`public repo`, smoke).
-3. Add invalid-input replay fixtures that assert stable non-zero `error_code` (`public repo`, smoke).
-4. Add structural validation outcome field to replay schema and strict verifier enforcement (`public + private`, smoke).
-5. Add numeric edge-case vector suite (ties-to-even rounding) and expected deterministic outputs (`private repo`, cross-platform, long-running).
-6. Add release artifact metadata check for prohibited numeric flags (`private repo`, smoke).
-7. Add governance lint for RFC002 ID stability and append-only policy (`public repo`, smoke).
-8. Add cross-hardware evidence publication policy test gate (claim requires comparison artifact) (`public repo`, smoke).
-9. Add deterministic JSON serialization conformance tests for replay record producers (`public repo`, smoke).
-10. Add explicit out-of-scope surface policy check (timestamp/network/fs/thread data excluded from equality) (`public repo`, smoke).
+1. Add generated replay-record integration test from real engine run artifacts and verify strict equality (engine-side, cross-platform, smoke).
+2. Add mismatch fixtures for each precondition field (engine/abi/bytecode/input/options) (SDK, smoke).
+3. Add invalid-input replay fixtures that assert stable non-zero `error_code` (SDK, smoke).
+4. Add structural validation outcome field to replay schema and strict verifier enforcement (both, smoke).
+5. Add numeric edge-case vector suite (ties-to-even rounding) and expected deterministic outputs (engine-side, cross-platform, long-running).
+6. Add release artifact metadata check for prohibited numeric flags (engine-side, smoke).
+7. Add governance lint for RFC002 ID stability and append-only policy (SDK, smoke).
+8. Add cross-hardware evidence publication policy test gate (claim requires comparison artifact) (SDK, smoke).
+9. Add deterministic JSON serialization conformance tests for replay record producers (SDK, smoke).
+10. Add explicit out-of-scope surface policy check (timestamp/network/fs/thread data excluded from equality) (SDK, smoke).

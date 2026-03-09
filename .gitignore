@@ -44,6 +44,9 @@ build.ninja
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Non-SDK content (marketing, drafts, personal)
+linkedin_article_*.md
 # Internal verification artifacts (keep local, not part of public surface)
 reports/
 
