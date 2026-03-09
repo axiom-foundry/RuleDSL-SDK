@@ -144,7 +144,7 @@ rule allow_other {
 }
 ```
 
-**Use case:** Different thresholds per currency. The engine compares the numeric value only when the currency tag matches the transaction currency.
+**Use case:** Different thresholds per currency. Note: the currency literal (`10000 USD`) attaches metadata to the comparison but the engine compares the **numeric value only** — it does not filter by currency. To enforce currency-specific rules, add an explicit condition: `when amount >= 10000 and currency == "USD"`.
 
 ---
 
@@ -287,9 +287,11 @@ rule allow_default {
 
 ## Patterns & Best Practices
 
-### Missing Fields Are Safe
+### Missing Fields Raise Runtime Errors
 
-If a field is not provided in the input context, it resolves to `missing`. Operations on `missing` produce a runtime diagnostic and the condition evaluates to `false` — the rule simply doesn't match. This is safe by design.
+If a field referenced in a rule condition is not provided in the input context, the engine raises a runtime error (`UNKNOWN_PATH`). This is an explicit failure — the engine does not silently treat missing fields as false.
+
+**Always provide all fields referenced in your rules.** If a field might not exist, check for it in your host application before passing input to the engine, or use a catch-all rule with `when true` as a fallback in a separate rule set that does not reference the optional field.
 
 ### Host Pre-Computes, Engine Decides
 
