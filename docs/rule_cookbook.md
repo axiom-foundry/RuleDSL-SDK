@@ -119,7 +119,7 @@ rule allow_other {
 }
 ```
 
-**Use case:** Flag transactions from internal email domains for manual review. MATCH expects the field to be a text value — applying it to a number produces a runtime error that safely resolves to false.
+**Use case:** Flag transactions from internal email domains for manual review. MATCH expects the field to be a text value — applying it to a number raises a runtime error (`MATCH_EXPECTS_TEXT`). Always ensure the matched field is a string.
 
 ---
 
