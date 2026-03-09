@@ -17,7 +17,7 @@ using var engine = new RuleDSLEngine();
 var bytecode = engine.Compile(@"
     rule high_risk {
         when amount > 1000 and currency == ""USD"";
-        then decline;
+        then risk_score = 95, reason = ""high_value_usd"", decline;
     }
 ");
 
@@ -27,9 +27,11 @@ var decision = engine.Evaluate(bytecode, new Dictionary<string, object>
     { "currency", "USD" },
 });
 
-Console.WriteLine(decision.Action);    // "DECLINE"
-Console.WriteLine(decision.Matched);   // True
-Console.WriteLine(decision.RuleName);  // "high_risk"
+Console.WriteLine(decision.Action);                  // "DECLINE"
+Console.WriteLine(decision.Matched);                 // True
+Console.WriteLine(decision.RuleName);                // "high_risk"
+Console.WriteLine(decision.Outputs["risk_score"]);   // 95
+Console.WriteLine(decision.Outputs["reason"]);       // "high_value_usd"
 ```
 
 ## Field Types
@@ -61,6 +63,31 @@ bytecode.Save("rules.axbc");
 // Load
 var bytecode = Bytecode.FromFile("rules.axbc");
 ```
+
+## Output Fields
+
+Rules can assign output fields in the `then` clause. These are available via `decision.Outputs`:
+
+```csharp
+var bytecode = engine.Compile(@"
+    rule fraud_check {
+        when amount > 5000 and ip_country in [NG, RU];
+        then risk_score = 95, reason = ""multi_signal"", decline;
+    }
+");
+
+var decision = engine.Evaluate(bytecode, new Dictionary<string, object>
+{
+    { "amount", 7500.0 },
+    { "ip_country", "NG" },
+});
+
+Console.WriteLine(decision.Outputs["risk_score"]);  // 95
+Console.WriteLine(decision.Outputs["reason"]);      // "multi_signal"
+```
+
+Output field values are typed: numbers as `double`, strings as `string`, booleans as `bool`.
+`Outputs` is `IReadOnlyDictionary<string, object?>` — empty when no rule matches or no assignments exist.
 
 ## Error Handling
 

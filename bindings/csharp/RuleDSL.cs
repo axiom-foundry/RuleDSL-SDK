@@ -111,12 +111,14 @@ namespace Axiom.RuleDSL
         public double WindowCount { get; }
         public string? WindowUnit { get; }
         public string? RuleName { get; }
+        public IReadOnlyDictionary<string, object?> Outputs { get; }
 
         private static readonly string[] ActionNames = { "ALLOW", "DECLINE", "REVIEW", "LIMIT" };
 
         internal Decision(bool matched, AXActionType actionType, double amount,
                           string? currency, double windowCount, string? windowUnit,
-                          string? ruleName)
+                          string? ruleName,
+                          Dictionary<string, object?>? outputs = null)
         {
             Matched = matched;
             ActionType = actionType;
@@ -128,6 +130,7 @@ namespace Axiom.RuleDSL
             WindowCount = windowCount;
             WindowUnit = windowUnit;
             RuleName = ruleName;
+            Outputs = outputs ?? new Dictionary<string, object?>();
         }
 
         public override string ToString()
@@ -140,6 +143,18 @@ namespace Axiom.RuleDSL
                 sb.Append($", amount={Amount}");
                 if (!string.IsNullOrEmpty(Currency)) sb.Append($", currency={Currency}");
                 if (!string.IsNullOrEmpty(WindowUnit)) sb.Append($", window={WindowCount} {WindowUnit}");
+            }
+            if (Outputs.Count > 0)
+            {
+                sb.Append(", outputs={");
+                bool first = true;
+                foreach (var kv in Outputs)
+                {
+                    if (!first) sb.Append(", ");
+                    sb.Append($"{kv.Key}={kv.Value}");
+                    first = false;
+                }
+                sb.Append('}');
             }
             sb.Append(')');
             return sb.ToString();
@@ -293,6 +308,13 @@ namespace Axiom.RuleDSL
 
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void ax_clear_last_error();
+
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern uint ax_eval_output_field_count(IntPtr compiler);
+
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ax_eval_output_field_at(
+            IntPtr compiler, uint index, out IntPtr out_name, out NativeAXValue out_value);
     }
 
     // -----------------------------------------------------------------------
@@ -408,6 +430,31 @@ namespace Axiom.RuleDSL
                     throw new EvalException((AXErrorCode)code, msg, detail);
                 }
 
+                // Collect output fields assigned in THEN clauses
+                var outputs = new Dictionary<string, object?>();
+                uint outputCount = NativeMethods.ax_eval_output_field_count(_compiler);
+                for (uint idx = 0; idx < outputCount; idx++)
+                {
+                    int rc = NativeMethods.ax_eval_output_field_at(
+                        _compiler, idx, out IntPtr namePtr, out NativeAXValue val);
+                    if (rc == 0 && namePtr != IntPtr.Zero)
+                    {
+                        string? name = Marshal.PtrToStringUTF8(namePtr);
+                        if (name != null)
+                        {
+                            object? value = (AXValueType)val.type switch
+                            {
+                                AXValueType.Number => val.number,
+                                AXValueType.String => val.text != IntPtr.Zero
+                                    ? Marshal.PtrToStringUTF8(val.text) : "",
+                                AXValueType.Bool => val.boolean_ != 0,
+                                _ => null,
+                            };
+                            outputs[name] = value;
+                        }
+                    }
+                }
+
                 var result = new Decision(
                     matched: dec.matched != 0,
                     actionType: (AXActionType)dec.action_type,
@@ -418,7 +465,8 @@ namespace Axiom.RuleDSL
                     windowUnit: dec.window_unit != IntPtr.Zero
                         ? Marshal.PtrToStringUTF8(dec.window_unit) : null,
                     ruleName: dec.rule_name != IntPtr.Zero
-                        ? Marshal.PtrToStringUTF8(dec.rule_name) : null
+                        ? Marshal.PtrToStringUTF8(dec.rule_name) : null,
+                    outputs: outputs
                 );
 
                 NativeMethods.ax_decision_reset(ref dec);

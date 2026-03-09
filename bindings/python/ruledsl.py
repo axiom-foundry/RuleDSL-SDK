@@ -191,10 +191,10 @@ class Decision:
     """Immutable result of a rule evaluation."""
 
     __slots__ = ("matched", "action", "action_type", "amount", "currency",
-                 "window_count", "window_unit", "rule_name")
+                 "window_count", "window_unit", "rule_name", "outputs")
 
     def __init__(self, matched, action_type, amount, currency,
-                 window_count, window_unit, rule_name):
+                 window_count, window_unit, rule_name, outputs=None):
         self.matched = bool(matched)
         self.action_type = action_type
         self.action = _ACTION_NAMES.get(action_type, f"UNKNOWN({action_type})")
@@ -203,6 +203,7 @@ class Decision:
         self.window_count = window_count
         self.window_unit = window_unit
         self.rule_name = rule_name
+        self.outputs = outputs if outputs is not None else {}
 
     def __repr__(self):
         if not self.matched:
@@ -216,6 +217,8 @@ class Decision:
                 parts.append(f"currency={self.currency!r}")
             if self.window_unit:
                 parts.append(f"window={self.window_count} {self.window_unit}")
+        if self.outputs:
+            parts.append(f"outputs={self.outputs!r}")
         return f"Decision(matched=True, {', '.join(parts)})"
 
 
@@ -409,6 +412,27 @@ class RuleDSL:
             exc_cls = _ERROR_CLASS.get(code, EvalError)
             raise exc_cls(code, msg, detail)
 
+        # Collect output fields assigned in THEN clauses
+        outputs = {}
+        count = self._lib.ax_eval_output_field_count(self._compiler)
+        for i in range(count):
+            out_name = ctypes.c_char_p()
+            out_value = _AXValue()
+            rc = self._lib.ax_eval_output_field_at(
+                self._compiler, i,
+                ctypes.byref(out_name), ctypes.byref(out_value),
+            )
+            if rc == ErrorCode.OK and out_name.value:
+                name_str = out_name.value.decode("utf-8")
+                if out_value.type == _VALUE_NUMBER:
+                    outputs[name_str] = out_value.number
+                elif out_value.type == _VALUE_STRING:
+                    outputs[name_str] = out_value.text.decode("utf-8") if out_value.text else ""
+                elif out_value.type == _VALUE_BOOL:
+                    outputs[name_str] = bool(out_value.boolean)
+                else:
+                    outputs[name_str] = None
+
         # Extract decision before reset
         result = Decision(
             matched=dec.matched,
@@ -418,6 +442,7 @@ class RuleDSL:
             window_count=dec.window_count,
             window_unit=dec.window_unit.decode("utf-8") if dec.window_unit else None,
             rule_name=dec.rule_name.decode("utf-8") if dec.rule_name else None,
+            outputs=outputs,
         )
 
         self._lib.ax_decision_reset(ctypes.byref(dec))
@@ -599,3 +624,12 @@ class RuleDSL:
 
         L.ax_clear_last_error.restype = None
         L.ax_clear_last_error.argtypes = []
+
+        L.ax_eval_output_field_count.restype = ctypes.c_uint32
+        L.ax_eval_output_field_count.argtypes = [ctypes.c_void_p]
+
+        L.ax_eval_output_field_at.restype = ctypes.c_int
+        L.ax_eval_output_field_at.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint32,
+            ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(_AXValue),
+        ]

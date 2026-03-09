@@ -148,6 +148,15 @@ AXIOM_API AXErrorCode ax_last_error_code(void);
 AXIOM_API size_t ax_last_error_detail_utf8(char* buf, size_t cap);
 AXIOM_API void ax_clear_last_error(void);
 
+// Output field accessors — query assigned fields from the most recent ax_eval_bytecode call.
+// Pointers returned by ax_eval_output_field_at are valid until the next ax_eval_bytecode call
+// on the same compiler instance, or until ax_compiler_destroy.
+AXIOM_API uint32_t ax_eval_output_field_count(const AXCompiler* compiler);
+AXIOM_API AXErrorCode ax_eval_output_field_at(const AXCompiler* compiler,
+                                               uint32_t index,
+                                               const char** out_name,
+                                               AXValue* out_value);
+
 #ifdef __cplusplus
 }
 #endif

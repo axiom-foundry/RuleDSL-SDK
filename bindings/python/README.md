@@ -20,7 +20,7 @@ engine = RuleDSL("path/to/ruledsl_capi.dll")
 bytecode = engine.compile("""
     rule high_risk {
         when amount > 1000 and currency == "USD";
-        then decline;
+        then risk_score = 95, reason = "high_value_usd", decline;
     }
 """)
 
@@ -30,8 +30,10 @@ decision = engine.evaluate(bytecode, {
     "currency": "USD",
 })
 
-print(decision.matched)   # True
-print(decision.action)    # "DECLINE"
+print(decision.matched)     # True
+print(decision.action)      # "DECLINE"
+print(decision.rule_name)   # "high_risk"
+print(decision.outputs)     # {"reason": "high_value_usd", "risk_score": 95.0}
 
 # Clean up
 engine.close()
@@ -87,6 +89,30 @@ print(info["compatible"])      # True
 print(info["axbc_version"])    # 3
 print(info["lang_major"])      # 1
 ```
+
+## Output Fields
+
+Rules can assign output fields in the `then` clause. These are available in `decision.outputs` as a dict:
+
+```python
+bytecode = engine.compile("""
+    rule fraud_check {
+        when amount > 5000 and ip_country in [NG, RU];
+        then risk_score = 95, reason = "multi_signal", decline;
+    }
+""")
+
+decision = engine.evaluate(bytecode, {
+    "amount": 7500.0,
+    "ip_country": "NG",
+})
+
+print(decision.outputs["risk_score"])  # 95.0
+print(decision.outputs["reason"])      # "multi_signal"
+```
+
+Output field values are typed: numbers return as `float`, strings as `str`, booleans as `bool`.
+If no rule matches or the matching rule has no assignments, `outputs` is an empty dict.
 
 ## Error Handling
 
