@@ -443,12 +443,12 @@
 <span class="kw">when</span> channel <span class="kw">in</span> [ECOM, APP, WEB];</pre>
     <p>List items can be identifiers (bare words) or strings.</p>
 
-    <h3>MATCH (Pattern Matching)</h3>
-    <p>Check if a text field contains a pattern:</p>
+    <h3>MATCH (Substring Matching)</h3>
+    <p>Check if a text field contains a substring:</p>
 <pre><span class="kw">when</span> email <span class="kw">match</span> <span class="str">"@example.com"</span>;
-<span class="kw">when</span> card_bin <span class="kw">match</span> <span class="str">"^4[0-9]{5}"</span>;</pre>
+<span class="kw">when</span> card_bin <span class="kw">match</span> <span class="str">"41111"</span>;</pre>
     <div class="note">
-        <strong>Safety:</strong> Applying MATCH to a non-text field (e.g., a number) produces a runtime diagnostic and the condition resolves to <code>false</code>. The rule simply does not match &mdash; no crash, no undefined behavior.
+        <strong>Safety:</strong> Applying MATCH to a non-text field (e.g., a number) raises a runtime error (<code>MATCH_EXPECTS_TEXT</code>). Always ensure the matched field is a string.
     </div>
 </section>
 
