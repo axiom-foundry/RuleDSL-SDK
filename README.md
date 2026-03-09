@@ -93,15 +93,16 @@ Highlights:
 
 ## What you receive
 
-A delivery packet includes:
+A delivery bundle (`.zip`) includes everything needed to integrate:
 
-| Content | Source |
-|---------|--------|
-| `include/` C headers | This repository |
-| `bin/` compiled binaries | Provided separately |
-| `manifest.json` + `SHA256SUMS.txt` | Integrity verification |
-| Documentation | This repository |
-| Examples | `examples/` directory |
+| Content | Description |
+|---------|------------|
+| `bin/` | Engine library (`.dll`/`.so`), compiler (`ruledslc`), import library |
+| `include/` | C headers |
+| `bindings/` | Python and C# wrappers with examples |
+| `examples/` | Complete C examples with rule files |
+| `docs/` | Cookbook, error reference, troubleshooting |
+| `manifests/` | `MANIFEST.json`, `HASHES.txt` for integrity verification |
 
 ## Language bindings
 
