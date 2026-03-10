@@ -81,7 +81,11 @@ rule allow_otherwise {
 }
 ```
 
-**Use case:** Block high-value transactions from specific countries. The `IN` list accepts identifiers (bare words) and strings.
+**Use case:** Block high-value transactions from specific countries. The `IN` list accepts **string literals** (`"NG"`, `"RU"`) and **bare identifiers** (`NG`, `RU`). Bare identifiers are treated as literal values (not field lookups) — `NG` is equivalent to `"NG"`. Using quoted strings is recommended for clarity:
+
+```ruledsl
+when ip_country in ["NG", "RU", "KP"];
+```
 
 ---
 
@@ -129,12 +133,12 @@ Append a currency code to numeric literals for currency-aware comparisons.
 
 ```ruledsl
 rule decline_large_usd {
-  when amount >= 10000 USD;
+  when amount >= 10000 and currency == "USD";
   then reason = "usd_threshold", decline;
 }
 
 rule review_large_eur {
-  when amount >= 8000 EUR;
+  when amount >= 8000 and currency == "EUR";
   then reason = "eur_threshold", review;
 }
 
@@ -144,7 +148,7 @@ rule allow_other {
 }
 ```
 
-**Use case:** Different thresholds per currency. Note: the currency literal (`10000 USD`) attaches metadata to the comparison but the engine compares the **numeric value only** — it does not filter by currency. To enforce currency-specific rules, add an explicit condition: `when amount >= 10000 and currency == "USD"`.
+**Use case:** Different thresholds per currency. The host application provides `currency` as a string field. Note: the currency literal syntax (`10000 USD`) attaches metadata to the numeric comparison but the engine compares the **numeric value only** — it does not filter by currency. For currency-specific enforcement, always add an explicit `currency == "USD"` condition as shown above.
 
 ---
 
@@ -164,7 +168,7 @@ rule allow_small {
 }
 ```
 
-**Use case:** Limit high-value customers to 200 USD per day. Supported time units: `S` (second), `M` (minute), `H` (hour), `D` (day).
+**Use case:** Limit high-value customers to 200 USD per day. Supported time units: `S` (second), `M` (minute), `H` (hour), `D` (day). Time units are case-insensitive: `d`, `D`, `h`, `H` are all valid.
 
 > **Note:** LIMIT rules require `now_utc_ms` to be provided in the input context. The Python and C# bindings auto-inject this from the system clock; the C API requires explicit injection.
 

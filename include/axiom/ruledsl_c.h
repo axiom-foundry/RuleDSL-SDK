@@ -46,10 +46,13 @@ typedef enum AXErrorCode {
     AX_ERR_BAD_STRUCT_SIZE = 10,
     AX_ERR_RUNTIME = 11
 } AXErrorCode;
+// AXStatus for bytecode compatibility checks.
+// Values 3-5 are reserved for future use.
 typedef enum AXStatus {
     AX_STATUS_OK = 0,
     AX_STATUS_INVALID_ARGUMENT = 1,
     AX_STATUS_BAD_STRUCT_SIZE = 2,
+    /* 3-5 reserved */
     AX_STATUS_STRUCTURALLY_INVALID = 6,
     AX_STATUS_UNSUPPORTED_VERSION = 7,
     AX_STATUS_CORRUPTED_PAYLOAD = 8
@@ -75,6 +78,10 @@ typedef struct AXBytecode {
     size_t size;
 } AXBytecode;
 
+// Trace callback invoked during evaluation for each rule/expression step.
+// Parameters:
+//   user — opaque context pointer from AXEvalOptions.trace_user
+//   line — null-terminated UTF-8 trace message (valid only for the duration of the call)
 typedef void (*AXTraceCallback)(void* user, const char* line);
 
 typedef struct AXEvalOptions {

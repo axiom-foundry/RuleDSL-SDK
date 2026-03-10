@@ -162,6 +162,12 @@ except EvalError as e:
     print(f"Eval failed: {e.code_name}")  # "AX_ERR_NON_FINITE"
 ```
 
+## Thread Safety
+
+Each `RuleDSL` instance uses an internal lock to serialize `compile()` and `evaluate()` calls. Multiple threads can safely share a single instance — the lock prevents concurrent access to the underlying C compiler state.
+
+For maximum throughput, create one `RuleDSL` instance per thread to avoid lock contention.
+
 ## Engine Version
 
 ```python

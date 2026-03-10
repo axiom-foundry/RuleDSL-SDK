@@ -59,6 +59,7 @@ Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensiti
 | C# type | RuleDSL type | Example |
 |---------|-------------|---------|
 | `double` / `int` / `long` / `float` | NUMBER | `{"amount", 1200.0}` |
+| `CurrencyValue` | NUMBER + currency tag | `{"amount", new CurrencyValue(1200.0, "USD")}` |
 | `string` | STRING | `{"currency", "USD"}` |
 | `bool` | BOOL | `{"is_vip", true}` |
 | `null` | MISSING | `{"country", null}` |
@@ -132,6 +133,11 @@ catch (CompileException ex)
 try
 {
     var result = engine.Evaluate(bytecode, fields);
+}
+catch (VerifyException ex)
+{
+    Console.WriteLine($"Code: {ex.Code}");     // Verify
+    Console.WriteLine($"Detail: {ex.Detail}");
 }
 catch (EvalException ex)
 {

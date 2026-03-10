@@ -1,6 +1,11 @@
-RULE threshold_decline {
-  WHEN amount > 500;
+RULE threshold_decline PRIORITY 100 {
+  WHEN amount > 1000;
   THEN DECLINE;
+}
+
+RULE threshold_review PRIORITY 50 {
+  WHEN amount > 500 AND amount <= 1000;
+  THEN REVIEW;
 }
 
 RULE threshold_allow {

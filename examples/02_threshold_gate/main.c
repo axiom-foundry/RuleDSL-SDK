@@ -77,12 +77,11 @@ int main(int argc, char** argv)
                 (unsigned)compatibility.lang_major,
                 (unsigned)compatibility.lang_minor,
                 (unsigned)compatibility.minimum_engine_abi);
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
+    /* Scenario: amount=700 falls in the "gate zone" (500-1000) → REVIEW */
     memset(fields, 0, sizeof(fields));
     fields[0].name = "amount";
     fields[0].value.type = AX_VALUE_NUMBER;
@@ -94,30 +93,24 @@ int main(int argc, char** argv)
 
     if (ax_eval_bytecode(compiler, &bytecode, fields, 2, &options, &decision, err, sizeof(err)) != AX_ERR_OK) {
         fprintf(stderr, "ax_eval_bytecode failed: %s\n", err[0] ? err : "no detail");
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
 
-    if (!decision.matched || decision.action_type != AX_ACTION_DECLINE) {
+    if (!decision.matched || decision.action_type != AX_ACTION_REVIEW) {
         fprintf(stderr, "unexpected action_type=%d matched=%d\n", (int)decision.action_type, decision.matched);
         ax_decision_reset(&decision);
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
 
-    printf("ACTION=DECLINE\n");
+    printf("ACTION=REVIEW\n");
     printf("RESULT=OK\n");
 
     ax_decision_reset(&decision);
-    free(bytecode.data);
-    bytecode.data = NULL;
-    bytecode.size = 0;
+    ax_bytecode_free(&bytecode);
     ax_compiler_destroy(compiler);
     return 0;
 }

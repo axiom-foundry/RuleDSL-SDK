@@ -1,6 +1,8 @@
 # 02 Threshold Gate
 
-This example compiles a threshold gate policy and evaluates the resulting decision.
+This example demonstrates a threshold gate pattern: transactions above a hard limit are declined, those in a "gate zone" are reviewed, and low-value transactions are allowed.
+
+The test evaluates `amount=700`, which falls in the review zone (500-1000).
 
 ## Commands
 
@@ -14,6 +16,6 @@ cl /nologo /W4 /I ..\..\include main.c /link /LIBPATH:<ENGINE_LIB_DIR> ruledsl_c
 Expected output:
 
 ```text
-ACTION=DECLINE
+ACTION=REVIEW
 RESULT=OK
 ```

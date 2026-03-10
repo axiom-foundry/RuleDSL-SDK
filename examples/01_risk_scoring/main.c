@@ -77,9 +77,7 @@ int main(int argc, char** argv)
                 (unsigned)compatibility.lang_major,
                 (unsigned)compatibility.lang_minor,
                 (unsigned)compatibility.minimum_engine_abi);
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
@@ -94,9 +92,7 @@ int main(int argc, char** argv)
 
     if (ax_eval_bytecode(compiler, &bytecode, fields, 2, &options, &decision, err, sizeof(err)) != AX_ERR_OK) {
         fprintf(stderr, "ax_eval_bytecode failed: %s\n", err[0] ? err : "no detail");
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
@@ -104,9 +100,7 @@ int main(int argc, char** argv)
     if (!decision.matched || decision.action_type != AX_ACTION_DECLINE) {
         fprintf(stderr, "unexpected action_type=%d matched=%d\n", (int)decision.action_type, decision.matched);
         ax_decision_reset(&decision);
-        free(bytecode.data);
-        bytecode.data = NULL;
-        bytecode.size = 0;
+        ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);
         return 1;
     }
@@ -115,9 +109,7 @@ int main(int argc, char** argv)
     printf("RESULT=OK\n");
 
     ax_decision_reset(&decision);
-    free(bytecode.data);
-    bytecode.data = NULL;
-    bytecode.size = 0;
+    ax_bytecode_free(&bytecode);
     ax_compiler_destroy(compiler);
     return 0;
 }

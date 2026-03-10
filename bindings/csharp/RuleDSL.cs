@@ -3,7 +3,7 @@
 // Usage:
 //   using Axiom.RuleDSL;
 //
-//   using var engine = new RuleDSLEngine("ruledsl_capi.dll");
+//   using var engine = new RuleDSLEngine();
 //   var bytecode = engine.Compile("rule r1 { when amount > 100; then decline; }");
 //   var decision = engine.Evaluate(bytecode, new Dictionary<string, object> {
 //       { "amount", 1200.0 },
@@ -91,10 +91,36 @@ namespace Axiom.RuleDSL
             : base(AXErrorCode.Compile, message, detail) { }
     }
 
+    public class VerifyException : RuleDSLException
+    {
+        public VerifyException(string message, string detail = "")
+            : base(AXErrorCode.Verify, message, detail) { }
+    }
+
     public class EvalException : RuleDSLException
     {
         public EvalException(AXErrorCode code, string message, string detail = "")
             : base(code, message, detail) { }
+    }
+
+    // -----------------------------------------------------------------------
+    // Currency-tagged numeric value
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// A numeric value with an attached currency tag (e.g., 100.0 USD).
+    /// Pass as a field value to attach currency metadata.
+    /// </summary>
+    public class CurrencyValue
+    {
+        public double Amount { get; }
+        public string Currency { get; }
+
+        public CurrencyValue(double amount, string currency)
+        {
+            Amount = amount;
+            Currency = currency ?? throw new ArgumentNullException(nameof(currency));
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -427,6 +453,8 @@ namespace Axiom.RuleDSL
                     string msg = Encoding.UTF8.GetString(err).TrimEnd('\0');
                     string detail = GetLastErrorDetail();
                     NativeMethods.ax_clear_last_error();
+                    if ((AXErrorCode)code == AXErrorCode.Verify)
+                        throw new VerifyException(msg, detail);
                     throw new EvalException((AXErrorCode)code, msg, detail);
                 }
 
@@ -480,7 +508,8 @@ namespace Axiom.RuleDSL
         }
 
         /// <summary>Check bytecode compatibility with the current engine.</summary>
-        public (bool Compatible, AXStatus Status, uint AxbcVersion) CheckCompatibility(Bytecode bytecode)
+        public (bool Compatible, AXStatus Status, uint AxbcVersion,
+                ushort LangMajor, ushort LangMinor, ushort MinimumEngineAbi) CheckCompatibility(Bytecode bytecode)
         {
             var info = new NativeAXCompatibilityInfo
             {
@@ -490,7 +519,8 @@ namespace Axiom.RuleDSL
             int status = NativeMethods.ax_check_bytecode_compatibility(
                 bytecode.Data, (UIntPtr)bytecode.Data.Length, ref info);
 
-            return (status == 0, (AXStatus)status, info.axbc_version);
+            return (status == 0, (AXStatus)status, info.axbc_version,
+                    info.lang_major, info.lang_minor, info.minimum_engine_abi);
         }
 
         /// <summary>Get the engine version string.</summary>
@@ -553,7 +583,8 @@ namespace Axiom.RuleDSL
             return result;
         }
 
-        private static NativeAXValue MakeValue(object val, List<GCHandle> handles)
+        private static NativeAXValue MakeValue(object val, List<GCHandle> handles,
+                                                string? currency = null)
         {
             var v = new NativeAXValue();
 
@@ -582,6 +613,14 @@ namespace Axiom.RuleDSL
                     v.type = (int)AXValueType.Number;
                     v.number = l;
                     break;
+                case CurrencyValue cv:
+                    v.type = (int)AXValueType.Number;
+                    v.number = cv.Amount;
+                    var cvBytes = Encoding.UTF8.GetBytes(cv.Currency + '\0');
+                    var cvHandle = GCHandle.Alloc(cvBytes, GCHandleType.Pinned);
+                    handles.Add(cvHandle);
+                    v.currency = cvHandle.AddrOfPinnedObject();
+                    break;
                 case string s:
                     v.type = (int)AXValueType.String;
                     var textBytes = Encoding.UTF8.GetBytes(s + '\0');
@@ -593,6 +632,14 @@ namespace Axiom.RuleDSL
                     throw new RuleDSLException(AXErrorCode.InvalidArgument,
                         $"Unsupported field value type: {val.GetType().Name}. " +
                         "Use double, string, bool, or null.");
+            }
+
+            if (currency != null)
+            {
+                var curBytes = Encoding.UTF8.GetBytes(currency + '\0');
+                var curHandle = GCHandle.Alloc(curBytes, GCHandleType.Pinned);
+                handles.Add(curHandle);
+                v.currency = curHandle.AddrOfPinnedObject();
             }
 
             return v;

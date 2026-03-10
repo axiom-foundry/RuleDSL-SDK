@@ -22,6 +22,7 @@ import ctypes
 import ctypes.util
 import os
 import platform
+import threading
 import time
 from pathlib import Path
 
@@ -100,9 +101,17 @@ class ArgumentError(RuleDSLError):
 
 
 _ERROR_CLASS = {
+    ErrorCode.INVALID_ARGUMENT: ArgumentError,
     ErrorCode.COMPILE: CompileError,
     ErrorCode.VERIFY: VerifyError,
-    ErrorCode.INVALID_ARGUMENT: ArgumentError,
+    ErrorCode.MISSING_NOW_UTC_MS: EvalError,
+    ErrorCode.NOW_UTC_MS_NOT_NUMBER: EvalError,
+    ErrorCode.NON_FINITE: EvalError,
+    ErrorCode.DIV_ZERO: EvalError,
+    ErrorCode.CONCURRENT_COMPILER_USE: EvalError,
+    ErrorCode.LIMIT_EXCEEDED: EvalError,
+    ErrorCode.BAD_STRUCT_SIZE: EvalError,
+    ErrorCode.RUNTIME: EvalError,
 }
 
 
@@ -137,7 +146,7 @@ class _AXBytecode(ctypes.Structure):
 class _AXEvalOptions(ctypes.Structure):
     _fields_ = [
         ("struct_size", ctypes.c_uint32),
-        ("trace_cb", ctypes.c_void_p),
+        ("trace_cb", ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)),
         ("trace_user", ctypes.c_void_p),
         ("reserved", ctypes.c_uint64 * 4),
     ]
@@ -268,6 +277,7 @@ class RuleDSL:
     """
 
     def __init__(self, library_path=None):
+        self._lock = threading.Lock()
         self._lib = self._load_library(library_path)
         self._setup_bindings()
         self._compiler = self._lib.ax_compiler_create()
@@ -282,8 +292,9 @@ class RuleDSL:
             raise RuleDSLError(ErrorCode.COMPILE, f"Compiler build failed: {msg}")
 
     def __del__(self):
-        if hasattr(self, "_compiler") and self._compiler:
-            self._lib.ax_compiler_destroy(self._compiler)
+        lib = getattr(self, "_lib", None)
+        if hasattr(self, "_compiler") and self._compiler and lib:
+            lib.ax_compiler_destroy(self._compiler)
             self._compiler = None
 
     def __enter__(self):
@@ -314,26 +325,27 @@ class RuleDSL:
             CompileError: If the rule source has syntax or semantic errors.
         """
         self._check_alive()
-        bc = _AXBytecode()
-        err = ctypes.create_string_buffer(2048)
+        with self._lock:
+            bc = _AXBytecode()
+            err = ctypes.create_string_buffer(2048)
 
-        result = self._lib.ax_compile_to_bytecode(
-            self._compiler,
-            rule_source.encode("utf-8"),
-            ctypes.byref(bc),
-            err,
-            len(err),
-        )
+            result = self._lib.ax_compile_to_bytecode(
+                self._compiler,
+                rule_source.encode("utf-8"),
+                ctypes.byref(bc),
+                err,
+                len(err),
+            )
 
-        if not result:
-            msg = err.value.decode("utf-8", errors="replace")
-            detail = self._get_last_error_detail()
-            self._lib.ax_clear_last_error()
-            raise CompileError(ErrorCode.COMPILE, msg, detail)
+            if not result:
+                msg = err.value.decode("utf-8", errors="replace")
+                detail = self._get_last_error_detail()
+                self._lib.ax_clear_last_error()
+                raise CompileError(ErrorCode.COMPILE, msg, detail)
 
-        # Copy bytes out before freeing the SDK allocation
-        data = bytes(ctypes.cast(bc.data, ctypes.POINTER(ctypes.c_ubyte * bc.size)).contents)
-        self._lib.ax_bytecode_free(ctypes.byref(bc))
+            # Copy bytes out before freeing the SDK allocation
+            data = bytes(ctypes.cast(bc.data, ctypes.POINTER(ctypes.c_ubyte * bc.size)).contents)
+            self._lib.ax_bytecode_free(ctypes.byref(bc))
 
         return Bytecode(data)
 
@@ -395,58 +407,59 @@ class RuleDSL:
 
         err = ctypes.create_string_buffer(2048)
 
-        code = self._lib.ax_eval_bytecode(
-            self._compiler,
-            ctypes.byref(c_bc),
-            c_fields,
-            field_count,
-            ctypes.byref(opts),
-            ctypes.byref(dec),
-            err,
-            len(err),
-        )
-
-        if code != ErrorCode.OK:
-            msg = err.value.decode("utf-8", errors="replace")
-            detail = self._get_last_error_detail()
-            self._lib.ax_clear_last_error()
-            exc_cls = _ERROR_CLASS.get(code, EvalError)
-            raise exc_cls(code, msg, detail)
-
-        # Collect output fields assigned in THEN clauses
-        outputs = {}
-        count = self._lib.ax_eval_output_field_count(self._compiler)
-        for i in range(count):
-            out_name = ctypes.c_char_p()
-            out_value = _AXValue()
-            rc = self._lib.ax_eval_output_field_at(
-                self._compiler, i,
-                ctypes.byref(out_name), ctypes.byref(out_value),
+        with self._lock:
+            code = self._lib.ax_eval_bytecode(
+                self._compiler,
+                ctypes.byref(c_bc),
+                c_fields,
+                field_count,
+                ctypes.byref(opts),
+                ctypes.byref(dec),
+                err,
+                len(err),
             )
-            if rc == ErrorCode.OK and out_name.value:
-                name_str = out_name.value.decode("utf-8")
-                if out_value.type == _VALUE_NUMBER:
-                    outputs[name_str] = out_value.number
-                elif out_value.type == _VALUE_STRING or out_value.type == _VALUE_IDENT:
-                    outputs[name_str] = out_value.text.decode("utf-8") if out_value.text else ""
-                elif out_value.type == _VALUE_BOOL:
-                    outputs[name_str] = bool(out_value.boolean)
-                else:
-                    outputs[name_str] = None
 
-        # Extract decision before reset
-        result = Decision(
-            matched=dec.matched,
-            action_type=dec.action_type,
-            amount=dec.amount,
-            currency=dec.currency.decode("utf-8") if dec.currency else None,
-            window_count=dec.window_count,
-            window_unit=dec.window_unit.decode("utf-8") if dec.window_unit else None,
-            rule_name=dec.rule_name.decode("utf-8") if dec.rule_name else None,
-            outputs=outputs,
-        )
+            if code != ErrorCode.OK:
+                msg = err.value.decode("utf-8", errors="replace")
+                detail = self._get_last_error_detail()
+                self._lib.ax_clear_last_error()
+                exc_cls = _ERROR_CLASS.get(code, EvalError)
+                raise exc_cls(code, msg, detail)
 
-        self._lib.ax_decision_reset(ctypes.byref(dec))
+            # Collect output fields assigned in THEN clauses
+            outputs = {}
+            count = self._lib.ax_eval_output_field_count(self._compiler)
+            for i in range(count):
+                out_name = ctypes.c_char_p()
+                out_value = _AXValue()
+                rc = self._lib.ax_eval_output_field_at(
+                    self._compiler, i,
+                    ctypes.byref(out_name), ctypes.byref(out_value),
+                )
+                if rc == ErrorCode.OK and out_name.value:
+                    name_str = out_name.value.decode("utf-8")
+                    if out_value.type == _VALUE_NUMBER:
+                        outputs[name_str] = out_value.number
+                    elif out_value.type == _VALUE_STRING or out_value.type == _VALUE_IDENT:
+                        outputs[name_str] = out_value.text.decode("utf-8") if out_value.text else ""
+                    elif out_value.type == _VALUE_BOOL:
+                        outputs[name_str] = bool(out_value.boolean)
+                    else:
+                        outputs[name_str] = None
+
+            # Extract decision before reset
+            result = Decision(
+                matched=dec.matched,
+                action_type=dec.action_type,
+                amount=dec.amount,
+                currency=dec.currency.decode("utf-8") if dec.currency else None,
+                window_count=dec.window_count,
+                window_unit=dec.window_unit.decode("utf-8") if dec.window_unit else None,
+                rule_name=dec.rule_name.decode("utf-8") if dec.rule_name else None,
+                outputs=outputs,
+            )
+
+            self._lib.ax_decision_reset(ctypes.byref(dec))
         return result
 
     def check_compatibility(self, bytecode) -> dict:
