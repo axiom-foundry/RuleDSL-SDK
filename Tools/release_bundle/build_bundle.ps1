@@ -295,13 +295,15 @@ foreach ($f in $csharpExampleFiles) {
     Copy-Item -Force $src (Join-Path $csharpExamplesOut $f.dst)
 }
 
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
 if ($BundleType -eq "Commercial") {
-    "LICENSE PLACEHOLDER - COMMERCIAL DELIVERY TERMS APPLY" | Set-Content -Path (Join-Path $outRoot "LICENSE") -Encoding utf8
+    [System.IO.File]::WriteAllText((Join-Path $outRoot "LICENSE"), "LICENSE PLACEHOLDER - COMMERCIAL DELIVERY TERMS APPLY`n", $utf8NoBom)
 }
 else {
-    "LICENSE PLACEHOLDER - EVALUATION DELIVERY TERMS APPLY" | Set-Content -Path (Join-Path $outRoot "LICENSE") -Encoding utf8
+    [System.IO.File]::WriteAllText((Join-Path $outRoot "LICENSE"), "LICENSE PLACEHOLDER - EVALUATION DELIVERY TERMS APPLY`n", $utf8NoBom)
 }
-"NOTICE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY" | Set-Content -Path (Join-Path $outRoot "NOTICE") -Encoding utf8
+[System.IO.File]::WriteAllText((Join-Path $outRoot "NOTICE"), "NOTICE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY`n", $utf8NoBom)
 
 if ($EmitManifests) {
     New-Item -ItemType Directory -Force -Path $manifestsOut | Out-Null
@@ -316,17 +318,17 @@ if ($EmitManifests) {
         "BUNDLE_SCRIPT_VERSION=$bundleScriptVersion"
     )
     $toolchainPath = Join-Path $manifestsOut "TOOLCHAIN.txt"
-    $toolchainLines | Set-Content -Path $toolchainPath -Encoding utf8
+    [System.IO.File]::WriteAllText($toolchainPath, (($toolchainLines -join "`n") + "`n"), $utf8NoBom)
 
     $licenseStatusPath = Join-Path $manifestsOut "LICENSE_STATUS.txt"
     $licenseOutput = & $CompilerBin license --status 2>&1
     $licenseExit = $LASTEXITCODE
     $licenseLines = @($licenseOutput | ForEach-Object { $_.ToString().TrimEnd() } | Where-Object { $_ -ne "" })
     if ($licenseExit -eq 0 -and $licenseLines.Count -gt 0) {
-        $licenseLines | Set-Content -Path $licenseStatusPath -Encoding utf8
+        [System.IO.File]::WriteAllText($licenseStatusPath, (($licenseLines -join "`n") + "`n"), $utf8NoBom)
     }
     else {
-        "LICENSE=UNKNOWN" | Set-Content -Path $licenseStatusPath -Encoding utf8
+        [System.IO.File]::WriteAllText($licenseStatusPath, "LICENSE=UNKNOWN`n", $utf8NoBom)
     }
 
     $currentFiles = @(Get-ChildItem -Path $outRoot -Recurse -File)
@@ -356,7 +358,7 @@ if ($EmitManifests) {
     }
     $manifestPath = Join-Path $manifestsOut "MANIFEST.json"
     $manifestJson = $manifestObject | ConvertTo-Json -Depth 8
-    $manifestJson | Set-Content -Path $manifestPath -Encoding utf8
+    [System.IO.File]::WriteAllText($manifestPath, ($manifestJson + "`n"), $utf8NoBom)
 
     $hashLines = @()
     $filesForHash = @(Get-ChildItem -Path $outRoot -Recurse -File)
@@ -375,7 +377,7 @@ if ($EmitManifests) {
         $hashLines += "$sha  $rel"
     }
     $hashesPath = Join-Path $manifestsOut "HASHES.txt"
-    $hashLines | Set-Content -Path $hashesPath -Encoding utf8
+    [System.IO.File]::WriteAllText($hashesPath, (($hashLines -join "`n") + "`n"), $utf8NoBom)
 }
 
 # Final bundle validation guardrails.

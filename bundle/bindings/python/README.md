@@ -1,0 +1,175 @@
+# RuleDSL Python Binding
+
+Pure Python (ctypes) wrapper for the RuleDSL C API. No compilation needed — just point it at your `ruledsl_capi.dll` or `libruledsl_capi.so`.
+
+## Requirements
+
+- Python 3.7+
+- RuleDSL shared library (`ruledsl_capi.dll` on Windows, `libruledsl_capi.so` on Linux)
+- No third-party dependencies
+
+## Quick Start
+
+```python
+from ruledsl import RuleDSL
+
+# Initialize (pass path to your shared library)
+engine = RuleDSL("path/to/ruledsl_capi.dll")
+
+# Compile a rule
+bytecode = engine.compile("""
+    rule high_risk {
+        when amount > 1000 and currency == "USD";
+        then risk_score = 95, reason = "high_value_usd", decline;
+    }
+""")
+
+# Evaluate
+decision = engine.evaluate(bytecode, {
+    "amount": 1200.0,
+    "currency": "USD",
+})
+
+print(decision.matched)     # True
+print(decision.action)      # "DECLINE"
+print(decision.rule_name)   # "high_risk"
+print(decision.outputs)     # {"reason": "high_value_usd", "risk_score": 95.0}
+
+# Clean up
+engine.close()
+```
+
+## Context Manager
+
+```python
+with RuleDSL("ruledsl_capi.dll") as engine:
+    bc = engine.compile('rule r1 { when x > 10; then review; }')
+    result = engine.evaluate(bc, {"x": 15.0})
+    print(result)  # Decision(matched=True, action='REVIEW')
+```
+
+## Priority and LIMIT
+
+Rules support priority ordering and rate-limit actions:
+
+```python
+bytecode = engine.compile("""
+    rule high_risk priority 10 {
+        when amount > 5000;
+        then decline;
+    }
+    rule spending_cap priority 5 {
+        when amount > 500;
+        then limit 1000 USD per 1 d;
+    }
+""")
+```
+
+Priority goes between the rule name and opening brace. Higher priority is evaluated first.
+Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensitive.
+
+## Field Types
+
+| Python type | RuleDSL type | Example |
+|-------------|-------------|---------|
+| `float` / `int` | NUMBER | `{"amount": 1200.0}` |
+| `str` | STRING | `{"currency": "USD"}` |
+| `bool` | BOOL | `{"is_vip": True}` |
+| `None` | MISSING | `{"country": None}` |
+
+## Time Injection
+
+The engine requires `now_utc_ms` for time-based rules. The wrapper auto-injects it from the system clock if not provided:
+
+```python
+# Automatic (uses current time)
+decision = engine.evaluate(bytecode, {"amount": 100.0})
+
+# Manual (for deterministic replay)
+decision = engine.evaluate(bytecode, {"amount": 100.0}, now_utc_ms=1700000000000.0)
+```
+
+## Bytecode I/O
+
+```python
+# Save compiled bytecode
+bytecode = engine.compile(rule_source)
+bytecode.save("rules.axbc")
+
+# Load bytecode from file
+from ruledsl import Bytecode
+bytecode = Bytecode.from_file("rules.axbc")
+```
+
+## Compatibility Check
+
+```python
+info = engine.check_compatibility(bytecode)
+print(info["compatible"])      # True
+print(info["axbc_version"])    # 3
+print(info["lang_major"])      # 1
+```
+
+## Output Fields
+
+Rules can assign output fields in the `then` clause. These are available in `decision.outputs` as a dict:
+
+```python
+bytecode = engine.compile("""
+    rule fraud_check {
+        when amount > 5000 and ip_country in [NG, RU];
+        then risk_score = 95, reason = "multi_signal", decline;
+    }
+""")
+
+decision = engine.evaluate(bytecode, {
+    "amount": 7500.0,
+    "ip_country": "NG",
+})
+
+print(decision.outputs["risk_score"])  # 95.0
+print(decision.outputs["reason"])      # "multi_signal"
+```
+
+Output field values are typed: numbers return as `float`, strings as `str`, booleans as `bool`.
+If no rule matches or the matching rule has no assignments, `outputs` is an empty dict.
+
+## Decision Behavior
+
+When a rule matches, `decision.matched` is `True` and `decision.action` reflects the matched rule's action.
+When no rule matches, `decision.matched` is `False`, `decision.outputs` is empty, and the `action` field should not be relied upon.
+
+Always check `decision.matched` before reading `decision.action`.
+
+## Error Handling
+
+```python
+from ruledsl import RuleDSL, CompileError, EvalError, RuleDSLError
+
+engine = RuleDSL("ruledsl_capi.dll")
+
+# Compile errors
+try:
+    engine.compile("invalid rule text")
+except CompileError as e:
+    print(f"Compile failed: {e}")
+    print(f"Error code: {e.code}")
+
+# Eval errors
+try:
+    result = engine.evaluate(bytecode, {"amount": float("nan")})
+except EvalError as e:
+    print(f"Eval failed: {e.code_name}")  # "AX_ERR_NON_FINITE"
+```
+
+## Thread Safety
+
+Each `RuleDSL` instance uses an internal lock to serialize `compile()` and `evaluate()` calls. Multiple threads can safely share a single instance — the lock prevents concurrent access to the underlying C compiler state.
+
+For maximum throughput, create one `RuleDSL` instance per thread to avoid lock contention.
+
+## Engine Version
+
+```python
+print(engine.version())  # "RuleDSL/1.0.0 (abi=1)"
+```
