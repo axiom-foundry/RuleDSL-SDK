@@ -144,6 +144,36 @@ jobs:
         working-directory: sdk
         run: ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir "$env:GITHUB_WORKSPACE/dist/bundle"
 
+      - name: Verify shipped examples (customer "follow the docs" path)
+        # Exercises exactly what a customer does from the docs: compile each
+        # rules.rule with the shipped ruledslc, build the example main.c against
+        # the shipped headers + .so, run it, and diff against expected_output.txt.
+        # Runs on a scratch COPY so build artifacts never enter the packaged bundle.
+        run: |
+          set -euo pipefail
+          B=/tmp/bundle-smoke
+          rm -rf "$B"; cp -a "$GITHUB_WORKSPACE/dist/bundle" "$B"
+          chmod +x "$B/bin/ruledslc"
+          fail=0
+          for d in "$B"/examples/*/; do
+            name=$(basename "$d")
+            (
+              cd "$d"
+              "$B/bin/ruledslc" compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+              "$B/bin/ruledslc" verify rules.axbc
+              cc main.c -I "$B/include" -L "$B/bin" -lruledsl_capi -o eval
+              got=$(LD_LIBRARY_PATH="$B/bin" ./eval rules.axbc)
+              exp=$(cat expected_output.txt)
+              if [ "$got" != "$exp" ]; then
+                echo "::error::example '$name' output mismatch"
+                printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"
+                exit 1
+              fi
+              echo "example '$name': OK"
+            ) || fail=1
+          done
+          [ "$fail" -eq 0 ] || { echo "::error::one or more shipped examples failed"; exit 1; }
+
       - name: Package bundle (deterministic archives)
         id: pkg
         run: |
