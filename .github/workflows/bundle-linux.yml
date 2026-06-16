@@ -66,10 +66,30 @@ jobs:
           sudo apt-get install -y ninja-build
 
       - name: Configure engine (Release)
-        run: cmake -S engine -B engine/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        # The engine is PRIVATE source built inside this PUBLIC repo's CI.
+        # Redirect cmake output so the public log never enumerates engine
+        # source paths; surface only a short tail on failure for debugging.
+        run: |
+          set -euo pipefail
+          if ! cmake -S engine -B engine/build -G Ninja -DCMAKE_BUILD_TYPE=Release > engine/configure.log 2>&1; then
+            echo "::error::engine configure failed"
+            tail -n 50 engine/configure.log
+            exit 1
+          fi
+          echo "engine configured (Release)"
 
       - name: Build ruledslc + shared C API
-        run: cmake --build engine/build --parallel --target ruledslc axiom_ruledsl_c_shared
+        # Ninja prints per-file source names; redirect so the public log does
+        # not list private engine source files. On failure, surface only the
+        # compiler error lines (not the full file-by-file progress).
+        run: |
+          set -euo pipefail
+          if ! cmake --build engine/build --parallel --target ruledslc axiom_ruledsl_c_shared > engine/build.log 2>&1; then
+            echo "::error::engine build failed (showing error lines only)"
+            grep -iE "error[:0-9 ]" engine/build.log | tail -n 40 || true
+            exit 1
+          fi
+          echo "engine build OK ($(grep -c 'Building CXX object' engine/build.log || true) objects compiled)"
 
       - name: Locate built binaries
         id: bins
