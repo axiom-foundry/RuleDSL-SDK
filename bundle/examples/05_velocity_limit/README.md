@@ -13,7 +13,7 @@ This example demonstrates arithmetic expressions, velocity limit clauses with cu
 ## Commands
 
 ```powershell
-ruledslc compile rules.rule -o rules.axbc --lang 1.0 --target axbc3 --emit-manifest compile_manifest.json
+ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3 --emit-manifest compile_manifest.json
 ruledslc verify rules.axbc
 cl /nologo /W4 /I ..\..\include main.c /link /LIBPATH:<ENGINE_LIB_DIR> ruledsl_capi.lib /OUT:velocity_eval.exe
 .\velocity_eval.exe rules.axbc
