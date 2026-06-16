@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          ref: 827c4b059b633ce5b35d217166447626f9ee98e8
+          ref: 3b928b3b151f556a63facab015c00b520a98da74
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
 
