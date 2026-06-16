@@ -147,7 +147,9 @@ function Get-GitShortHash {
     return $hash.Trim()
 }
 
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+# Forward slashes resolve on both Windows and Unix; "..\.." would be a literal
+# (non-separator) path component on PowerShell/Linux and break the build.
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 if (-not $Out) {
     $Out = Join-Path $repoRoot "bundle"
 }
@@ -191,7 +193,7 @@ $manifestsOut = Join-Path $outRoot "manifests"
 
 New-Item -ItemType Directory -Force -Path $includeOut, $binOut, $docsOut, $examplesOut, $bindingsOut | Out-Null
 
-Copy-Item -Recurse -Force (Join-Path $repoRoot "include\*") $includeOut
+Copy-Item -Recurse -Force (Join-Path $repoRoot "include/*") $includeOut
 Copy-Item -Force $EngineBin (Join-Path $binOut ([System.IO.Path]::GetFileName($EngineBin)))
 $compilerOutName = "ruledslc" + [System.IO.Path]::GetExtension($CompilerBin)
 Copy-Item -Force $CompilerBin (Join-Path $binOut $compilerOutName)
@@ -404,8 +406,13 @@ if ($includeNonHeaders) {
     throw "Bundle include/ contains non-header files: $list"
 }
 
+# Allowed bin/ contents: known shared/static/import-lib extensions, plus
+# extensionless files — on Linux the compiler ships as `ruledslc` with no
+# extension, which is a legitimate executable deliverable.
 $allowedBinExt = @(".exe", ".dll", ".lib", ".so", ".a", ".dylib")
-$disallowedBinFiles = Get-ChildItem -Recurse -File $binOut | Where-Object { $allowedBinExt -notcontains $_.Extension.ToLowerInvariant() }
+$disallowedBinFiles = Get-ChildItem -Recurse -File $binOut | Where-Object {
+    $_.Extension -ne "" -and $allowedBinExt -notcontains $_.Extension.ToLowerInvariant()
+}
 if ($disallowedBinFiles) {
     $list = ($disallowedBinFiles | ForEach-Object { $_.FullName }) -join "; "
     throw "Bundle bin/ contains disallowed files: $list"
