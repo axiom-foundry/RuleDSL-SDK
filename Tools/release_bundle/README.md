@@ -64,3 +64,44 @@ A public fixture is available at:
 `Tools/release_bundle/fixtures/min_bundle/`
 
 This fixture allows CI to validate layout audit behavior without private binaries.
+
+## Linux bundle workflow (`.github/workflows/bundle-linux.yml`)
+
+Produces a **real Linux delivery bundle** (with `bin/` populated) in CI, so the
+SDK ships a runnable `ruledslc` executable and `libruledsl_capi.so` for Linux —
+not just source.
+
+What it does:
+
+1. Checks out this (public) SDK repo and the private engine repo
+   (`axiom-foundry/RuleDSL`).
+2. Builds the engine on `ubuntu-24.04` with the same `Release` + Ninja path the
+   engine CI runs green, building only `ruledslc` and `axiom_ruledsl_c_shared`
+   (output `libruledsl_capi.so`).
+3. Smoke-tests the binaries (`ruledslc --version`, `license --status`, an
+   end-to-end compile + verify, and an ELF check on the `.so`).
+4. Runs `build_bundle.ps1` to assemble a deterministic bundle with `bin/`
+   populated, then `audit_bundle_layout.ps1` to validate it.
+5. Uploads `RuleDSL-SDK-<tag>-linux-x86_64.{tar.gz,zip}` + `SHA256SUMS.txt` as a
+   workflow artifact, and attaches them to the GitHub release on `v*.*.*` tags.
+
+### Required secret
+
+| Secret | Purpose |
+|--------|---------|
+| `ENGINE_REPO_TOKEN` | PAT used to check out the private engine source. Classic PAT with `repo` scope, or a fine-grained token with **Contents: read** on `axiom-foundry/RuleDSL`. Add under *Settings → Secrets and variables → Actions*. |
+
+### Triggers
+
+- **Manual** (`workflow_dispatch`): choose `engine_ref` (default `main`) and
+  `bundle_type` (`Evaluation`/`Commercial`). Outputs land as a workflow
+  artifact.
+- **Tag push** (`v*.*.*`): the bundle archives are additionally attached to the
+  GitHub release (alongside the source archives from `release.yml`).
+
+### Note on local builds
+
+A native build on macOS produces a Mach-O object, **not** a Linux ELF. To
+produce a genuine Linux binary locally you would need Docker/a Linux container
+or a cross toolchain; this workflow uses GitHub's Linux runners instead, which
+matches the determinism-critical "CI is authoritative" build model.
