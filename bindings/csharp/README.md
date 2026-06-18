@@ -175,4 +175,7 @@ NativeLibrary.SetDllImportResolver(typeof(RuleDSLEngine).Assembly,
 
 ## Thread Safety
 
-Each `RuleDSLEngine` instance is single-threaded. For concurrent use, create one instance per thread or use a pool pattern.
+Each `RuleDSLEngine` instance is thread-safe: an internal lock serializes the underlying native
+`Compile`/`Evaluate` calls, so a single instance can be shared safely across threads. For maximum
+throughput under heavy concurrency you can still use one instance per thread (a per-thread-compiler
+pattern) to avoid lock contention.

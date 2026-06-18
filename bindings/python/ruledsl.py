@@ -146,7 +146,7 @@ class _AXBytecode(ctypes.Structure):
 class _AXEvalOptions(ctypes.Structure):
     _fields_ = [
         ("struct_size", ctypes.c_uint32),
-        ("trace_cb", ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)),
+        ("trace_cb", ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_char_p)),
         ("trace_user", ctypes.c_void_p),
         ("reserved", ctypes.c_uint64 * 4),
     ]

@@ -32,7 +32,7 @@ Redistributable binaries are available as the **release bundle** (`.zip`) attach
 ### Windows (Developer Command Prompt)
 
 ```bat
-cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:lib axiom_ruledsl_c.lib /OUT:minimal_eval.exe
+cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:lib ruledsl_capi.lib /OUT:minimal_eval.exe
 ```
 
 If runtime reports a missing DLL:
@@ -43,13 +43,13 @@ If runtime reports a missing DLL:
 ### Linux (gcc)
 
 ```bash
-gcc -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -laxiom_ruledsl_c -o minimal_eval
+gcc -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -lruledsl_capi -o minimal_eval
 ```
 
 ### Linux (clang)
 
 ```bash
-clang -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -laxiom_ruledsl_c -o minimal_eval
+clang -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -lruledsl_capi -o minimal_eval
 ```
 
 ## Run
@@ -71,6 +71,7 @@ Linux:
 ```text
 RuleDSL/1.0.0 (abi=1)
 Decision: matched=1 action_type=0
+DETERMINISTIC_OK
 ```
 
 ## Python / C# (No Compilation Needed)

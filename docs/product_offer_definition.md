@@ -1,4 +1,4 @@
-# RuleDSL ? Product Offer Model
+# RuleDSL — Product Offer Model
 
 ## Target Customer Profile
 RuleDSL is aimed at mid-market software companies that run business-critical decision logic inside their own applications.

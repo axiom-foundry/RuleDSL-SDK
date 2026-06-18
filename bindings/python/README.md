@@ -107,7 +107,8 @@ bytecode = Bytecode.from_file("rules.axbc")
 info = engine.check_compatibility(bytecode)
 print(info["compatible"])      # True
 print(info["axbc_version"])    # 3
-print(info["lang_major"])      # 1
+print(info["lang_major"])      # 0   (v1.0 bytecode carries the internal language tag 0.9)
+print(info["lang_minor"])      # 9
 ```
 
 ## Output Fields
