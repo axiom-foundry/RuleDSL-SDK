@@ -68,21 +68,21 @@ The RuleDSL engine is tested against adversarial and edge-case scenarios across 
 Zero tolerance for crashes — all malformed inputs are rejected gracefully with structured error codes.
 
 ```
- Category                                Checks   Crashes   Result
+ Category                                Cases    Crashes   Result
  ──────────────────────────────────────────────────────────────────
  Fuzz regression set (malformed rules)       45         0   PASS
  Bytecode tampering                          17         0   PASS
  Input injection (SQLi/XSS/CRLF)             37         0   PASS
- Memory stability (sequential)              500         0   PASS
  Rule complexity limits                      30         0   PASS
  Locale determinism                           7         0   PASS
  C API misuse (NULL/NaN/overflow)            48         0   PASS
  ──────────────────────────────────────────────────────────────────
- Total discrete checks                      684         0   ALL PASS
+ Total distinct cases                       184         0   ALL PASS
 ```
 
-In addition, an 8-thread stress run performs **800,000 concurrent evaluations** with zero
-crashes, zero errors, and no net memory growth.
+Beyond these discrete cases, longer-running stability runs also pass with zero crashes and no
+net memory growth: a **500-iteration sequential compile/evaluate soak** and an **8-thread stress
+run of 800,000 concurrent evaluations**.
 
 Beyond this fixed regression set, the parser and bytecode loader are exercised on every change by
 **continuous, CI-gated, coverage-guided fuzzing** (libFuzzer under ASan/UBSan). This continuous
