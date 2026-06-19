@@ -6,11 +6,11 @@
 2. Run bundle assembly:
 
 ```powershell
-pwsh Tools/release_bundle/build_bundle.ps1 \
-  -EngineBin <engine-binary> \
-  -CompilerBin <ruledslc-binary> \
-  -EngineImportLib <optional-import-lib> \
-  -BundleType <Evaluation|Commercial> \
+pwsh Tools/release_bundle/build_bundle.ps1 `
+  -EngineBin <engine-binary> `
+  -CompilerBin <ruledslc-binary> `
+  -EngineImportLib <optional-import-lib> `
+  -BundleType <Evaluation|Commercial> `
   -Out <bundle-dir>
 ```
 
@@ -73,5 +73,4 @@ Before pushing a final tag (e.g., v1.0.0):
 
 - Governance: PR-only + squash-only + required status check `verify` (strict) is active (see `docs/evidence/governance_snapshot_*.json`).
 - Deterministic bundle: `MANIFEST.json` and `HASHES.txt` are byte-identical across two local bundle builds from the same commit.
-- CI release validation: `audit-summary` artifact is produced and contains asset SHA256 for the release set.
-  - Validated on tag `v1.0.0-rc.2`, run `22234987419` (success), commit `3aef8e5c2740c0f3e2de0029c3a4d107cdf3d8aa`.
+- CI release validation: the `bundle-linux` workflow produces the release artifact set (`<prefix>.tar.gz`, `<prefix>.zip`, `SHA256SUMS.txt`) and `audit_bundle_layout.ps1` passes on the assembled bundle.

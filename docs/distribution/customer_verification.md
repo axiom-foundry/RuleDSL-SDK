@@ -2,12 +2,25 @@
 
 ## 1) Verify bundle integrity
 
-1. Read `manifests/HASHES.txt` from the delivery bundle.
-2. Compute SHA256 for each listed file.
-3. Compare results line-by-line.
-4. Stop integration if any hash mismatches.
+1. From the bundle root, verify every file against `manifests/HASHES.txt`:
 
-Canonical line format:
+```bash
+# POSIX (Linux/macOS) - run from the bundle root
+sha256sum -c manifests/HASHES.txt
+```
+
+```powershell
+# Windows PowerShell - run from the bundle root
+Get-Content manifests/HASHES.txt | ForEach-Object {
+  $sha, $rel = ($_ -split '  ', 2)
+  $actual = (Get-FileHash -Algorithm SHA256 $rel).Hash.ToLowerInvariant()
+  if ($actual -ne $sha) { Write-Error "HASH MISMATCH: $rel" }
+}
+```
+
+2. Stop integration if any line reports a mismatch.
+
+`manifests/HASHES.txt` uses two spaces between hash and path, is sorted by `<relative_path>`, and excludes itself:
 
 ```text
 <sha256>  <relative_path>
@@ -16,7 +29,7 @@ Canonical line format:
 ## 2) Verify compiler authenticity
 
 - Run `ruledslc --version` and record output.
-- Validate the compiler file hash against vendor-published `HASHES.txt`.
+- Validate the compiler file hash against the entry for `bin/ruledslc` (or `bin/ruledslc.exe`) in the bundle's `manifests/HASHES.txt`.
 - If hash and declared version do not match expected release records, treat the binary as untrusted.
 
 ## 3) Compile -> verify -> evaluate
@@ -24,7 +37,7 @@ Canonical line format:
 ```text
 ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
 ruledslc verify rules.axbc
-# then evaluate using the RuleDSL C API
+# then evaluate using the RuleDSL C API (see examples/01_risk_scoring/main.c)
 ```
 
 Expected `verify` success output contains:

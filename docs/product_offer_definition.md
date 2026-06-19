@@ -13,7 +13,7 @@ These teams care about determinism because operational confidence depends on rep
 
 ## What We Provide
 - Redistributable SDK package with headers, binaries, and integration notes.
-- Core documentation covering ABI contract, ownership, thread model, replay, and error model.
+- Core documentation covering ABI contract, ownership, thread model, determinism/replay-proof verification, and error model.
 - Minimal example code for initial compile/run validation.
 - Structured evaluation framework for deterministic fit and migration risk assessment.
 - Optional time-boxed integration advisory focused on architecture and risk controls.

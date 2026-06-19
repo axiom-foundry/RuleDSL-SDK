@@ -10,7 +10,7 @@ Replay evidence is used to prove deterministic equivalence. Schema drift, ambigu
 
 ## Decision
 
-Replay/evidence schema evolution follows strict version and serialization rules.
+The replay/evidence schema is the JSON `replay_proof_v1` decision-record format consumed by `Tools/replay_proof/verify_replay_proof.py` (defined in `Tools/replay_proof/replay_proof_schema_v1.md`). Its evolution follows strict version and serialization rules.
 
 - Every record MUST include `schema_version`.
 - Minor schema revisions in v1.x SHALL be additive-only.
