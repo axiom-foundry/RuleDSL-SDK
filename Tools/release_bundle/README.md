@@ -78,8 +78,8 @@ What it does:
 2. Builds the engine on `ubuntu-24.04` with the same `Release` + Ninja path the
    engine CI runs green, building only `ruledslc` and `axiom_ruledsl_c_shared`
    (output `libruledsl_capi.so`).
-3. Smoke-tests the binaries (`ruledslc --version`, `license --status`, an
-   end-to-end compile + verify, and an ELF check on the `.so`).
+3. Smoke-tests the binaries (`ruledslc --version`, an end-to-end compile +
+   verify, and an ELF check on the `.so`).
 4. Runs `build_bundle.ps1` to assemble a deterministic bundle with `bin/`
    populated, then `audit_bundle_layout.ps1` to validate it.
 5. Uploads `RuleDSL-SDK-<tag>-linux-x86_64.{tar.gz,zip}` + `SHA256SUMS.txt` as a
