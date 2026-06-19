@@ -1,8 +1,13 @@
-# Support Scope + SLA Policy
+# Support Scope and Model
 
 ## Public-facing summary
 
-This policy defines operational support scope and response targets for public RuleDSL SDK deliveries.
+This document defines the support scope and model for public RuleDSL SDK deliveries.
+
+RuleDSL is built to minimize the need for support. Evaluation is deterministic and reproducible;
+failures surface through a stable, structured error-code contract (see `docs/errors.md`) rather than
+opaque crashes; and the documentation set is designed for self-service integration. Support is
+offered on a best-effort basis on top of that foundation — the goal is that you rarely need it.
 
 ## Supported scope
 
@@ -30,11 +35,16 @@ Support means reproducible triage on supported releases and fix delivery through
 - **Sev2**: major degradation or rollout/integration blocker.
 - **Sev3**: non-blocking defects, questions, documentation clarifications.
 
-## Response targets (supported lines)
+## Response handling (best-effort, by severity)
 
-- Sev1: first response within 1 business day.
-- Sev2: first response within 3 business days.
-- Sev3: first response within 5 business days (best effort).
+Support is best-effort and prioritized by severity; response times are guidance, not contractual
+commitments. Higher-severity issues are handled first:
+
+- Sev1: handled first.
+- Sev2: next priority.
+- Sev3: handled as capacity allows.
+
+A complete incident bundle (below) is the fastest path to a resolution.
 
 ## Required incident bundle
 

@@ -47,6 +47,8 @@ Expected `verify` success output contains:
 - `LANG=<supported-language>`
 - `ABI=<supported-abi>`
 
+> `LANG` reports the language implementation tag (`0.9`) for the v1.0 specification — this is expected. See [`compatibility_matrix.md`](../compatibility_matrix.md) for the canonical 1.0/0.9 reconciliation.
+
 ## 4) Compatibility check before evaluation
 
 Use the C API compatibility pre-check before evaluation:
