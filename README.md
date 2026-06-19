@@ -64,41 +64,26 @@ ax_compiler_destroy(c);
 
 ## Engine Robustness
 
-The RuleDSL engine is tested against adversarial and edge-case scenarios across every release.
-Zero tolerance for crashes — all malformed inputs are rejected gracefully with structured error codes.
+The RuleDSL engine is built to fail safe: malformed inputs are rejected gracefully with structured
+error codes, never with a crash.
 
-```
- Category                                Cases    Crashes   Result
- ──────────────────────────────────────────────────────────────────
- Fuzz regression set (malformed rules)       45         0   PASS
- Bytecode tampering                          17         0   PASS
- Input injection (SQLi/XSS/CRLF)             37         0   PASS
- Rule complexity limits                      30         0   PASS
- Locale determinism                           7         0   PASS
- C API misuse (NULL/NaN/overflow)            48         0   PASS
- ──────────────────────────────────────────────────────────────────
- Total distinct cases                       184         0   ALL PASS
-```
-
-Beyond these discrete cases, longer-running stability runs also pass with zero crashes and no
-net memory growth: a **500-iteration sequential compile/evaluate soak** and an **8-thread stress
-run of 800,000 concurrent evaluations**.
-
-Beyond this fixed regression set, the parser and bytecode loader are exercised on every change by
-**continuous, CI-gated, coverage-guided fuzzing** (libFuzzer under ASan/UBSan). This continuous
-fuzzing is what caught — and let us fix — a real determinism bug (an integer overflow in priority
+**Continuous fuzzing.** The parser and bytecode loader are exercised on every change by CI-gated,
+coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer), seeded with a
+committed adversarial corpus (malformed rule sources and tampered/truncated/oversized bytecode). This
+continuous fuzzing caught — and let us fix — a real determinism bug (an integer overflow in priority
 parsing) before release.
 
-Highlights:
+**Tested against** adversarial and edge-case scenarios on every release:
 
-- **Thread safety**: 800K concurrent evaluations across 8 threads — zero errors, zero memory leak
-- **Throughput**: 79,000+ evaluations/sec (8 threads, per-thread compiler pattern)
-- **Memory**: flat after warm-up, returns below baseline after cleanup (+0.34 MB at peak, -2.21 MB post-free)
-- **Contention detection**: shared compiler across threads returns `AX_ERR_CONCURRENT_COMPILER_USE` — no crash, no corruption
-- **Fuzz**: null bytes, 10K-char names, 1000-rule files, binary garbage — all rejected, none crash
-- **Bytecode tampering**: flipped bits, truncated files, wrong magic, 1 MB garbage — all detected
-- **Locale determinism**: identical bytecode across 7 OS locales (C, Turkish, German, French, POSIX, en_US, tr_TR)
-- **API misuse**: NULL pointers, double-free, bad struct sizes, NaN/Infinity — all return proper error codes
+- Malformed rule sources and tampered bytecode (flipped bits, truncated files, wrong magic, oversized payloads) — rejected, never crash.
+- Hostile input strings (injection-style payloads — SQL, markup, CRLF — null bytes, very long identifiers) — rejected.
+- Rule-complexity limits and C-API misuse (NULL pointers, double-free, bad struct sizes, NaN/Infinity) — return proper error codes.
+- Locale determinism — identical bytecode across OS locales (C, Turkish, German, French, POSIX, en_US, tr_TR).
+- Concurrency — sustained multi-threaded stress (8 threads) and long sequential soak runs complete with zero crashes, zero errors, and no net memory growth; a shared compiler used across threads returns `AX_ERR_CONCURRENT_COMPILER_USE` rather than corrupting state.
+
+**Performance shape.** Evaluation is in-process — no network hop, no serialization — and bytecode
+evaluation avoids parsing on the hot path. Throughput scales with per-thread compilers; measure on
+your target hardware and workload.
 
 ## What you receive
 
