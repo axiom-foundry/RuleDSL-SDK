@@ -8,7 +8,7 @@ This document defines the public release artifact model for controlled RuleDSL S
 
 - Versioned artifact sets are the delivery unit.
 - Customers SHOULD verify hashes before integration.
-- Signing is optional by policy and may be required per delivery tier.
+- Release archives ship with `SHA256SUMS.txt`, and bundles include a per-file `manifests/HASHES.txt` for integrity verification.
 
 ## Canonical release structure
 
@@ -17,51 +17,61 @@ RuleDSL-<version>/
   bin/
   include/
   docs/
-  examples/            (optional)
-  manifest.json
-  SHA256SUMS.txt
+  examples/
+  bindings/
+  LICENSE
+  NOTICE
+  manifests/
+    MANIFEST.json
+    HASHES.txt
+    TOOLCHAIN.txt
+    LICENSE_STATUS.txt
 ```
 
-- `bin/`: runtime libraries
+- `bin/`: runtime library and the `ruledslc` compiler
 - `include/`: public headers
-- `manifest.json`: release metadata
-- `SHA256SUMS.txt`: authoritative hash list
+- `bindings/`: Python and C# bindings
+- `manifests/MANIFEST.json`: deterministic release metadata
+- `manifests/HASHES.txt`: authoritative in-bundle hash list
 
-## `manifest.json` (informational)
+## `manifests/MANIFEST.json` (deterministic metadata)
 
-Required fields:
+Fields (deterministic key order, written by `Tools/release_bundle/build_bundle.ps1`):
 
-- `product_name`
-- `version`
-- `build_date`
-- `supported_abi_level`
-- `bytecode_schema_version`
-- `supported_os`
-- `supported_arch`
-- `artifact_hashes`
+- `bundle_type`
+- `created_by`
+- `ruledslc_version`
+- `engine_version`
+- `lang_version`
+- `axbc_version`
+- `abi_level`
+- `file_list` (relative, forward-slash, sorted)
 
-`SHA256SUMS.txt` remains authoritative for integrity checks.
+`manifests/HASHES.txt` is the authoritative in-bundle integrity record; `MANIFEST.json` does not embed hashes.
 
-## `SHA256SUMS.txt` format
+## `manifests/HASHES.txt` format
 
-Canonical line format:
+Canonical line format (two spaces between hash and path):
 
 ```text
 <sha256>  <relative_path>
 ```
 
-Requirements:
+Requirements (enforced by `Tools/release_bundle/audit_bundle_layout.ps1`):
 
-- include distributed binaries and headers,
-- generated at packaging time,
-- verified before rollout.
+- covers every bundle file except `manifests/HASHES.txt` itself,
+- entries sorted by `<relative_path>`,
+- paths relative and forward-slash normalized,
+- generated at bundle-assembly time and verified before rollout.
+
+A separate `SHA256SUMS.txt` over the outer `.tar.gz`/`.zip` release archives is produced by the Linux release workflow (`.github/workflows/bundle-linux.yml`).
 
 ## Upgrade and rollback
 
 Upgrade:
 
 1. verify hashes,
-2. verify compatibility (`docs/version_policy.md`),
+2. verify compatibility (`docs/version_policy.md`, `docs/compatibility_matrix.md`),
 3. stage deployment,
 4. keep previous release folder intact.
 
@@ -88,4 +98,4 @@ Rollback:
 - `docs/version_policy.md`
 - `docs/support_policy.md`
 - `docs/bytecode_lifecycle.md`
-- `docs/signing_policy.md`
+- `docs/distribution/customer_verification.md`

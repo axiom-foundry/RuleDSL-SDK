@@ -46,8 +46,6 @@
 | Support policy | [`support_policy.md`](support_policy.md) |
 | Compatibility matrix | [`compatibility_matrix.md`](compatibility_matrix.md) |
 | Bytecode lifecycle | [`bytecode_lifecycle.md`](bytecode_lifecycle.md) |
-| Release gate | [`release_gate.md`](release_gate.md) |
-| Signing policy | [`signing_policy.md`](signing_policy.md) |
 | Compiler contract | [`compiler/ruledslc_contract.md`](compiler/ruledslc_contract.md) |
 | Contact & evaluation | [`contact.md`](contact.md) |
 
