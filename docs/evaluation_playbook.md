@@ -32,7 +32,7 @@ Customer provides:
 
 - **Day 0-2**: preflight (version, environment, hashes, smoke).
 - **Day 2-10**: integration and error-handling wiring.
-- **Day 5-15**: determinism validation with replay samples.
+- **Day 5-15**: determinism validation by re-running representative inputs and comparing decision records with the replay-proof verifier.
 - **Day 10-25**: staged rollout and rollback drill.
 - **Day 25-30**: close-out decision and handoff.
 
@@ -46,12 +46,13 @@ Customer provides:
 
 Determinism claim applies when runtime version, bytecode hash, inputs, and options are identical.
 
-Recommended evidence:
+Recommended evidence (matching the replay-proof record schema):
 
-- sample set identifier,
+- engine version string,
+- ABI level,
 - bytecode hash,
-- run identifier,
-- output comparison result.
+- decision/result hash,
+- (optional) input hash and run identifier.
 
 ## Bug bundle minimum
 

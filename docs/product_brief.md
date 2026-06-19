@@ -37,7 +37,7 @@ Bytecode lifecycle ownership is operationally defined.
 Compilation, artifact provenance, rollout, and rollback are treated as part of system reliability, not ad hoc process.
 
 Release artifacts are integrity-verifiable.
-`SHA256SUMS.txt` is the authoritative hash source, with optional detached signature verification available through release tooling.
+`SHA256SUMS.txt` is the authoritative hash source for the release archives, and the bundle additionally ships per-file integrity manifests (`manifests/HASHES.txt` and `manifests/MANIFEST.json`) for content-level verification.
 
 Support operations follow a business-day model with severity-based response targets.
 Issue handling is designed around reproducible bundles and stable error diagnostics.
@@ -49,9 +49,8 @@ A standard release package includes:
 - versioned release folder (`RuleDSL-<version>/`)
 - compiled runtime binaries
 - public C headers
-- `manifest.json` metadata
-- `SHA256SUMS.txt` integrity list
-- optional detached signature descriptor when enabled by release policy
+- `manifests/MANIFEST.json` metadata (with `manifests/HASHES.txt`, `manifests/TOOLCHAIN.txt`, `manifests/LICENSE_STATUS.txt`)
+- `SHA256SUMS.txt` integrity list for the release archives
 
 Customers also receive the technical documentation set required for integration and operations.
 The expected model is explicit and controlled, not self-serve binary discovery.
