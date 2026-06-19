@@ -126,53 +126,39 @@ int eval_checked(AXCompiler* compiler,
 
 ## 3) Release Artifact Intake (Operational Safety)
 
-> **Note**: This snippet references `Tools/release_gate/release_gate.py` which is planned but not yet included in the SDK. For current release verification, use the SHA256SUMS.txt manual check described in [`docs/distribution/customer_verification.md`](distribution/customer_verification.md).
+Verify bundle integrity against `manifests/HASHES.txt` before loading any bytecode. This is the
+programmatic form of the manual steps in [`docs/distribution/customer_verification.md`](distribution/customer_verification.md).
 
 ```c
 #include <axiom/ruledsl_c.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static int run_release_gate(const char* release_dir, int require_signature) {
+/* Verify every bundle file against manifests/HASHES.txt before trusting the artifacts. */
+static int verify_bundle_integrity(const char* bundle_dir) {
     char cmd[1024];
-    int n;
-
-    /* SHA256SUMS must be verified before loading bytecode. */
-    if (require_signature) {
-        n = snprintf(cmd,
+    int n = snprintf(cmd,
                      sizeof(cmd),
-                     "python Tools/release_gate/release_gate.py "
-                     "--release-dir \"%s\" "
-                     "--out-dir reports/release_gate/intake "
-                     "--sig-file \"%s/SHA256SUMS.sig.json\" "
-                     "--keyring docs/signing_keys.json --require-signature",
-                     release_dir,
-                     release_dir);
-    } else {
-        n = snprintf(cmd,
-                     sizeof(cmd),
-                     "python Tools/release_gate/release_gate.py "
-                     "--release-dir \"%s\" "
-                     "--out-dir reports/release_gate/intake",
-                     release_dir);
-    }
+                     "cd \"%s\" && sha256sum -c manifests/HASHES.txt",
+                     bundle_dir);
     if (n <= 0 || n >= (int)sizeof(cmd)) return -1;
     return (system(cmd) == 0) ? 0 : -1;
 }
 
-int intake_release(const char* release_dir, int require_signature) {
+int intake_release(const char* bundle_dir) {
     const char* runtime = ax_version_string();
     if (!runtime || runtime[0] == '\0') {
         fprintf(stderr, "missing runtime version string\n");
         return -1;
     }
 
-    if (run_release_gate(release_dir, require_signature) != 0) {
-        fprintf(stderr, "release verification failed\n");
+    /* Integrity must pass before loading bytecode from the bundle. */
+    if (verify_bundle_integrity(bundle_dir) != 0) {
+        fprintf(stderr, "bundle integrity check failed\n");
         return -1;
     }
 
-    printf("release_intake_ok runtime=%s release=%s\n", runtime, release_dir);
+    printf("release_intake_ok runtime=%s bundle=%s\n", runtime, bundle_dir);
     return 0;
 }
 ```
