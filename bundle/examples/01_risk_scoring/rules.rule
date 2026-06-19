@@ -1,9 +1,0 @@
-RULE high_risk {
-  WHEN amount >= 1000;
-  THEN DECLINE;
-}
-
-RULE default_allow {
-  WHEN amount < 1000;
-  THEN ALLOW;
-}

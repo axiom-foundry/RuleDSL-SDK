@@ -1,9 +1,0 @@
-RULE temporal_review {
-  WHEN now_utc_ms >= 1700000000000;
-  THEN REVIEW;
-}
-
-RULE temporal_allow {
-  WHEN now_utc_ms < 1700000000000;
-  THEN ALLOW;
-}
