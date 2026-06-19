@@ -49,7 +49,7 @@ Default runtime loading window:
 
 - Supported lines: latest MINOR and previous MINOR in active MAJOR.
 - For each supported MINOR, only latest PATCH receives fixes.
-- Security targets (best-effort): critical within 5 business days, high within 15 business days.
+- Security fixes are prioritized on a best-effort basis (critical issues first); specific timelines are not contractual.
 
 ## Release checklist (public contract)
 

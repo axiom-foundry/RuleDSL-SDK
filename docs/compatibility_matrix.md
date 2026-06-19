@@ -6,7 +6,7 @@ This matrix defines the supported compile-to-evaluate path for the public SDK co
 | --- | --- | --- | --- | --- |
 | 1.0.x | 1.0 (impl 0.9) | 3 | 1 | 1.0.0 |
 
-> **Note**: The compiler reports `lang=0.9` in its version string. This is the internal implementation tag for the v1.0 language specification. All v1.0 grammar productions are fully implemented.
+> **Note**: The compiler reports `lang=0.9` in its version string. This is the internal implementation tag for the v1.0 language specification. All v1.0 grammar productions are fully implemented. This matrix is the canonical reconciliation of the product version (`1.0`) and the language implementation tag (`0.9`); other docs reference it rather than restating the distinction.
 
 ## Interpretation
 
