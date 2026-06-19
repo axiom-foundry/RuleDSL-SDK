@@ -14,10 +14,15 @@ Both bundle types use the same deterministic structure and manifest rules.
 
 ```text
 bundle/
+  LICENSE
+  NOTICE
   include/
   bin/
   docs/
   examples/
+  bindings/
+    python/
+    csharp/
   manifests/
     MANIFEST.json
     HASHES.txt
@@ -31,6 +36,7 @@ bundle/
 - `bin/`: distributable binaries only.
 - `docs/`: public documentation only.
 - `examples/`: public example source and expected outputs.
+- `bindings/`: language wrappers (Python, C#) and their examples.
 - `manifests/`: deterministic metadata and hash evidence.
 
 ### Allowed `bin/` extensions

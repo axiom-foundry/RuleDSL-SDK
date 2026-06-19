@@ -12,21 +12,21 @@ Determinism is a first-class constraint in the engine contract. For equivalent b
 ## Why It Is Different
 - Deterministic evaluation model
 - ABI compatibility contract (`struct_size` + `reserved`)
-- Replay schema with explicit header and integrity checks
+- Auditable determinism: decision records can be compared for equality with the offline replay-proof verifier (`Tools/replay_proof/verify_replay_proof.py`)
 - No runtime service
 - No database requirement
 - Concurrency-safe usage contract
 
 ## Integration Model
-The host loads bytecode into memory, prepares input fields, executes evaluation, and consumes a structured decision object. Replay capture is optional and uses caller-provided buffers.
+The host loads bytecode into memory, prepares input fields, executes evaluation, and consumes a structured decision object. Determinism can be re-verified by re-running the same bytecode and inputs through `ax_eval_bytecode`; the offline replay-proof verifier then compares the two decision records for equality.
 
 ```text
 compiler = create_compiler()
 bc = load_bytecode(file)
 input = { amount, currency, now_utc_ms, ... }
 decision = eval_bytecode(compiler, bc, input)
-if replay_enabled:
-    replay_blob = record_replay_data(bc, decision)
+# To audit determinism later: keep `bc` + `input`, re-run eval_bytecode,
+# and compare the two decision records with verify_replay_proof.py
 ```
 
 ## Risk Surface
