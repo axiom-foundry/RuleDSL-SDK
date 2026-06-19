@@ -300,12 +300,13 @@ foreach ($f in $csharpExampleFiles) {
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 if ($BundleType -eq "Commercial") {
-    [System.IO.File]::WriteAllText((Join-Path $outRoot "LICENSE"), "LICENSE PLACEHOLDER - COMMERCIAL DELIVERY TERMS APPLY`n", $utf8NoBom)
+    [System.IO.File]::WriteAllText((Join-Path $outRoot "LICENSE"), "This RuleDSL SDK delivery is licensed under your executed commercial agreement with the Licensor.`nSee that agreement for terms; contact the RuleDSL team for commercial licensing.`n", $utf8NoBom)
 }
 else {
-    [System.IO.File]::WriteAllText((Join-Path $outRoot "LICENSE"), "LICENSE PLACEHOLDER - EVALUATION DELIVERY TERMS APPLY`n", $utf8NoBom)
+    # Evaluation bundle ships the real PolyForm Free Trial license from the repo root.
+    Copy-Item -Path (Join-Path $repoRoot "LICENSE") -Destination (Join-Path $outRoot "LICENSE") -Force
 }
-[System.IO.File]::WriteAllText((Join-Path $outRoot "NOTICE"), "NOTICE PLACEHOLDER - PROVIDED IN COMMERCIAL DELIVERY`n", $utf8NoBom)
+[System.IO.File]::WriteAllText((Join-Path $outRoot "NOTICE"), "RuleDSL SDK`nCopyright (c) 2025 Tanzer Cakir`nSee LICENSE for license terms.`n", $utf8NoBom)
 
 if ($EmitManifests) {
     New-Item -ItemType Directory -Force -Path $manifestsOut | Out-Null
@@ -323,15 +324,13 @@ if ($EmitManifests) {
     [System.IO.File]::WriteAllText($toolchainPath, (($toolchainLines -join "`n") + "`n"), $utf8NoBom)
 
     $licenseStatusPath = Join-Path $manifestsOut "LICENSE_STATUS.txt"
-    $licenseOutput = & $CompilerBin license --status 2>&1
-    $licenseExit = $LASTEXITCODE
-    $licenseLines = @($licenseOutput | ForEach-Object { $_.ToString().TrimEnd() } | Where-Object { $_ -ne "" })
-    if ($licenseExit -eq 0 -and $licenseLines.Count -gt 0) {
-        [System.IO.File]::WriteAllText($licenseStatusPath, (($licenseLines -join "`n") + "`n"), $utf8NoBom)
+    if ($BundleType -eq "Commercial") {
+        $licenseStatusLines = @("LICENSE=Commercial", "TYPE=COMMERCIAL", "TERMS=See your executed commercial agreement")
     }
     else {
-        [System.IO.File]::WriteAllText($licenseStatusPath, "LICENSE=UNKNOWN`n", $utf8NoBom)
+        $licenseStatusLines = @("LICENSE=PolyForm-Free-Trial-1.0.0", "TYPE=EVALUATION")
     }
+    [System.IO.File]::WriteAllText($licenseStatusPath, (($licenseStatusLines -join "`n") + "`n"), $utf8NoBom)
 
     $currentFiles = @(Get-ChildItem -Path $outRoot -Recurse -File)
     $manifestList = @()
