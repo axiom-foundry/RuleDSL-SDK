@@ -78,7 +78,9 @@ typedef struct AXBytecode {
     size_t size;
 } AXBytecode;
 
-// Trace callback invoked during evaluation for each rule/expression step.
+// Optional trace callback invoked during bytecode evaluation. The shipped bytecode evaluator emits a
+// trace line for each action assignment, each decision, and any runtime error — not for every rule
+// or expression step.
 // Parameters:
 //   user — opaque context pointer from AXEvalOptions.trace_user
 //   line — null-terminated UTF-8 trace message (valid only for the duration of the call)
