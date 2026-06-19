@@ -1,9 +1,10 @@
-# Legal Placeholder Index
+# Legal & Commercial Reference Index
 
 ## Public-facing summary
 
-This folder is an index for legal/commercial handoff boundaries.
-It is not a legal agreement.
+This folder indexes the legal/commercial references for the RuleDSL SDK. The binding evaluation
+license is the repository root `LICENSE` (PolyForm Free Trial License 1.0.0); commercial production
+terms are provided in executed agreements. This folder itself is not a legal agreement.
 
 ## Technical references in repository docs
 

@@ -47,4 +47,4 @@ before evaluation. Run `ax_check_bytecode_compatibility` before calling evaluati
 ## Known Limitations
 
 - Integrity is verified by SHA256: validate the bundle against `manifests/HASHES.txt`, and validate the release archives against the published `SHA256SUMS.txt`.
-- License status may report placeholder values in evaluation distributions (`manifests/LICENSE_STATUS.txt`, and placeholder `LICENSE`/`NOTICE`).
+- Evaluation bundles ship the PolyForm Free Trial License (`LICENSE`); `manifests/LICENSE_STATUS.txt` reports `LICENSE=PolyForm-Free-Trial-1.0.0` / `TYPE=EVALUATION`.

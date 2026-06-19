@@ -81,4 +81,4 @@ The following MUST NOT appear in a delivery bundle:
 - `file_list`
 
 `TOOLCHAIN.txt` MUST record version lines for compiler and engine.
-`LICENSE_STATUS.txt` MUST contain `ruledslc license --status` output (or `LICENSE=UNKNOWN`).
+`LICENSE_STATUS.txt` MUST record the bundle license: `LICENSE=PolyForm-Free-Trial-1.0.0` with `TYPE=EVALUATION` for evaluation bundles, or the executed-commercial-agreement reference for commercial bundles.

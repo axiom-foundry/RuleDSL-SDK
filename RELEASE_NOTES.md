@@ -37,4 +37,4 @@ Before evaluation, call ax_check_bytecode_compatibility and proceed only when st
 ## Known limitations
 
 - Signature verification policy may differ by distribution tier.
-- Evaluation bundles may use license status placeholder outputs.
+- Evaluation bundles ship the PolyForm Free Trial License (`LICENSE`); `manifests/LICENSE_STATUS.txt` reports `LICENSE=PolyForm-Free-Trial-1.0.0` / `TYPE=EVALUATION`.

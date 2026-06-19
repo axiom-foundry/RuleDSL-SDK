@@ -36,7 +36,7 @@ bundle/
 - `MANIFEST.json` is emitted with deterministic key order and sorted `file_list`.
 - `HASHES.txt` uses canonical lines: `<sha256>  <relative_path>` sorted by path.
 - `TOOLCHAIN.txt` records `ruledslc --version`, engine version (if discoverable), and script revision.
-- `LICENSE_STATUS.txt` records `ruledslc license --status`; fallback is `LICENSE=UNKNOWN`.
+- `LICENSE_STATUS.txt` records the bundle license: `LICENSE=PolyForm-Free-Trial-1.0.0` / `TYPE=EVALUATION` for evaluation bundles, or the executed-commercial-agreement reference for commercial bundles.
 - No timestamps are emitted in manifests by default.
 
 ## `audit_bundle_layout.ps1`
