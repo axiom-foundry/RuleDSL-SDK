@@ -119,9 +119,6 @@ jobs:
           echo "== ruledslc --version =="
           "$C" --version
 
-          echo "== ruledslc license --status =="
-          "$C" license --status
-
           echo "== end-to-end compile + verify (non-fatal) =="
           RULE="$GITHUB_WORKSPACE/sdk/examples/01_risk_scoring/rules.rule"
           if   "$C" compile "$RULE" -o /tmp/smoke.axbc --lang 1.0 --target axbc3; then :;

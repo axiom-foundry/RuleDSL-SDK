@@ -10,7 +10,6 @@ The compiler is distributed as a licensed binary for local customer use.
 ```text
 ruledslc compile <input.rule> -o <output.axbc> [--lang 0.9] [--target axbc3] [--emit-manifest <path.json>]
 ruledslc verify <input.axbc>
-ruledslc license --status
 ruledslc --version
 ruledslc --help
 ```
@@ -53,11 +52,6 @@ Failure output is machine-readable and reason-coded, for example:
 STATUS=INCOMPATIBLE
 REASON=UNSUPPORTED_AXBC
 ```
-
-## License Status Command
-
-`ruledslc license --status` is deterministic and offline.
-Current baseline is a local non-network status surface (no telemetry, no SaaS dependency).
 
 ## Determinism Contract
 
