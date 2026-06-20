@@ -18,6 +18,7 @@ This document defines the canonical input normalization contract referenced by t
 
 - [DET-027] Duplicate keys in the same normalized input payload MUST be rejected.
 - [DET-028] Deterministic resolution by "first wins" or "last wins" MUST NOT be used in RuleDSL 1.0 determinism evidence.
+- [DET-027a] The public C API enforces DET-027/DET-028 at the evaluation boundary: supplying the same input field name more than once returns `AX_ERR_DUPLICATE_FIELD` (12) before evaluation, rather than silently keeping one value (which would make the decision depend on host input ordering).
 
 ## 4. Numeric canonicalization
 

@@ -30,6 +30,7 @@ This document defines the stable public error-code contract for RuleDSL SDK v1.0
 | `AX_ERR_LIMIT_EXCEEDED` | 9 | Configured engine/runtime limits were exceeded during compile or evaluation. | Not guaranteed |
 | `AX_ERR_BAD_STRUCT_SIZE` | 10 | Caller passed a struct with unsupported or too-small `struct_size`. | Not guaranteed |
 | `AX_ERR_RUNTIME` | 11 | Runtime failure not covered by a more specific public code. | Not guaranteed |
+| `AX_ERR_DUPLICATE_FIELD` | 12 | The same input field name was supplied more than once; rejected to preserve determinism (silent last-write-wins would make the decision depend on host input ordering). | Not guaranteed |
 
 ## 4. Consumer handling requirements
 
