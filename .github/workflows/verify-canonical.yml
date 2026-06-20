@@ -23,32 +23,70 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          ref: 8068dd4c7ee966abcae3febce2ca4a5995cfecda
+          # Canonical pin: every engine->SDK mirrored artifact (MIRROR_ITEMS) must match
+          # the engine at THIS ref. Bump it whenever a mirrored source changes and is
+          # re-mirrored into the SDK (re-mirror + re-pin go together).
+          ref: 0589b2f9a08e795bf03c45700cf14208dd2cf763
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
 
       - name: Dual checkout confirmation
         run: echo "Dual checkout OK"
 
-      - name: Canonical header hash compare
+      - name: Canonical mirror parity (all MIRROR_ITEMS)
         shell: bash
         run: |
           set -euo pipefail
-          ENGINE_HEADER=engine/SDK/Include/axiom/ruledsl_c.h
-          SDK_HEADER=include/axiom/ruledsl_c.h
+          # Extends the canonical pin from the header alone to EVERY engine->SDK mirrored
+          # artifact. Reuses the engine's own allowlist (MIRROR_ITEMS) and normalization
+          # (normalize_text_bytes: strip UTF-8 BOM + CRLF/CR -> LF) by importing the
+          # checked-out mirror tool, so the gate and the mirror can never drift in either
+          # the set OR the hashing. Each required item must exist on both sides and match
+          # the engine at the canonical pin ref; optional items are checked only if present.
+          python3 - <<'PY'
+          import importlib.util, pathlib, sys
 
-          ENGINE_HASH="$(tr -d '\r' < "$ENGINE_HEADER" | sha256sum | awk '{print $1}')"
-          SDK_HASH="$(tr -d '\r' < "$SDK_HEADER" | sha256sum | awk '{print $1}')"
+          spec = importlib.util.spec_from_file_location("md", "engine/Tools/docs_mirror/mirror_docs.py")
+          md = importlib.util.module_from_spec(spec)
+          sys.modules[spec.name] = md  # required so @dataclass in the module resolves its own module
+          spec.loader.exec_module(md)
 
-          echo "ENGINE_HEADER_SHA256=$ENGINE_HASH"
-          echo "SDK_HEADER_SHA256=$SDK_HASH"
+          fails = []
+          checked = 0
+          for it in md.MIRROR_ITEMS:
+              src = pathlib.Path("engine") / it.source_rel
+              dst = pathlib.Path(it.dest_rel)
+              if not src.exists():
+                  if it.required:
+                      fails.append(f"{it.source_rel}: required source MISSING in engine@canonical")
+                  else:
+                      print(f"SKIP    {it.dest_rel}  (optional, no source@canonical)")
+                  continue
+              if not dst.exists():
+                  if it.required:
+                      fails.append(f"{it.dest_rel}: required artifact MISSING in SDK")
+                  else:
+                      print(f"SKIP    {it.dest_rel}  (optional, not present in SDK)")
+                  continue
+              es = md.sha256_bytes(md.normalize_text_bytes(src))
+              ds = md.sha256_bytes(md.normalize_text_bytes(dst))
+              checked += 1
+              if es == ds:
+                  print(f"OK      {it.dest_rel}  ({es[:12]})")
+              else:
+                  print(f"MISMATCH {it.dest_rel}  engine={es[:12]} sdk={ds[:12]}")
+                  fails.append(f"{it.dest_rel}: SDK differs from engine@canonical ({it.source_rel})")
 
-          if [[ "$ENGINE_HASH" != "$SDK_HASH" ]]; then
-            echo "Header hash mismatch"
-            exit 1
-          fi
-
-          echo "Header hash match"
+          print(f"\nchecked {checked} mirrored artifact(s) against engine canonical ref")
+          if fails:
+              print("\nCANONICAL MIRROR PARITY FAILURES:")
+              for f in fails:
+                  print(f"  - {f}")
+              print("\nFix: re-mirror the changed source(s) into the SDK and bump the")
+              print("canonical `ref:` above to the engine commit you mirrored from.")
+              sys.exit(1)
+          print("All mirrored artifacts match the engine canonical ref (normalized).")
+          PY
 
       - name: Forbidden token sweep
         shell: bash
