@@ -17,6 +17,7 @@ bindings/csharp/examples/RiskScoring.cs
 bindings/csharp/examples/RiskScoring.csproj
 bindings/python/README.md
 bindings/python/examples/quick_test.py
+bindings/python/examples/replay_proof_producer.py
 bindings/python/examples/risk_scoring.py
 bindings/python/ruledsl.py
 docs/README.md
@@ -127,8 +128,10 @@ examples/05_velocity_limit/main.c
 examples/05_velocity_limit/rules.rule
 examples/c/batch_eval.c
 examples/c/error_handling.c
+examples/c/malformed_bytecode.c
 examples/c/minimal_eval.c
 examples/c/output_fields.c
+examples/c/unknown_error_code.c
 include/axiom/export.h
 include/axiom/ruledsl_c.h
 include/axiom/version.h

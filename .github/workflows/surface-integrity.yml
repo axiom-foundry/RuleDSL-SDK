@@ -110,8 +110,8 @@ jobs:
           LIBDIR='${{ steps.bins.outputs.libdir }}'
           cd "$GITHUB_WORKSPACE/sdk"
           "$RULEDSLC" compile examples/05_velocity_limit/rules.rule -o /tmp/of.axbc --lang 0.9 --target axbc3
-          for f in batch_eval error_handling output_fields; do
-            cc -std=c11 -I include examples/c/$f.c -L "$LIBDIR" -lruledsl_capi -o /tmp/$f
+          for f in batch_eval error_handling output_fields unknown_error_code malformed_bytecode; do
+            cc -std=c11 -Wall -Wextra -I include examples/c/$f.c -L "$LIBDIR" -lruledsl_capi -o /tmp/$f
             if [ "$f" = "output_fields" ]; then arg=/tmp/of.axbc; else arg=""; fi
             if LD_LIBRARY_PATH="$LIBDIR" /tmp/$f $arg >/tmp/$f.out 2>&1; then
               echo "OK    examples/c/$f.c (exit 0)"
@@ -119,3 +119,16 @@ jobs:
               echo "::error::examples/c/$f.c failed smoke (exit $?)"; cat /tmp/$f.out; exit 1
             fi
           done
+
+      - name: replay-proof — verifier self-tests + producer/verify loop
+        run: |
+          set -euo pipefail
+          LIBDIR='${{ steps.bins.outputs.libdir }}'
+          cd "$GITHUB_WORKSPACE/sdk"
+          # 1) The offline verifier's own test suite (pure Python).
+          python3 Tools/replay_proof/test_verify_replay_proof.py
+          # 2) End-to-end: produce two replay_proof_v1 records from real evaluations,
+          #    then verify they match — exercises the producer example + the verifier.
+          python3 bindings/python/examples/replay_proof_producer.py "$LIBDIR/libruledsl_capi.so" /tmp/rp
+          python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json
+          echo "OK    replay-proof produce + verify"
