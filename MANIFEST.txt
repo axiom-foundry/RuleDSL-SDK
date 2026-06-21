@@ -98,6 +98,7 @@ docs/product_brief.md
 docs/product_offer_definition.md
 docs/quickstart.md
 docs/release_audit_summary_plan.md
+docs/release_notes/v1.0.1.md
 docs/replay_contract.md
 docs/rule_cookbook.md
 docs/sdk_struct_contract.md
