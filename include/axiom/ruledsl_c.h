@@ -44,7 +44,8 @@ typedef enum AXErrorCode {
     AX_ERR_CONCURRENT_COMPILER_USE = 8,
     AX_ERR_LIMIT_EXCEEDED = 9,
     AX_ERR_BAD_STRUCT_SIZE = 10,
-    AX_ERR_RUNTIME = 11
+    AX_ERR_RUNTIME = 11,
+    AX_ERR_DUPLICATE_FIELD = 12  // host supplied the same input field name more than once (caller error)
 } AXErrorCode;
 // AXStatus for bytecode compatibility checks.
 // Values 3-5 are reserved for future use.

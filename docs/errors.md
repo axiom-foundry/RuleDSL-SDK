@@ -117,6 +117,12 @@ Evaluation completed successfully. Inspect `AXDecision.matched` and `AXDecision.
 
 **Action**: Call `ax_last_error_detail_utf8()` for diagnostic detail. If the issue persists, prepare an incident bundle per the [support policy](support_policy.md).
 
+### `AX_ERR_DUPLICATE_FIELD` (12) — Duplicate input field name
+
+**What**: The same input field `name` was supplied more than once in the `AXField[]` array. The engine rejects this rather than silently keeping one value, because a silent last-write-wins would make the decision depend on host array ordering and break the determinism contract.
+
+**Action**: De-duplicate input fields before evaluation — each field name must appear at most once. This is a caller error, not an engine fault.
+
 ## Standard error handling pattern
 
 ```c

@@ -26,7 +26,7 @@ jobs:
           # Canonical pin: every engine->SDK mirrored artifact (MIRROR_ITEMS) must match
           # the engine at THIS ref. Bump it whenever a mirrored source changes and is
           # re-mirrored into the SDK (re-mirror + re-pin go together).
-          ref: 0589b2f9a08e795bf03c45700cf14208dd2cf763
+          ref: 333a1afde01585970e88a1a8f4486f428fe3058a
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
 
