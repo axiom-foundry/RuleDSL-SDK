@@ -56,7 +56,13 @@ Thumbs.db
 # Non-SDK content (marketing, drafts, personal)
 linkedin_article_*.md
 # Internal verification artifacts (keep local, not part of public surface)
-reports/
+reports/*
+# EXCEPTION (scoped, do NOT wholesale un-ignore reports/): published determinism evidence IS
+# committed — committed-but-not-shipped (still excluded from the MANIFEST surface). Mandated by
+# determinism_evidence_bundle_v1_0.md §1 (evidence lives under reports/determinism_v1_0/) and
+# published_evidence_index_v1_0.md §2 (published evidence is a committed bundle directory).
+!reports/determinism_v1_0/
+!reports/determinism_compare_v1/
 
 # Keep fixture placeholder binaries tracked for public bundle audit in CI.
 !Tools/release_bundle/fixtures/min_bundle/bin/

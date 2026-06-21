@@ -23,8 +23,8 @@ Reference example paths are naming examples and do not imply public artifact ava
 
 | Requirement | Status |
 | --- | --- |
-| DET-001 | Evidence available internally; public publication TBD. |
+| DET-001 | **Published 2026-06-21**: linux-x64 + windows-x64 bundles (`verify-existing` rc 0) + cross-platform compare report (`status: pass`, `equal_output: true`). See `reports/determinism_v1_0/2026-06-21/` and `reports/determinism_compare_v1/2026-06-21/DET-001/`. |
 | DET-002 | Evidence available internally; locale provisioning caveats documented; public publication TBD. |
-| DET-003 | Evidence available internally; canonical compare artifact defined; public publication TBD. |
+| DET-003 | **Published 2026-06-21**: linux-x64 + windows-x64 bundles (`verify-existing` rc 0) + cross-platform compare report (`status: pass`, `equal_output: true`). See `reports/determinism_compare_v1/2026-06-21/DET-003/`. |
 
-Multi-host evidence is TBD.
+Multi-host (same-platform, multiple machines) evidence is TBD.

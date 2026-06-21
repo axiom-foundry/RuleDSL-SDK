@@ -2,7 +2,7 @@
 
 - Status: DRAFT
 - Source RFC: `docs/governance/rfc_001_system_boundary_v1.md`
-- Date: 2026-02-21
+- Date: 2026-06-21
 - Purpose: ensure every normative requirement is testable and tracked
 
 ## Legend
@@ -32,7 +32,7 @@
 | RFC001-REQ-009 | 5. System Boundary | "RuleDSL SHALL validate contract-visible fields and SHALL reject malformed boundary inputs on detectable paths." | PARTIAL | `Tools/smoke/compiler_smoke_test.ps1` (`ruledslc verify` STATUS=OK checks) | Positive verify path covered; negative malformed boundary cases are not systematically asserted in public CI. |
 | RFC001-REQ-010 | 6. Determinism Contract | "Undefined behavior is prohibited in the specified surface; behavior outside contract is unspecified." | MISSING | N/A | TODO: add UB boundary negative tests mapped to contract-defined outcomes. |
 | RFC001-REQ-011 | 7. Responsibility Matrix (Engine) | "Engine MUST preserve stable meaning of documented error/status codes." | PARTIAL | `.github/workflows/verify-canonical.yml` (`Canonical header hash compare`) | Registry exists; no automated numeric-value regression test in this repo. |
-| RFC001-REQ-012 | 7. Responsibility Matrix (Engine) | "Engine MUST preserve deterministic evaluation semantics on the specified surface." | PARTIAL | `Tools/smoke/compiler_smoke_test.ps1`; `.github/workflows/verify-canonical.yml` (`verify` job) | Determinism smoke exists; limited scenario coverage and no mandatory cross-platform determinism compare in public repo. |
+| RFC001-REQ-012 | 7. Responsibility Matrix (Engine) | "Engine MUST preserve deterministic evaluation semantics on the specified surface." | PARTIAL | `Tools/smoke/compiler_smoke_test.ps1`; `.github/workflows/verify-canonical.yml` (`verify` job); published cross-platform evidence `reports/determinism_compare_v1/2026-06-21/` | Cross-platform (Windows-x64 ↔ Linux-x64) byte-identity is now demonstrated by published comparison evidence (`status: pass`, `equal_output: true`); per-PR mandatory cross-platform gating in the public repo remains future work. |
 | RFC001-REQ-013 | 7. Responsibility Matrix (Engine) | "Engine SHALL reject malformed contract-visible artifacts on supported detection paths." | PARTIAL | `Tools/smoke/compiler_smoke_test.ps1` (`ruledslc verify`) | Detect/reject behavior only partially covered; missing malformed bytecode/input corpus tests. |
 | RFC001-REQ-014 | 7. Responsibility Matrix (Host) | "Host MUST provide canonicalized input and explicit evaluation options required by contract." | MISSING | N/A | TODO: add host integration tests that fail on non-canonical input and missing required options. |
 | RFC001-REQ-015 | 7. Responsibility Matrix (Host) | "Host MUST treat unknown error/status codes as unknown failure states." | MISSING | N/A | TODO: add C example/unit test for unknown code handling fallback branch. |
