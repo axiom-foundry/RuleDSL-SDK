@@ -27,12 +27,12 @@ Redistributable binaries are available as the **release bundle** (`.zip`) attach
 - `gcc` or `clang`
 - standard C runtime/linker toolchain
 
-## Build (when SDK binaries are provided under `lib/`)
+## Build (SDK binaries ship under `bin/`)
 
 ### Windows (Developer Command Prompt)
 
 ```bat
-cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:lib ruledsl_capi.lib /OUT:minimal_eval.exe
+cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:bin ruledsl_capi.lib /OUT:minimal_eval.exe
 ```
 
 If runtime reports a missing DLL:
@@ -43,13 +43,22 @@ If runtime reports a missing DLL:
 ### Linux (gcc)
 
 ```bash
-gcc -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -lruledsl_capi -o minimal_eval
+gcc -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L bin -lruledsl_capi -o minimal_eval
 ```
 
 ### Linux (clang)
 
 ```bash
-clang -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -lruledsl_capi -o minimal_eval
+clang -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L bin -lruledsl_capi -o minimal_eval
+```
+
+## Compile a rule to bytecode
+
+Turn a rule into deterministic bytecode with the bundled `ruledslc` compiler (the `minimal_eval`
+program loads this `.axbc` and evaluates it):
+
+```text
+ruledslc compile examples/01_risk_scoring/rules.rule -o rules.axbc --lang 0.9 --target axbc3
 ```
 
 ## Run
@@ -57,13 +66,13 @@ clang -std=c11 -O2 -Wall -Wextra -I include examples/c/minimal_eval.c -L lib -lr
 Windows:
 
 ```text
-minimal_eval.exe <bytecode.bc>
+minimal_eval.exe rules.axbc
 ```
 
 Linux:
 
 ```text
-./minimal_eval <bytecode.bc>
+./minimal_eval rules.axbc
 ```
 
 ## Expected output (sample)
@@ -93,7 +102,7 @@ See [`bindings/python/README.md`](../bindings/python/README.md) and [`bindings/c
 
 ## Troubleshooting
 
-- `lib/` missing: download the release bundle from [GitHub Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases) and extract the binaries.
+- `bin/` missing: download the release bundle from [GitHub Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases) and extract the binaries.
 - Bytecode path error: verify `<bytecode.bc>` exists and is readable.
 - Architecture mismatch: use matching x64 toolchain and x64 libraries.
 - Runtime loader errors: add SDK runtime directory to `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux).

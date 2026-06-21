@@ -570,8 +570,8 @@ class RuleDSL:
         else:
             candidates = [
                 "libruledsl_capi.so",
-                "lib/libruledsl_capi.so",
-                "../lib/libruledsl_capi.so",
+                "bin/libruledsl_capi.so",
+                "../bin/libruledsl_capi.so",
             ]
 
         for c in candidates:
