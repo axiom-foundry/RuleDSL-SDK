@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     AXBytecode bytecode = {0};
     AXEvalOptions options = AX_EVAL_OPTIONS_INIT;
     AXDecision decision = AX_DECISION_INIT;
-    AXField fields[5];
+    AXField fields[6];
     char err[256] = {0};
 
     if (argc != 2) {
@@ -76,7 +76,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    /* Scenario: new device, unverified, high amount, clean email */
+    /* Scenario: new device, unverified, high amount, clean US email.
+       Every field the rules reference must be supplied: amount, ip_country, email,
+       is_verified, is_new_device (+ now_utc_ms). With these inputs the
+       new_device_review rule (priority 40) fires -> REVIEW. */
     memset(fields, 0, sizeof(fields));
     fields[0].name = "amount";
     fields[0].value.type = AX_VALUE_NUMBER;
@@ -94,11 +97,15 @@ int main(int argc, char** argv)
     fields[3].value.type = AX_VALUE_BOOL;
     fields[3].value.boolean = 1;
 
-    fields[4].name = AX_FIELD_NOW_UTC_MS;
-    fields[4].value.type = AX_VALUE_NUMBER;
-    fields[4].value.number = 1700000000000.0;
+    fields[4].name = "is_verified";
+    fields[4].value.type = AX_VALUE_BOOL;
+    fields[4].value.boolean = 0;
 
-    if (ax_eval_bytecode(compiler, &bytecode, fields, 5, &options, &decision, err, sizeof(err)) != AX_ERR_OK) {
+    fields[5].name = AX_FIELD_NOW_UTC_MS;
+    fields[5].value.type = AX_VALUE_NUMBER;
+    fields[5].value.number = 1700000000000.0;
+
+    if (ax_eval_bytecode(compiler, &bytecode, fields, 6, &options, &decision, err, sizeof(err)) != AX_ERR_OK) {
         fprintf(stderr, "ax_eval_bytecode failed: %s\n", err[0] ? err : "no detail");
         ax_bytecode_free(&bytecode);
         ax_compiler_destroy(compiler);

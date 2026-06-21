@@ -13,10 +13,24 @@ This example demonstrates boolean logic (`and`, `or`, `not`), list membership (`
 
 ## Commands
 
-```powershell
+Compile and verify the rule (any platform):
+
+```text
 ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3 --emit-manifest compile_manifest.json
 ruledslc verify rules.axbc
-cl /nologo /W4 /I ..\..\include main.c /link /LIBPATH:<ENGINE_LIB_DIR> ruledsl_capi.lib /OUT:kyc_eval.exe
+```
+
+Build and run — Linux/macOS (gcc or clang):
+
+```bash
+cc -std=c11 -I ../../include main.c -L ../../bin -lruledsl_capi -o kyc_eval
+LD_LIBRARY_PATH=../../bin ./kyc_eval rules.axbc
+```
+
+Build and run — Windows (MSVC):
+
+```powershell
+cl /nologo /W4 /I ..\..\include main.c /link /LIBPATH:..\..\bin ruledsl_capi.lib /OUT:kyc_eval.exe
 .\kyc_eval.exe rules.axbc
 ```
 

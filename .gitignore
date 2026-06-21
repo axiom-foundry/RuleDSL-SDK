@@ -66,3 +66,7 @@ reports/
 
 # Generated delivery bundle (produced by Tools/release_bundle/build_bundle.ps1 at release; not committed)
 /bundle/
+
+# Generated example build artifacts (compiled fresh by CI verify-examples)
+examples/*/rules.axbc
+examples/*/compile_manifest.json
