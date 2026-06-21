@@ -1,0 +1,139 @@
+name: windows-fidelity
+
+# Phase D opening move: the first real-Windows exercise of the onboarding surface.
+# Builds the engine on Windows (MSVC / VS 2022) and runs EVERY documented onboarding
+# path with the documented `cl` command line — the same paths the Linux example-fidelity
+# gate runs, but on real Windows. workflow_dispatch is the intended one-shot trigger;
+# the branch-push trigger below is temporary, only to iterate this workflow into green.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-fidelity:
+    name: windows-fidelity
+    runs-on: windows-2022
+    steps:
+      - name: Checkout SDK (public)
+        uses: actions/checkout@v4
+        with:
+          path: sdk
+
+      - name: Checkout engine (private source)
+        uses: actions/checkout@v4
+        with:
+          repository: axiom-foundry/RuleDSL
+          ref: main
+          token: ${{ secrets.ENGINE_REPO_TOKEN }}
+          path: engine
+
+      - name: Setup MSVC developer environment (cl on PATH)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure + build engine (ruledslc + shared C API)
+        shell: pwsh
+        run: |
+          cmake -S engine -B engine/build -G "Visual Studio 17 2022" -A x64
+          if ($LASTEXITCODE -ne 0) { Write-Error "engine configure failed"; exit 1 }
+          cmake --build engine/build --config Release --parallel --target ruledslc axiom_ruledsl_c_shared
+          if ($LASTEXITCODE -ne 0) { Write-Error "engine build failed"; exit 1 }
+
+      - name: Locate engine binaries
+        id: bins
+        shell: pwsh
+        run: |
+          $ruledslc = Get-ChildItem -Path engine/build -Recurse -Filter ruledslc.exe | Select-Object -First 1
+          $dll = Get-ChildItem -Path engine/build -Recurse -Filter ruledsl_capi.dll | Select-Object -First 1
+          $lib = Get-ChildItem -Path engine/build -Recurse -Filter ruledsl_capi.lib | Select-Object -First 1
+          if (-not $ruledslc -or -not $dll -or -not $lib) {
+            Write-Error "could not locate engine binaries (ruledslc.exe / ruledsl_capi.dll / ruledsl_capi.lib)"; exit 1
+          }
+          $inc = (Resolve-Path sdk/include).Path
+          "ruledslc=$($ruledslc.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "dll=$($dll.FullName)"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "libdir=$($lib.Directory.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "incdir=$inc"                    | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "ruledslc=$($ruledslc.FullName)"
+          Write-Host "libdir=$($lib.Directory.FullName)"
+
+      - name: Example folders — compile (cl) + run + diff expected_output (all 5)
+        shell: pwsh
+        run: |
+          $ruledslc = '${{ steps.bins.outputs.ruledslc }}'
+          $libdir   = '${{ steps.bins.outputs.libdir }}'
+          $inc      = '${{ steps.bins.outputs.incdir }}'
+          $env:PATH = "$libdir;$env:PATH"   # ruledsl_capi.dll discovery at runtime
+          $fail = 0
+          Get-ChildItem -Path sdk/examples -Directory -Filter "0*" | ForEach-Object {
+            $name = $_.Name
+            Push-Location $_.FullName
+            & $ruledslc compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$name compile failed"; $fail = 1; Pop-Location; return }
+            cl /nologo /W4 /std:c11 /I $inc main.c /link /LIBPATH:$libdir ruledsl_capi.lib /OUT:eval.exe
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$name cl build failed"; $fail = 1; Pop-Location; return }
+            $got = (& .\eval.exe rules.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
+            $exp = (Get-Content expected_output.txt -Raw) -replace "`r`n", "`n"
+            if ($got.Trim() -eq $exp.Trim()) {
+              Write-Host "OK    $name"
+            } else {
+              Write-Host "::error::example $name output mismatch"
+              Write-Host "got:`n$($got.Trim())`nexpected:`n$($exp.Trim())"
+              $fail = 1
+            }
+            Pop-Location
+          }
+          if ($fail -ne 0) { Write-Error "one or more example folders failed Windows fidelity"; exit 1 }
+
+      - name: Quickstart loop — compile + minimal_eval + assert documented output
+        shell: pwsh
+        run: |
+          $ruledslc = '${{ steps.bins.outputs.ruledslc }}'
+          $libdir   = '${{ steps.bins.outputs.libdir }}'
+          $env:PATH = "$libdir;$env:PATH"
+          Set-Location sdk
+          & $ruledslc compile examples/01_risk_scoring/rules.rule -o qs.axbc --lang 0.9 --target axbc3
+          if ($LASTEXITCODE -ne 0) { Write-Error "quickstart compile failed"; exit 1 }
+          cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:$libdir ruledsl_capi.lib /OUT:minimal_eval.exe
+          if ($LASTEXITCODE -ne 0) { Write-Error "quickstart cl build failed"; exit 1 }
+          $got = (& .\minimal_eval.exe qs.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
+          $exp = "RuleDSL/1.0.0 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
+          if ($got.Trim() -ne $exp.Trim()) {
+            Write-Host "::error::quickstart loop output mismatch"
+            Write-Host "got:`n$($got.Trim())`nexpected:`n$exp"
+            exit 1
+          }
+          Write-Host "OK    quickstart loop"
+
+      - name: examples/c smoke — compile (cl) + run (no crash)
+        shell: pwsh
+        run: |
+          $ruledslc = '${{ steps.bins.outputs.ruledslc }}'
+          $libdir   = '${{ steps.bins.outputs.libdir }}'
+          $env:PATH = "$libdir;$env:PATH"
+          Set-Location sdk
+          & $ruledslc compile examples/05_velocity_limit/rules.rule -o of.axbc --lang 0.9 --target axbc3
+          $fail = 0
+          foreach ($f in @("batch_eval","error_handling","output_fields","unknown_error_code","malformed_bytecode")) {
+            cl /nologo /W4 /std:c11 /I include examples/c/$f.c /link /LIBPATH:$libdir ruledsl_capi.lib /OUT:"$f.exe"
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::examples/c/$f.c cl build failed"; $fail = 1; continue }
+            $arg = if ($f -eq "output_fields") { "of.axbc" } else { "" }
+            if ($arg) { & ".\$f.exe" $arg | Out-Null } else { & ".\$f.exe" | Out-Null }
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::examples/c/$f.c failed smoke (exit $LASTEXITCODE)"; $fail = 1 }
+            else { Write-Host "OK    examples/c/$f.c" }
+          }
+          if ($fail -ne 0) { Write-Error "examples/c Windows smoke failed"; exit 1 }
+
+      - name: replay-proof — producer + verify loop (real engine DLL)
+        shell: pwsh
+        run: |
+          $dll = '${{ steps.bins.outputs.dll }}'
+          Set-Location sdk
+          python Tools/replay_proof/test_verify_replay_proof.py
+          if ($LASTEXITCODE -ne 0) { Write-Error "replay verifier self-tests failed"; exit 1 }
+          python bindings/python/examples/replay_proof_producer.py "$dll" rp
+          if ($LASTEXITCODE -ne 0) { Write-Error "replay producer failed"; exit 1 }
+          python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json
+          if ($LASTEXITCODE -ne 0) { Write-Error "replay verify failed"; exit 1 }
+          Write-Host "OK    replay-proof produce + verify (Windows)"
