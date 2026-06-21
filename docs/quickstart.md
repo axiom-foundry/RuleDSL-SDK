@@ -106,4 +106,4 @@ See [`bindings/python/README.md`](../bindings/python/README.md) and [`bindings/c
 - Bytecode path error: verify `<bytecode.bc>` exists and is readable.
 - Architecture mismatch: use matching x64 toolchain and x64 libraries.
 - Runtime loader errors: add SDK runtime directory to `PATH` (Windows) or `LD_LIBRARY_PATH` (Linux).
-- Replay may be unavailable in some builds; this is expected for minimal runtime packages.
+- Replay verification is an **offline** step, not a runtime feature — there is nothing to enable in the build. Compare two `replay_proof` decision records with the bundled `Tools/replay_proof/verify_replay_proof.py` (Python 3); see [`replay_contract.md`](replay_contract.md).
