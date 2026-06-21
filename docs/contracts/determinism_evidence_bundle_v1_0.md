@@ -53,7 +53,9 @@ Layout requirements:
 - `platform` (string)
 - `config` (string)
 - `bytecode_sha256` (string, 64 lowercase hex chars)
-- `canonical_input_artifacts` (array of relative paths)
+- `bytecode_artifacts` (array of relative paths under `inputs/`)
+- `input_artifacts` (array of relative paths under `inputs/`)
+- `options_artifacts` (array of relative paths under `inputs/`)
 - `requirements` (array of objects)
 
 Each item in `requirements` MUST include:
