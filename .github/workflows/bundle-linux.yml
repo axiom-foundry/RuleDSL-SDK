@@ -141,35 +141,71 @@ jobs:
         working-directory: sdk
         run: ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir "$env:GITHUB_WORKSPACE/dist/bundle"
 
-      - name: Verify shipped examples (customer "follow the docs" path)
-        # Exercises exactly what a customer does from the docs: compile each
-        # rules.rule with the shipped ruledslc, build the example main.c against
-        # the shipped headers + .so, run it, and diff against expected_output.txt.
-        # Runs on a scratch COPY so build artifacts never enter the packaged bundle.
+      - name: Clean-room — verify the SHIPPED bundle (every documented onboarding path)
+        # Fresh scratch copy of the REAL bundle; exercise every documented onboarding
+        # path against the SHIPPED binaries (not the CI build): the 5 example folders,
+        # the quickstart loop, the examples/c set, and the replay produce->verify loop.
+        # This is the per-build proof that the shipped bundle is self-sufficient.
         run: |
           set -euo pipefail
           B=/tmp/bundle-smoke
           rm -rf "$B"; cp -a "$GITHUB_WORKSPACE/dist/bundle" "$B"
           chmod +x "$B/bin/ruledslc"
+          export LD_LIBRARY_PATH="$B/bin"
           fail=0
-          for d in "$B"/examples/*/; do
+
+          # 1) Example folders 01..05: compile rule + build main.c + diff expected_output.
+          for d in "$B"/examples/0*/; do
             name=$(basename "$d")
             (
               cd "$d"
               "$B/bin/ruledslc" compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
               "$B/bin/ruledslc" verify rules.axbc
               cc main.c -I "$B/include" -L "$B/bin" -lruledsl_capi -o eval
-              got=$(LD_LIBRARY_PATH="$B/bin" ./eval rules.axbc)
+              got=$(./eval rules.axbc)
               exp=$(cat expected_output.txt)
               if [ "$got" != "$exp" ]; then
                 echo "::error::example '$name' output mismatch"
-                printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"
-                exit 1
+                printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
               fi
-              echo "example '$name': OK"
+              echo "OK    example $name"
             ) || fail=1
           done
-          [ "$fail" -eq 0 ] || { echo "::error::one or more shipped examples failed"; exit 1; }
+
+          # 2) Quickstart loop: the documented examples/c/minimal_eval.c path.
+          (
+            cd "$B"
+            ./bin/ruledslc compile examples/01_risk_scoring/rules.rule -o /tmp/qs.axbc --lang 0.9 --target axbc3
+            cc examples/c/minimal_eval.c -I include -L bin -lruledsl_capi -o /tmp/minimal_eval
+            got=$(/tmp/minimal_eval /tmp/qs.axbc)
+            exp=$'RuleDSL/1.0.0 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
+            if [ "$got" != "$exp" ]; then
+              echo "::error::quickstart loop mismatch"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
+            fi
+            echo "OK    quickstart loop"
+          ) || fail=1
+
+          # 3) examples/c smoke: compile + run each against the shipped binaries.
+          (
+            cd "$B"
+            ./bin/ruledslc compile examples/05_velocity_limit/rules.rule -o /tmp/of.axbc --lang 0.9 --target axbc3
+            for f in batch_eval error_handling output_fields unknown_error_code malformed_bytecode; do
+              cc examples/c/$f.c -I include -L bin -lruledsl_capi -o /tmp/$f
+              if [ "$f" = "output_fields" ]; then arg=/tmp/of.axbc; else arg=""; fi
+              /tmp/$f $arg >/dev/null
+              echo "OK    examples/c/$f.c"
+            done
+          ) || fail=1
+
+          # 4) Replay produce->verify using the bundled tooling against the shipped .so.
+          (
+            cd "$B"
+            python3 bindings/python/examples/replay_proof_producer.py "$B/bin/libruledsl_capi.so" /tmp/rp
+            python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json
+            echo "OK    replay produce->verify"
+          ) || fail=1
+
+          [ "$fail" -eq 0 ] || { echo "::error::shipped bundle clean-room failed (a documented path is not self-sufficient)"; exit 1; }
 
       - name: Package bundle (deterministic archives)
         id: pkg
