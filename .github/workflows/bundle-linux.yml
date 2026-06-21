@@ -234,7 +234,8 @@ jobs:
           ( cd "$GITHUB_WORKSPACE/out" && find "${PREFIX}" -type f | sort | \
             zip -X -9 "${PREFIX}.zip" -@ >/dev/null )
 
-          ( cd "$GITHUB_WORKSPACE/out" && sha256sum "${PREFIX}.tar.gz" "${PREFIX}.zip" > SHA256SUMS.txt )
+          # Per-platform name so the linux + windows SHA files don't collide as release assets.
+          ( cd "$GITHUB_WORKSPACE/out" && sha256sum "${PREFIX}.tar.gz" "${PREFIX}.zip" > "${PREFIX}.SHA256SUMS.txt" )
           echo "prefix=${PREFIX}" >> "$GITHUB_OUTPUT"
 
       - name: Upload bundle artifact
@@ -244,15 +245,18 @@ jobs:
           path: |
             out/${{ steps.pkg.outputs.prefix }}.tar.gz
             out/${{ steps.pkg.outputs.prefix }}.zip
-            out/SHA256SUMS.txt
+            out/${{ steps.pkg.outputs.prefix }}.SHA256SUMS.txt
           if-no-files-found: error
 
       - name: Publish to GitHub release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          # Release body is sourced from the committed, gate-checked note (same file on
+          # both platform workflows, so order doesn't matter).
+          body_path: sdk/docs/release_notes/v1.0.1.md
           files: |
             out/${{ steps.pkg.outputs.prefix }}.tar.gz
             out/${{ steps.pkg.outputs.prefix }}.zip
-            out/SHA256SUMS.txt
+            out/${{ steps.pkg.outputs.prefix }}.SHA256SUMS.txt
           fail_on_unmatched_files: true

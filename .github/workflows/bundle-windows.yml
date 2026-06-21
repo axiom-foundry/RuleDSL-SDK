@@ -176,7 +176,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE\dist\bundle\*" $stage
           Compress-Archive -Path $stage -DestinationPath "$env:GITHUB_WORKSPACE\out\$prefix.zip" -Force
-          (Get-FileHash -Algorithm SHA256 "$env:GITHUB_WORKSPACE\out\$prefix.zip").Hash.ToLower() + "  $prefix.zip" | Out-File -FilePath "$env:GITHUB_WORKSPACE\out\SHA256SUMS.txt" -Encoding ascii
+          # Per-platform name so the linux + windows SHA files don't collide as release assets.
+          (Get-FileHash -Algorithm SHA256 "$env:GITHUB_WORKSPACE\out\$prefix.zip").Hash.ToLower() + "  $prefix.zip" | Out-File -FilePath "$env:GITHUB_WORKSPACE\out\$prefix.SHA256SUMS.txt" -Encoding ascii
           "prefix=$prefix" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Upload bundle artifact
@@ -185,14 +186,17 @@ jobs:
           name: ${{ steps.pkg.outputs.prefix }}
           path: |
             out/${{ steps.pkg.outputs.prefix }}.zip
-            out/SHA256SUMS.txt
+            out/${{ steps.pkg.outputs.prefix }}.SHA256SUMS.txt
           if-no-files-found: error
 
       - name: Publish to GitHub release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          # Release body is sourced from the committed, gate-checked note (same file on
+          # both platform workflows, so order doesn't matter).
+          body_path: sdk/docs/release_notes/v1.0.1.md
           files: |
             out/${{ steps.pkg.outputs.prefix }}.zip
-            out/SHA256SUMS.txt
+            out/${{ steps.pkg.outputs.prefix }}.SHA256SUMS.txt
           fail_on_unmatched_files: true
