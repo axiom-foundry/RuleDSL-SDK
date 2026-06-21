@@ -1,0 +1,121 @@
+name: surface-integrity
+
+# Public-surface integrity gates:
+#  - manifest:          MANIFEST.txt must match the tracked tree (no silent inventory drift).
+#  - example-fidelity:  every documented onboarding path must actually compile + run on real Linux
+#                       against the real engine, and produce its documented output. This is the gate
+#                       that would have caught example #04 shipping a fabricated result.
+#
+# example-fidelity builds the PRIVATE engine inside this PUBLIC repo's CI (needs ENGINE_REPO_TOKEN);
+# engine build output is redirected so the public log never enumerates engine source paths.
+
+on:
+  pull_request:
+
+jobs:
+  manifest:
+    name: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: MANIFEST <-> tree parity
+        run: python3 Tools/manifest/check_manifest.py --check
+
+  example-fidelity:
+    name: example-fidelity
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout SDK (public)
+        uses: actions/checkout@v4
+        with:
+          path: sdk
+
+      - name: Checkout engine (private source)
+        uses: actions/checkout@v4
+        with:
+          repository: axiom-foundry/RuleDSL
+          ref: main
+          token: ${{ secrets.ENGINE_REPO_TOKEN }}
+          path: engine
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      - name: Configure + build engine (ruledslc + shared C API)
+        run: |
+          set -euo pipefail
+          if ! cmake -S engine -B engine/build -G Ninja -DCMAKE_BUILD_TYPE=Release > engine/configure.log 2>&1; then
+            echo "::error::engine configure failed"; tail -n 50 engine/configure.log; exit 1
+          fi
+          if ! cmake --build engine/build --parallel --target ruledslc axiom_ruledsl_c_shared > engine/build.log 2>&1; then
+            echo "::error::engine build failed (error lines only)"; grep -iE "error[:0-9 ]" engine/build.log | tail -n 40 || true; exit 1
+          fi
+          echo "engine built"
+
+      - name: Locate engine binaries
+        id: bins
+        run: |
+          set -euo pipefail
+          LIB="$(find "$GITHUB_WORKSPACE/engine/build" -name 'libruledsl_capi.so' -type f | head -n1)"
+          CC_RULEDSLC="$(find "$GITHUB_WORKSPACE/engine/build" -name 'ruledslc' -type f | head -n1)"
+          if [ -z "$LIB" ] || [ -z "$CC_RULEDSLC" ]; then
+            echo "::error::could not locate engine binaries"; exit 1
+          fi
+          chmod +x "$CC_RULEDSLC"
+          echo "libdir=$(dirname "$LIB")" >> "$GITHUB_OUTPUT"
+          echo "ruledslc=$CC_RULEDSLC" >> "$GITHUB_OUTPUT"
+
+      - name: Example folders — compile + run + diff expected_output (all 5)
+        run: |
+          set -euo pipefail
+          RULEDSLC='${{ steps.bins.outputs.ruledslc }}'
+          LIBDIR='${{ steps.bins.outputs.libdir }}'
+          INC="$GITHUB_WORKSPACE/sdk/include"
+          fail=0
+          for d in "$GITHUB_WORKSPACE"/sdk/examples/0*/; do
+            name=$(basename "$d"); cd "$d"
+            "$RULEDSLC" compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+            cc -std=c11 -I "$INC" main.c -L "$LIBDIR" -lruledsl_capi -o eval
+            got=$(LD_LIBRARY_PATH="$LIBDIR" ./eval rules.axbc 2>&1) || true
+            exp=$(cat expected_output.txt)
+            if [ "$got" = "$exp" ]; then
+              echo "OK    $name"
+            else
+              echo "::error::example $name output mismatch"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ] || { echo "::error::one or more example folders failed fidelity"; exit 1; }
+
+      - name: Quickstart loop — compile + minimal_eval + assert documented output
+        run: |
+          set -euo pipefail
+          RULEDSLC='${{ steps.bins.outputs.ruledslc }}'
+          LIBDIR='${{ steps.bins.outputs.libdir }}'
+          cd "$GITHUB_WORKSPACE/sdk"
+          "$RULEDSLC" compile examples/01_risk_scoring/rules.rule -o /tmp/qs.axbc --lang 0.9 --target axbc3
+          cc -std=c11 -I include examples/c/minimal_eval.c -L "$LIBDIR" -lruledsl_capi -o /tmp/minimal_eval
+          got=$(LD_LIBRARY_PATH="$LIBDIR" /tmp/minimal_eval /tmp/qs.axbc 2>&1) || true
+          exp=$'RuleDSL/1.0.0 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
+          if [ "$got" != "$exp" ]; then
+            echo "::error::quickstart loop output does not match docs/quickstart.md"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
+          fi
+          echo "OK    quickstart loop"
+
+      - name: examples/c smoke — compile + run (no crash)
+        run: |
+          set -euo pipefail
+          RULEDSLC='${{ steps.bins.outputs.ruledslc }}'
+          LIBDIR='${{ steps.bins.outputs.libdir }}'
+          cd "$GITHUB_WORKSPACE/sdk"
+          "$RULEDSLC" compile examples/05_velocity_limit/rules.rule -o /tmp/of.axbc --lang 0.9 --target axbc3
+          for f in batch_eval error_handling output_fields; do
+            cc -std=c11 -I include examples/c/$f.c -L "$LIBDIR" -lruledsl_capi -o /tmp/$f
+            if [ "$f" = "output_fields" ]; then arg=/tmp/of.axbc; else arg=""; fi
+            if LD_LIBRARY_PATH="$LIBDIR" /tmp/$f $arg >/tmp/$f.out 2>&1; then
+              echo "OK    examples/c/$f.c (exit 0)"
+            else
+              echo "::error::examples/c/$f.c failed smoke (exit $?)"; cat /tmp/$f.out; exit 1
+            fi
+          done
