@@ -98,7 +98,7 @@ jobs:
           cl /nologo /W4 /std:c11 /I include examples/c/minimal_eval.c /link /LIBPATH:$libdir ruledsl_capi.lib /OUT:minimal_eval.exe
           if ($LASTEXITCODE -ne 0) { Write-Error "quickstart cl build failed"; exit 1 }
           $got = (& .\minimal_eval.exe qs.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
-          $exp = "RuleDSL/1.0.0 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
+          $exp = "RuleDSL/1.0.1 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
           if ($got.Trim() -ne $exp.Trim()) {
             Write-Host "::error::quickstart loop output mismatch"
             Write-Host "got:`n$($got.Trim())`nexpected:`n$exp"

@@ -6,8 +6,8 @@
 // AXIOM_VERSION_* is the SDK/product version.
 #define AXIOM_VERSION_MAJOR 1
 #define AXIOM_VERSION_MINOR 0
-#define AXIOM_VERSION_PATCH 0
-#define AXIOM_VERSION_STRING "1.0.0"
+#define AXIOM_VERSION_PATCH 1
+#define AXIOM_VERSION_STRING "1.0.1"
 
 // AXIOM_RULEDSL_LANGUAGE_VERSION_* is the RuleDSL *language* version the compiler accepts (--lang),
 // which is 0.9 — distinct from the product version above. It must match the compiler's supported

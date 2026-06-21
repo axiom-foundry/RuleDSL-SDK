@@ -178,7 +178,7 @@ jobs:
             ./bin/ruledslc compile examples/01_risk_scoring/rules.rule -o /tmp/qs.axbc --lang 0.9 --target axbc3
             cc examples/c/minimal_eval.c -I include -L bin -lruledsl_capi -o /tmp/minimal_eval
             got=$(/tmp/minimal_eval /tmp/qs.axbc)
-            exp=$'RuleDSL/1.0.0 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
+            exp=$'RuleDSL/1.0.1 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
             if [ "$got" != "$exp" ]; then
               echo "::error::quickstart loop mismatch"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
             fi
