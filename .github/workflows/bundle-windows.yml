@@ -27,8 +27,6 @@ on:
           - Evaluation
           - Commercial
   push:
-    branches:
-      - phase-d-bundle-selfsufficient   # temporary: iterate this workflow into green before merge
     tags:
       - "v*.*.*"
 
