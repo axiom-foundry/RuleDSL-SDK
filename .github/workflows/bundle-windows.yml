@@ -1,0 +1,198 @@
+name: bundle-windows
+
+# Builds the RuleDSL engine on Windows and assembles a complete SDK delivery
+# bundle whose bin/ holds the Windows binaries:
+#   bin/ruledslc.exe        (CLI compiler)
+#   bin/ruledsl_capi.dll    (engine shared library)
+#   bin/ruledsl_capi.lib    (import library for linking)
+#
+# Then runs the clean-room: a fresh extract of the REAL bundle is exercised across
+# every documented onboarding path with the documented `cl` line, against the SHIPPED
+# binaries (not the CI build) — the Windows half of the presentable gate. Mirrors
+# bundle-linux.yml; reuses the same build_bundle.ps1.
+
+on:
+  workflow_dispatch:
+    inputs:
+      engine_ref:
+        description: "Engine repo ref (branch/tag/SHA) to build"
+        required: false
+        default: "main"
+      bundle_type:
+        description: "Bundle type"
+        required: false
+        default: "Evaluation"
+        type: choice
+        options:
+          - Evaluation
+          - Commercial
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-bundle:
+    name: windows-bundle
+    runs-on: windows-2022
+    steps:
+      - name: Checkout SDK (public)
+        uses: actions/checkout@v4
+        with:
+          path: sdk
+
+      - name: Checkout engine (private source)
+        uses: actions/checkout@v4
+        with:
+          repository: axiom-foundry/RuleDSL
+          ref: ${{ github.event.inputs.engine_ref || 'main' }}
+          token: ${{ secrets.ENGINE_REPO_TOKEN }}
+          path: engine
+
+      - name: Setup MSVC developer environment (cl on PATH)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure + build engine (ruledslc + shared C API)
+        shell: pwsh
+        run: |
+          cmake -S engine -B engine/build -G "Visual Studio 17 2022" -A x64 > engine/configure.log 2>&1
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::engine configure failed"; Get-Content engine/configure.log -Tail 50; exit 1 }
+          cmake --build engine/build --config Release --parallel --target ruledslc axiom_ruledsl_c_shared > engine/build.log 2>&1
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::engine build failed"; Select-String -Path engine/build.log -Pattern "error" | Select-Object -Last 40; exit 1 }
+          Write-Host "engine build OK"
+
+      - name: Locate built binaries
+        id: bins
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem -Path engine/build -Recurse -Filter ruledsl_capi.dll | Select-Object -First 1
+          $lib = Get-ChildItem -Path engine/build -Recurse -Filter ruledsl_capi.lib | Select-Object -First 1
+          $exe = Get-ChildItem -Path engine/build -Recurse -Filter ruledslc.exe | Select-Object -First 1
+          if (-not $dll -or -not $lib -or -not $exe) {
+            Write-Error "could not locate built binaries (dll/lib/exe)"; exit 1
+          }
+          "engine_bin=$($dll.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "import_lib=$($lib.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "compiler_bin=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "dll=$($dll.FullName)"; Write-Host "lib=$($lib.FullName)"; Write-Host "exe=$($exe.FullName)"
+
+      - name: Smoke test Windows binaries
+        shell: pwsh
+        run: |
+          & '${{ steps.bins.outputs.compiler_bin }}' --version
+          if ($LASTEXITCODE -ne 0) { Write-Error "ruledslc --version failed"; exit 1 }
+
+      - name: Assemble SDK bundle (bin/ populated)
+        shell: pwsh
+        working-directory: sdk
+        run: |
+          ./Tools/release_bundle/build_bundle.ps1 `
+            -EngineBin      '${{ steps.bins.outputs.engine_bin }}' `
+            -CompilerBin    '${{ steps.bins.outputs.compiler_bin }}' `
+            -EngineImportLib '${{ steps.bins.outputs.import_lib }}' `
+            -BundleType     '${{ github.event.inputs.bundle_type || 'Evaluation' }}' `
+            -Out            "$env:GITHUB_WORKSPACE/dist/bundle"
+
+      - name: Audit bundle layout
+        shell: pwsh
+        working-directory: sdk
+        run: ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir "$env:GITHUB_WORKSPACE/dist/bundle"
+
+      - name: Clean-room — verify the SHIPPED bundle (every documented onboarding path)
+        # Fresh scratch copy of the REAL bundle; exercise every documented onboarding path
+        # against the SHIPPED Windows binaries (dll/lib) with the documented `cl` line.
+        shell: pwsh
+        run: |
+          $B = "$env:RUNNER_TEMP\bundle-smoke"
+          if (Test-Path $B) { Remove-Item -Recurse -Force $B }
+          Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE/dist/bundle" $B
+          $env:PATH = "$B\bin;$env:PATH"   # ruledsl_capi.dll discovery at runtime
+          $fail = 0
+
+          # 1) Example folders 01..05.
+          Get-ChildItem -Path "$B\examples" -Directory -Filter "0*" | ForEach-Object {
+            $name = $_.Name
+            Push-Location $_.FullName
+            & "$B\bin\ruledslc.exe" compile rules.rule -o rules.axbc --lang 0.9 --target axbc3
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$name compile failed"; $script:fail = 1; Pop-Location; return }
+            cl /nologo /W4 /std:c11 /I "$B\include" main.c /link /LIBPATH:"$B\bin" ruledsl_capi.lib /OUT:eval.exe
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$name cl build failed"; $script:fail = 1; Pop-Location; return }
+            $got = (& .\eval.exe rules.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
+            $exp = (Get-Content expected_output.txt -Raw) -replace "`r`n", "`n"
+            if ($got.Trim() -eq $exp.Trim()) { Write-Host "OK    example $name" }
+            else { Write-Host "::error::example $name mismatch"; Write-Host "got:`n$($got.Trim())`nexpected:`n$($exp.Trim())"; $script:fail = 1 }
+            Pop-Location
+          }
+
+          # 2) Quickstart loop: documented examples/c/minimal_eval.c path.
+          Push-Location $B
+          & "$B\bin\ruledslc.exe" compile examples/01_risk_scoring/rules.rule -o qs.axbc --lang 0.9 --target axbc3
+          cl /nologo /W4 /std:c11 /I include examples\c\minimal_eval.c /link /LIBPATH:bin ruledsl_capi.lib /OUT:minimal_eval.exe
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::quickstart cl build failed"; $fail = 1 }
+          else {
+            $got = (& .\minimal_eval.exe qs.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
+            $exp = "RuleDSL/1.0.0 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
+            if ($got.Trim() -eq $exp.Trim()) { Write-Host "OK    quickstart loop" }
+            else { Write-Host "::error::quickstart mismatch"; Write-Host "got:`n$($got.Trim())`nexpected:`n$exp"; $fail = 1 }
+          }
+          Pop-Location
+
+          # 3) examples/c smoke.
+          Push-Location $B
+          & "$B\bin\ruledslc.exe" compile examples/05_velocity_limit/rules.rule -o of.axbc --lang 0.9 --target axbc3
+          foreach ($f in @("batch_eval","error_handling","output_fields","unknown_error_code","malformed_bytecode")) {
+            cl /nologo /W4 /std:c11 /I include examples\c\$f.c /link /LIBPATH:bin ruledsl_capi.lib /OUT:"$f.exe"
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::examples/c/$f.c cl build failed"; $fail = 1; continue }
+            $arg = if ($f -eq "output_fields") { "of.axbc" } else { "" }
+            if ($arg) { & ".\$f.exe" $arg | Out-Null } else { & ".\$f.exe" | Out-Null }
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::examples/c/$f.c run failed ($LASTEXITCODE)"; $fail = 1 }
+            else { Write-Host "OK    examples/c/$f.c" }
+          }
+          Pop-Location
+
+          # 4) Replay produce->verify with the bundled tooling against the shipped DLL.
+          Push-Location $B
+          python bindings/python/examples/replay_proof_producer.py "$B\bin\ruledsl_capi.dll" rp
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::replay producer failed"; $fail = 1 }
+          else {
+            python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::replay verify failed"; $fail = 1 } else { Write-Host "OK    replay produce->verify" }
+          }
+          Pop-Location
+
+          if ($fail -ne 0) { Write-Error "shipped bundle clean-room failed (a documented path is not self-sufficient on Windows)"; exit 1 }
+
+      - name: Package bundle (zip)
+        id: pkg
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "manual" }
+          $prefix = "RuleDSL-SDK-$tag-windows-x86_64"
+          $stage = "$env:GITHUB_WORKSPACE\out\$prefix"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE\dist\bundle\*" $stage
+          Compress-Archive -Path $stage -DestinationPath "$env:GITHUB_WORKSPACE\out\$prefix.zip" -Force
+          (Get-FileHash -Algorithm SHA256 "$env:GITHUB_WORKSPACE\out\$prefix.zip").Hash.ToLower() + "  $prefix.zip" | Out-File -FilePath "$env:GITHUB_WORKSPACE\out\SHA256SUMS.txt" -Encoding ascii
+          "prefix=$prefix" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.pkg.outputs.prefix }}
+          path: |
+            out/${{ steps.pkg.outputs.prefix }}.zip
+            out/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Publish to GitHub release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/${{ steps.pkg.outputs.prefix }}.zip
+            out/SHA256SUMS.txt
+          fail_on_unmatched_files: true

@@ -205,6 +205,7 @@ if ($EngineImportLib) {
 $docFiles = @(
     "docs/rule_cookbook.md",
     "docs/quickstart.md",
+    "docs/replay_contract.md",
     "docs/errors.md",
     "docs/troubleshooting.md",
     "docs/bytecode_workflow_v1_0.md",
@@ -247,6 +248,37 @@ foreach ($name in $exampleDirs) {
     }
 }
 
+# --- examples/c (C API usage; quickstart.md references examples/c/minimal_eval.c) ---
+# Ship the full examples/c set so a bundle-only customer can follow every documented
+# C path (quickstart build + the example smoke set) against the shipped binaries.
+$examplesCOut = Join-Path $examplesOut "c"
+New-Item -ItemType Directory -Force -Path $examplesCOut | Out-Null
+$exampleCFiles = @(
+    "minimal_eval.c",
+    "batch_eval.c",
+    "error_handling.c",
+    "output_fields.c",
+    "unknown_error_code.c",
+    "malformed_bytecode.c"
+)
+foreach ($file in $exampleCFiles) {
+    $src = Join-Path $repoRoot (Join-Path "examples/c" $file)
+    if (-not (Test-Path $src)) { throw "Missing required examples/c file: $src" }
+    Copy-Item -Force $src (Join-Path $examplesCOut $file)
+}
+
+# --- Replay tooling (quickstart.md + replay_contract.md present these as customer-runnable) ---
+# Shipped at the doc-referenced path "Tools/replay_proof/..." so those references resolve
+# from the bundle root.
+$replayOut = Join-Path $outRoot "Tools/replay_proof"
+New-Item -ItemType Directory -Force -Path $replayOut | Out-Null
+$replayFiles = @("verify_replay_proof.py", "replay_proof_schema_v1.md")
+foreach ($file in $replayFiles) {
+    $src = Join-Path $repoRoot (Join-Path "Tools/replay_proof" $file)
+    if (-not (Test-Path $src)) { throw "Missing required replay tool file: $src" }
+    Copy-Item -Force $src (Join-Path $replayOut $file)
+}
+
 # --- Bindings ---
 
 $pythonOut = Join-Path $bindingsOut "python"
@@ -264,8 +296,9 @@ foreach ($f in $pythonFiles) {
 }
 
 $pythonExampleFiles = @(
-    @{ src = "bindings/python/examples/quick_test.py";    dst = "quick_test.py" },
-    @{ src = "bindings/python/examples/risk_scoring.py";  dst = "risk_scoring.py" }
+    @{ src = "bindings/python/examples/quick_test.py";              dst = "quick_test.py" },
+    @{ src = "bindings/python/examples/risk_scoring.py";            dst = "risk_scoring.py" },
+    @{ src = "bindings/python/examples/replay_proof_producer.py";   dst = "replay_proof_producer.py" }
 )
 foreach ($f in $pythonExampleFiles) {
     $src = Join-Path $repoRoot $f.src
