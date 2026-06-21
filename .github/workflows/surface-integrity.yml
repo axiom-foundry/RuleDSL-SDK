@@ -97,7 +97,7 @@ jobs:
           "$RULEDSLC" compile examples/01_risk_scoring/rules.rule -o /tmp/qs.axbc --lang 0.9 --target axbc3
           cc -std=c11 -I include examples/c/minimal_eval.c -L "$LIBDIR" -lruledsl_capi -o /tmp/minimal_eval
           got=$(LD_LIBRARY_PATH="$LIBDIR" /tmp/minimal_eval /tmp/qs.axbc 2>&1) || true
-          exp=$'RuleDSL/1.0.0 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
+          exp=$'RuleDSL/1.0.1 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
           if [ "$got" != "$exp" ]; then
             echo "::error::quickstart loop output does not match docs/quickstart.md"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
           fi

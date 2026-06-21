@@ -78,7 +78,7 @@ Linux:
 ## Expected output (sample)
 
 ```text
-RuleDSL/1.0.0 (abi=1)
+RuleDSL/1.0.1 (abi=1)
 Decision: matched=1 action_type=0
 DETERMINISTIC_OK
 ```

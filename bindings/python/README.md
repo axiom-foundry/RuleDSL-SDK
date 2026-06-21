@@ -172,5 +172,5 @@ For maximum throughput, create one `RuleDSL` instance per thread to avoid lock c
 ## Engine Version
 
 ```python
-print(engine.version())  # "RuleDSL/1.0.0 (abi=1)"
+print(engine.version())  # "RuleDSL/1.0.1 (abi=1)"
 ```
