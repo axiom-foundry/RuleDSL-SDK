@@ -1,26 +1,26 @@
 # KYC Compliance — demonstrates boolean logic, IN lists, MATCH, and priority
 
-RULE block_sanctioned_country PRIORITY 200 {
-  WHEN ip_country IN [KP, IR, SY];
-  THEN reason = "sanctioned_country", DECLINE;
+rule block_sanctioned_country priority 200 {
+  when ip_country in [KP, IR, SY];
+  then reason = "sanctioned_country", decline;
 }
 
-RULE flag_suspicious_email PRIORITY 100 {
-  WHEN email MATCH "@tempmail" OR email MATCH "@throwaway";
-  THEN reason = "disposable_email", REVIEW;
+rule flag_suspicious_email priority 100 {
+  when email match "@tempmail" or email match "@throwaway";
+  then reason = "disposable_email", review;
 }
 
-RULE trusted_verified_customer PRIORITY 50 {
-  WHEN is_verified AND NOT is_new_device AND amount <= 5000;
-  THEN reason = "trusted_customer", ALLOW;
+rule trusted_verified_customer priority 50 {
+  when is_verified and not is_new_device and amount <= 5000;
+  then reason = "trusted_customer", allow;
 }
 
-RULE new_device_review PRIORITY 40 {
-  WHEN is_new_device AND (amount > 1000 OR NOT is_verified);
-  THEN reason = "new_device_risk", REVIEW;
+rule new_device_review priority 40 {
+  when is_new_device and (amount > 1000 or not is_verified);
+  then reason = "new_device_risk", review;
 }
 
-RULE default_allow {
-  WHEN TRUE;
-  THEN reason = "baseline", ALLOW;
+rule default_allow {
+  when true;
+  then reason = "baseline", allow;
 }

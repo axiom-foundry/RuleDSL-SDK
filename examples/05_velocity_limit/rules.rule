@@ -1,21 +1,21 @@
 # Velocity Limits — demonstrates arithmetic, limit clauses, and currency thresholds
 
-RULE block_extreme PRIORITY 200 {
-  WHEN amount > 25000;
-  THEN reason = "extreme_amount", risk_score = 99, DECLINE;
+rule block_extreme priority 200 {
+  when amount > 25000;
+  then reason = "extreme_amount", risk_score = 99, decline;
 }
 
-RULE high_value_daily_cap PRIORITY 100 {
-  WHEN amount > 5000 AND amount <= 25000;
-  THEN reason = "daily_cap", risk_score = (amount / 500) + 20, LIMIT 3000 USD PER 1 D;
+rule high_value_daily_cap priority 100 {
+  when amount > 5000 and amount <= 25000;
+  then reason = "daily_cap", risk_score = (amount / 500) + 20, limit 3000 USD per 1 D;
 }
 
-RULE medium_hourly_cap PRIORITY 50 {
-  WHEN amount > 1000 AND amount <= 5000;
-  THEN reason = "hourly_cap", risk_score = (amount / 1000) * 10, LIMIT 10000 USD PER 1 H;
+rule medium_hourly_cap priority 50 {
+  when amount > 1000 and amount <= 5000;
+  then reason = "hourly_cap", risk_score = (amount / 1000) * 10, limit 10000 USD per 1 H;
 }
 
-RULE allow_small {
-  WHEN amount <= 1000;
-  THEN reason = "low_value", risk_score = 5, ALLOW;
+rule allow_small {
+  when amount <= 1000;
+  then reason = "low_value", risk_score = 5, allow;
 }
