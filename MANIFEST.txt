@@ -82,6 +82,7 @@ docs/integration_snippets.md
 docs/language/README.md
 docs/language/boolean_model_v1_0.md
 docs/language/conformance_map.md
+docs/language/conformance_status_v0_9.md
 docs/language/grammar_v1_0.md
 docs/language/identifier_missing_v1_0.md
 docs/language/lexical_core_v1_0.md

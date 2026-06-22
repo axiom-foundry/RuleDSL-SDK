@@ -2,6 +2,8 @@
 
 This annex defines lexical core behavior for whitespace, comments, identifiers, keywords, and numeric literals.
 
+> **v0.9 conformance:** This annex defines the v1.0 **target**. The shipped v0.9 engine implements some semantics differently; the authoritative shipped status is [conformance_status_v0_9.md](conformance_status_v0_9.md).
+
 ## 1) Whitespace and Newline Treatment
 
 - [SYN-0007] The lexical whitespace set SHALL be exactly: space (U+0020), horizontal tab (U+0009), carriage return (U+000D), and line feed (U+000A).

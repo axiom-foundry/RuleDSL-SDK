@@ -2,6 +2,8 @@
 
 This annex defines boolean-domain, condition-context, and equality semantics for v1.0.
 
+> **v0.9 conformance:** This annex defines the v1.0 **target**. The shipped v0.9 engine implements some semantics differently; the authoritative shipped status is [conformance_status_v0_9.md](conformance_status_v0_9.md).
+
 ## 1) Boolean Type Contract
 
 - [TYP-0005] The language Boolean value domain SHALL contain exactly two values: `true` and `false`.

@@ -2,6 +2,8 @@
 
 This annex defines ordering semantics for `<`, `>`, `<=`, and `>=` in v1.0.
 
+> **v0.9 conformance:** This annex defines the v1.0 **target**. The shipped v0.9 engine implements some semantics differently; the authoritative shipped status is [conformance_status_v0_9.md](conformance_status_v0_9.md).
+
 ## 1) Operand Type Rule
 
 - [SEM-0021] Ordering operations SHALL be defined only when both operands have the same language type.

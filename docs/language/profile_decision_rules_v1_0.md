@@ -24,3 +24,11 @@ Normative parsing/lexing binding:
 
 - [VER-0008] v1.0 language mode SHALL activate `decision-rules-v1.0` as the baseline profile.
 - [VER-0009] v1.0 SHALL NOT support selecting alternative profiles.
+
+## 5) Decision Resolution (Non-normative)
+
+This section describes the shipped v0.9 evaluation behavior; see [conformance_status_v0_9.md](conformance_status_v0_9.md) for the full conformance record.
+
+- The first rule whose `when` condition is true wins, and evaluation stops at that rule.
+- This includes assign-only rules: an assign-only rule (one that only assigns and never reaches `allow`/`decline`/`review`/`limit`) with a broad `when` **shadows** any lower-priority decision rule. The outcome is `matched = true` with the profile default action (`review`) and an empty/`NULL` `rule_name`.
+- The `limit` decision **expresses** a velocity cap (an amount and a `per` window); it does not enforce anything by itself. The engine is stateless and does not track cumulative spend — the host system enforces the cap. `now_utc_ms` must be supplied for a `limit` rule and is validated as present and numeric, but is not used computationally in v0.9.
