@@ -414,15 +414,20 @@ namespace Axiom.RuleDSL
         /// </summary>
         /// <param name="bytecode">Compiled bytecode.</param>
         /// <param name="fields">Field name-value pairs. Values: double, string, bool, or null.</param>
-        /// <param name="nowUtcMs">Epoch ms for time-based rules. If null, uses current time.</param>
+        /// <param name="nowUtcMs">Epoch ms for time-based rules. Must be supplied explicitly
+        /// (via this argument or a "now_utc_ms" field); the engine never reads the system clock —
+        /// reproducibility requires an explicit value. Omitting it for a time-based rule throws
+        /// EvalException (MISSING_NOW_UTC_MS).</param>
         public Decision Evaluate(Bytecode bytecode, Dictionary<string, object> fields,
                                  double? nowUtcMs = null)
         {
             ThrowIfDisposed();
 
             var allFields = new Dictionary<string, object>(fields);
-            if (!nowUtcMs.HasValue && !allFields.ContainsKey("now_utc_ms"))
-                nowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            // now_utc_ms is NEVER auto-injected from the system clock. A deterministic engine must
+            // be a pure function of explicit inputs; reading the wall clock here would make the same
+            // bytecode+input non-reproducible. Time-based rules require an explicit now_utc_ms
+            // (argument or field); otherwise the engine reports MISSING_NOW_UTC_MS and this throws.
             if (nowUtcMs.HasValue)
                 allFields["now_utc_ms"] = nowUtcMs.Value;
 

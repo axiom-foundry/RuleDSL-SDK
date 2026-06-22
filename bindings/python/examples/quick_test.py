@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from ruledsl import RuleDSL, Bytecode, RuleDSLError
+from ruledsl import RuleDSL, Bytecode, RuleDSLError, ErrorCode
 
 
 def check(label, condition, detail=""):
@@ -91,6 +91,34 @@ def main():
         check("No-match case works", not decision2.matched, "amount=50 < 100")
     except RuleDSLError as e:
         check("No-match case works", False, str(e))
+
+    # 6. Determinism contract: the engine never reads the system clock. A
+    #    time-based (LIMIT) rule REQUIRES an explicit now_utc_ms — omitting it is a
+    #    deterministic MISSING_NOW_UTC_MS error (not a silent wall-clock read), and
+    #    the same explicit inputs always produce the same decision.
+    try:
+        limit_bc = engine.compile(
+            'rule velocity { when amount > 0; then limit 100 per 1 D; }'
+        )
+        # (a) No now_utc_ms -> the SAME deterministic error on every call (no hidden clock).
+        codes = []
+        for _ in range(2):
+            try:
+                engine.evaluate(limit_bc, {"amount": 50.0})
+                codes.append("NO_ERROR")
+            except RuleDSLError as e:
+                codes.append(e.code)
+        check("Time rule without now_utc_ms -> deterministic error (no system clock)",
+              codes[0] == codes[1] and codes[0] not in ("NO_ERROR", ErrorCode.OK),
+              f"both raised code={codes[0]} ({ErrorCode.name(codes[0])})")
+        # (b) Explicit now_utc_ms -> identical decision across repeated runs.
+        d_a = engine.evaluate(limit_bc, {"amount": 50.0}, now_utc_ms=1700000000000.0)
+        d_b = engine.evaluate(limit_bc, {"amount": 50.0}, now_utc_ms=1700000000000.0)
+        check("Time rule with explicit now_utc_ms -> reproducible decision",
+              (d_a.matched, d_a.action, d_a.amount) == (d_b.matched, d_b.action, d_b.amount),
+              f"{d_a.action} amount={d_a.amount}")
+    except RuleDSLError as e:
+        check("now_utc_ms determinism contract", False, str(e))
 
     engine.close()
     print(f"\n  ===== ALL CHECKS PASSED =====\n")

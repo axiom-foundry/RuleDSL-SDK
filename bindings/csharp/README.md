@@ -64,14 +64,18 @@ Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensiti
 | `bool` | BOOL | `{"is_vip", true}` |
 | `null` | MISSING | `{"country", null}` |
 
-## Time Injection
+## Time
+
+Time-based rules require `now_utc_ms` (epoch milliseconds), supplied **explicitly** —
+neither the engine nor this wrapper ever reads the system clock, because a
+deterministic engine must be a pure function of explicit inputs. Omitting it for a
+time-based rule throws `EvalException` (`MISSING_NOW_UTC_MS`).
 
 ```csharp
-// Automatic (uses DateTimeOffset.UtcNow)
-var decision = engine.Evaluate(bytecode, fields);
-
-// Manual (for deterministic replay)
+// Supply the time from your host application's clock at the call site:
 var decision = engine.Evaluate(bytecode, fields, nowUtcMs: 1700000000000.0);
+
+// ...or pass it as an explicit field in `fields`.
 ```
 
 ## Bytecode I/O

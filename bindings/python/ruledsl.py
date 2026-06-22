@@ -23,7 +23,6 @@ import ctypes.util
 import os
 import platform
 import threading
-import time
 from pathlib import Path
 
 
@@ -361,8 +360,11 @@ class RuleDSL:
                     - str: STRING
                     - bool: BOOL
                     - None: MISSING
-            now_utc_ms: Epoch milliseconds for time-based rules.
-                        If None, uses current system time automatically.
+            now_utc_ms: Epoch milliseconds for time-based rules. Must be supplied
+                        explicitly (via this argument or as a "now_utc_ms" field);
+                        the engine never reads the system clock — reproducibility
+                        requires an explicit value. Omitting it for a time-based
+                        rule raises EvalError (MISSING_NOW_UTC_MS).
 
         Returns:
             Decision object with matched, action, amount, currency, etc.
@@ -372,11 +374,12 @@ class RuleDSL:
         """
         self._check_alive()
 
-        # Auto-inject now_utc_ms if not provided
-        if now_utc_ms is None and "now_utc_ms" not in fields:
-            now_utc_ms = time.time() * 1000.0
-
         # Build fields array
+        # NOTE: now_utc_ms is NEVER auto-injected from the system clock. A deterministic
+        # engine must be a pure function of explicit inputs; reading the wall clock here
+        # would make the same bytecode+input non-reproducible. Time-based rules require
+        # an explicit now_utc_ms (argument or field); otherwise the engine reports
+        # MISSING_NOW_UTC_MS and this binding raises EvalError.
         all_fields = dict(fields)
         if now_utc_ms is not None:
             all_fields["now_utc_ms"] = float(now_utc_ms)
