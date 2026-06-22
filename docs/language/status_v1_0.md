@@ -11,7 +11,7 @@
 - Keyword matching is ASCII case-insensitive.
 - Logical operators are keyword-only: `and`, `or`, `not`.
 - Numeric exponent literals (`e`/`E`) are supported (e.g., `1e6`, `1.5e-3`).
-- Implicit coercions are not allowed.
+- v1.0 target: implicit coercions are disallowed. Shipped v0.9 engine: the condition context applies dynamic truthiness coercion — see [conformance_status_v0_9.md](conformance_status_v0_9.md).
 - Operator precedence is deterministic and fixed by the v1.0 grammar table.
 
 ## 3. Determinism Guarantees

@@ -2,6 +2,8 @@
 
 This annex defines identifier resolution and missing-value behavior for v1.0.
 
+> **v0.9 conformance:** This annex defines the v1.0 **target**. The shipped v0.9 engine implements some semantics differently; the authoritative shipped status is [conformance_status_v0_9.md](conformance_status_v0_9.md).
+
 ## 1) Identifier Role
 
 - [TYP-0007] `identifier` SHALL denote a symbolic reference form that requires deterministic resolution before value-consuming operations.

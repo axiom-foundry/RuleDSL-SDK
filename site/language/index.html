@@ -462,7 +462,7 @@
 <!-- 8. Time & Velocity -->
 <section id="time">
     <h2><a href="#time">Time & Velocity Limits</a></h2>
-    <p>The <code>limit</code> decision enforces velocity caps over time windows:</p>
+    <p>The <code>limit</code> decision <strong>expresses</strong> a velocity cap (an amount and a <code>per</code> window). The engine is stateless and does not track cumulative spend &mdash; your system enforces the cap. <code>now_utc_ms</code> is validated as present but is not used computationally in v0.9:</p>
 <pre><span class="kw">then</span> <span class="kw">limit</span> <span class="num">500</span> USD <span class="kw">per</span> <span class="num">1</span> D;    <span class="cmt"># max 500 USD per day</span>
 <span class="kw">then</span> <span class="kw">limit</span> <span class="num">3</span> TRY <span class="kw">per</span> <span class="num">1</span> H;      <span class="cmt"># max 3 transactions per hour</span></pre>
 
@@ -476,7 +476,7 @@
     </table>
 
     <div class="note">
-        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided as <code>now_utc_ms</code> in the input context. The Python and C# bindings auto-inject this; the C API requires explicit injection.
+        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided explicitly as <code>now_utc_ms</code> in the input context — in every binding (Python, C#, and the C API). Omitting it for a time-based rule raises <code>MISSING_NOW_UTC_MS</code>.
     </div>
 </section>
 
