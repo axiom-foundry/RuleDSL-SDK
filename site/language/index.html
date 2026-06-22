@@ -476,7 +476,7 @@
     </table>
 
     <div class="note">
-        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided as <code>now_utc_ms</code> in the input context. The Python and C# bindings auto-inject this; the C API requires explicit injection.
+        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided explicitly as <code>now_utc_ms</code> in the input context — in every binding (Python, C#, and the C API). Omitting it for a time-based rule raises <code>MISSING_NOW_UTC_MS</code>.
     </div>
 </section>
 

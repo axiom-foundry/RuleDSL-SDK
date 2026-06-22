@@ -170,7 +170,7 @@ rule allow_small {
 
 **Use case:** Limit high-value customers to 200 USD per day. Supported time units: `S` (second), `M` (minute), `H` (hour), `D` (day). Time units are case-insensitive: `d`, `D`, `h`, `H` are all valid.
 
-> **Note:** LIMIT rules require `now_utc_ms` to be provided in the input context. The Python and C# bindings auto-inject this from the system clock; the C API requires explicit injection.
+> **Note:** LIMIT rules require `now_utc_ms` to be provided explicitly in the input context. The engine never reads the system clock; all bindings (Python, C#, and the C API) require an explicit value — omitting it for a time-based rule raises `MISSING_NOW_UTC_MS`.
 
 ---
 
