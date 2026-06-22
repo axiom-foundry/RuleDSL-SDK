@@ -360,21 +360,21 @@ decision = engine.evaluate(bc, {
             Built to fail safe: malformed inputs are rejected gracefully with structured error codes,
             never with a crash. The parser and bytecode loader are exercised on every change by CI-gated,
             coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer),
-            seeded with a committed adversarial corpus &mdash; which already caught and fixed a real
-            determinism bug before release.
+            seeded with an adversarial corpus (maintained in the engine repository) &mdash; which has
+            caught and fixed bugs before release.
         </p>
         <div class="features" style="margin-top: 32px; grid-template-columns: repeat(2, 1fr);">
             <div class="feature">
                 <h3>Continuous Fuzzing in CI</h3>
-                <p>Parser and bytecode loader fuzzed on every change under ASan/UBSan, seeded with a committed adversarial corpus. This caught and fixed a real determinism bug (a priority integer overflow) before release.</p>
+                <p>Parser and bytecode loader fuzzed on every change under ASan/UBSan, seeded with an adversarial corpus (maintained in the engine repository). This has caught and fixed bugs before release.</p>
             </div>
             <div class="feature">
                 <h3>Thread-Safe by Design</h3>
-                <p>Per-thread compiler pattern for full parallelism; sustained multi-threaded and long soak runs complete with zero crashes, zero errors, and no net memory growth. Shared-compiler misuse is detected at runtime with <code>AX_ERR_CONCURRENT_COMPILER_USE</code> &mdash; no crash, no corruption.</p>
+                <p>Per-thread compiler pattern for full parallelism; concurrent and long-running (soak) execution is exercised on every release in CI under ASan/UBSan. Shared-compiler misuse is detected at runtime with <code>AX_ERR_CONCURRENT_COMPILER_USE</code> &mdash; no crash, no corruption.</p>
             </div>
             <div class="feature">
-                <h3>Identical Bytecode Across Locales</h3>
-                <p>Compiled output verified identical across locales including Turkish, German, and French. No decimal-separator drift, no collation variance.</p>
+                <h3>Locale Independence</h3>
+                <p>Evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002); cross-locale equivalence is exercised in CI. No decimal-separator drift, no collation variance.</p>
             </div>
             <div class="feature">
                 <h3>Malformed &amp; Tampered Input Rejected</h3>
