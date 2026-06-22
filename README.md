@@ -68,18 +68,18 @@ The RuleDSL engine is built to fail safe: malformed inputs are rejected graceful
 error codes, never with a crash.
 
 **Continuous fuzzing.** The parser and bytecode loader are exercised on every change by CI-gated,
-coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer), seeded with a
-committed adversarial corpus (malformed rule sources and tampered/truncated/oversized bytecode). This
-continuous fuzzing caught — and let us fix — a real determinism bug (an integer overflow in priority
-parsing) before release.
+coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer), seeded with an
+adversarial corpus (maintained in the engine repository; malformed rule sources and
+tampered/truncated/oversized bytecode). This continuous fuzzing has caught — and let us fix — bugs
+before release.
 
 **Tested against** adversarial and edge-case scenarios on every release:
 
 - Malformed rule sources and tampered bytecode (flipped bits, truncated files, wrong magic, oversized payloads) — rejected, never crash.
 - Hostile input strings (injection-style payloads — SQL, markup, CRLF — null bytes, very long identifiers) — rejected.
 - Rule-complexity limits and C-API misuse (NULL pointers, double-free, bad struct sizes, NaN/Infinity) — return proper error codes.
-- Locale determinism — identical bytecode across OS locales (C, Turkish, German, French, POSIX, en_US, tr_TR).
-- Concurrency — sustained multi-threaded stress (8 threads) and long sequential soak runs complete with zero crashes, zero errors, and no net memory growth; a shared compiler used across threads returns `AX_ERR_CONCURRENT_COMPILER_USE` rather than corrupting state.
+- Locale independence — evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002); cross-locale equivalence is exercised in CI.
+- Concurrency — the engine uses a per-thread compiler model; concurrent and long-running (soak) execution is exercised on every release in CI under AddressSanitizer/UndefinedBehaviorSanitizer. A compiler shared across threads is rejected at runtime with `AX_ERR_CONCURRENT_COMPILER_USE` rather than corrupting state.
 
 **Performance shape.** Evaluation is in-process — no network hop, no serialization — and bytecode
 evaluation avoids parsing on the hot path. Throughput scales with per-thread compilers; measure on
