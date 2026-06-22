@@ -77,16 +77,19 @@ Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensiti
 | `bool` | BOOL | `{"is_vip": True}` |
 | `None` | MISSING | `{"country": None}` |
 
-## Time Injection
+## Time
 
-The engine requires `now_utc_ms` for time-based rules. The wrapper auto-injects it from the system clock if not provided:
+Time-based rules require `now_utc_ms` (epoch milliseconds). It must be supplied
+**explicitly** — neither the engine nor this wrapper ever reads the system clock,
+because a deterministic engine must be a pure function of explicit inputs. Omitting
+it for a time-based rule raises `EvalError` (`MISSING_NOW_UTC_MS`).
 
 ```python
-# Automatic (uses current time)
-decision = engine.evaluate(bytecode, {"amount": 100.0})
-
-# Manual (for deterministic replay)
+# Supply the time from your host application's clock at the call site:
 decision = engine.evaluate(bytecode, {"amount": 100.0}, now_utc_ms=1700000000000.0)
+
+# ...or pass it as an explicit field:
+decision = engine.evaluate(bytecode, {"amount": 100.0, "now_utc_ms": 1700000000000.0})
 ```
 
 ## Bytecode I/O
