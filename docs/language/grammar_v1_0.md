@@ -163,3 +163,13 @@ Time-unit identifiers in `LimitClause` (e.g., `1 D`) use the following conventio
 | `M` | Minute |
 | `H` | Hour |
 | `D` | Day |
+
+## 7. Reserved Symbols (Non-normative)
+
+The following symbols are **not** part of the v1.0 surface and have no token in the Token Inventory (Section 2.1). They carry no normative meaning in v1.0:
+
+- `&&`, `||` — logical conjunction and disjunction are spelled with the keywords `and` and `or` (SYN-TOK-019, SYN-TOK-020). `a and b` is valid; `a && b` is not v1.0.
+- `!` (standalone) — logical negation is spelled with the keyword `not` (SYN-TOK-021). In v1.0 the character `!` occurs only as part of the `!=` equality token (SYN-TOK-014).
+- `%` — there is no modulo token; the only multiplicative operators are `*` and `/` (SYN-GRAM-015). The `SYN-TOK-012` slot is reserved (Section 2.1).
+
+A v1.0-conformant implementation rejects `&&`, `||`, a standalone `!`, and `%` as lexical errors. These symbols are reserved for possible future language versions; no v1.0 conformance requirement attaches to them.

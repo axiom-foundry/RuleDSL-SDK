@@ -18,6 +18,11 @@
 - Existing struct numeric/offset layout is frozen once published.
 - New capacity is added by tail extension when ABI-safe.
 
+## `AXDecision` output-field semantics
+
+- `matched` is non-zero when some rule's condition matched (including assign-only matches), and zero when only the profile default action applies.
+- `rule_name` identifies the rule that produced the **decision action** (`allow` / `decline` / `review` / `limit`). It is `NULL` for a default-action or assign-only outcome — i.e. when no rule reached a decision. This mirrors the engine contract and is held identical across the AST and bytecode evaluators by the engine's parity gate.
+
 ## `struct_size` contract
 
 - Caller sets `struct_size = sizeof(struct_type)` before API call.
