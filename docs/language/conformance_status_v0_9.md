@@ -71,8 +71,8 @@ message.
 | `CONCURRENT_COMPILER_USE` | `AX_ERR_CONCURRENT_COMPILER_USE` (8) |
 | `UNKNOWN_PATH`, `TYPE_MISMATCH`, `MATCH_EXPECTS_TEXT`, `ASSIGN_VALUE_MISSING`, `INVALID_TIME_WINDOW` | `AX_ERR_RUNTIME` (11, generic) |
 
-Note: `UNARY_EXPECTS_NUMBER` is emitted only by the internal AST oracle; the shipped
-bytecode path silently yields a missing value for a non-numeric unary operand.
+Note: a non-numeric unary operand (`-` applied to a non-number) silently yields a
+missing value with no trace error, on both the AST and bytecode evaluators.
 
 **Compile / lex / parse:** every failure → `AX_ERR_COMPILE=2` with a free-text message,
 e.g. `Parse error, expected: …`, `Lex error`, `Unterminated block comment`,
