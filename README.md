@@ -3,6 +3,8 @@
 RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
 Same input, same bytecode, same decision — guaranteed across supported platforms.
 
+**Linux & Windows x86_64 · release v1.0.1 · language version v0.9 (v1.0 = target spec).**
+
 **Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation.
 
 **What it is**: an in-process library (`.dll` / `.so`). No daemon, no network hop, no database dependency.
@@ -62,6 +64,13 @@ ax_decision_reset(&dec);
 ax_compiler_destroy(c);
 ```
 
+## Language version & conformance
+
+The Quickstart compiles with `--lang 0.9`. The shipped engine implements **language version v0.9** — the honest, deterministic subset of the **v1.0** target specification. The v1.0 spec is the normative target; every place the engine differs from it is documented explicitly, so there are no hidden surprises:
+
+- **Shipped behavior, and where it diverges from the v1.0 target** — [`docs/language/conformance_status_v0_9.md`](docs/language/conformance_status_v0_9.md)
+- **The v1.0 target specification** — [`docs/language/spec_v1_0.md`](docs/language/spec_v1_0.md)
+
 ## Engine Robustness
 
 The RuleDSL engine is built to fail safe: malformed inputs are rejected gracefully with structured
@@ -84,6 +93,15 @@ before release.
 **Performance shape.** Evaluation is in-process — no network hop, no serialization — and bytecode
 evaluation avoids parsing on the hot path. Throughput scales with per-thread compilers; measure on
 your target hardware and workload.
+
+## Proven determinism
+
+"Same input, same decision" is a published, recomputable proof — not a slogan. On every release the same bytecode is evaluated on **real Linux and real Windows** (x86_64), the decision output is serialized and hashed, and the two platforms' hashes are byte-identical. The evidence lives in this repository, so you can verify it yourself:
+
+- Cross-platform comparison reports (Windows-x64 vs Linux-x64) — [`reports/determinism_compare_v1/2026-06-23/`](reports/determinism_compare_v1/2026-06-23/) — each `status: pass`, every hash byte-identical (e.g. [the DET-001 comparison](reports/determinism_compare_v1/2026-06-23/DET-001/windows-x64__linux-x64/comparison.json)).
+- Each bundle ships the raw `output.bin`, inputs, options, and a `SHA256SUMS.txt` — recompute the hashes and compare the two platforms yourself.
+
+Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
 
 ## What you receive
 
