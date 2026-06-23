@@ -11,6 +11,8 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 
 **What it is not**: not a SaaS, not an open-source engine, not a 24/7 managed service.
 
+**Open vs closed.** This repository is the **SDK** — headers, language bindings, examples, documentation, and determinism evidence, source-available for integration. The **engine** ships as a licensed binary in [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases), not as open source. See [`LICENSE`](LICENSE) and [`EVALUATION_TERMS.md`](EVALUATION_TERMS.md).
+
 > **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
 
 ## Quickstart
@@ -102,6 +104,16 @@ your target hardware and workload.
 - Each bundle ships the raw `output.bin`, inputs, options, and a `SHA256SUMS.txt` — recompute the hashes and compare the two platforms yourself.
 
 Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
+
+## Why RuleDSL (vs other rule engines)
+
+Most rule engines evaluate rules; RuleDSL is built so you can **prove and audit** the result.
+
+- **Deterministic — and proven.** Same input → byte-identical decision on Linux and Windows, with the cross-platform hashes committed in this repo (see [Proven determinism](#proven-determinism)). Many engines are deterministic in practice; few publish the proof.
+- **In-process, no runtime baggage.** A C ABI library (`.so` / `.dll`) — no JVM, no daemon, no network hop, no policy sidecar. Embeds directly in C, C++, Python, or C# (Drools requires a JVM; OPA/Rego typically runs as a separate service).
+- **Auditable and honest.** Compact, integrity-checked bytecode, a published error contract, and a conformance status documenting exactly what the engine does versus the spec (see [Language version & conformance](#language-version--conformance)) — instead of claiming more than it ships.
+
+Performance is deliberately not the headline: evaluation is in-process and parse-free on the hot path, but measure throughput on your own hardware — we don't publish cherry-picked numbers.
 
 ## What you receive
 
