@@ -3,7 +3,7 @@
 RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
 Same input, same bytecode, same decision — guaranteed across supported platforms.
 
-**Linux & Windows x86_64 · release v1.0.1 · language version v0.9 (v1.0 = target spec).**
+**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec).**
 
 **Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation.
 

@@ -67,7 +67,7 @@ For the same compiler version, same input bytes, and same compile flags, `ruleds
 `ruledslc --version` returns machine-readable metadata:
 
 ```text
-RuleDSL/1.0.1 (lang=0.9; axbc=3; abi=1)
+RuleDSL/1.0.2 (lang=0.9; axbc=3; abi=1)
 BUILD_HASH=<short-hash>
 ```
 
