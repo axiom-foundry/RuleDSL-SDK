@@ -256,7 +256,7 @@ class Workbench(tk.Tk):
 
         actions = ttk.Frame(self, padding=(8, 6))
         actions.pack(fill="x")
-        ttk.Button(actions, text="Compile && Run", command=self.run_once).pack(side="left")
+        ttk.Button(actions, text="Compile & Run", command=self.run_once).pack(side="left")
         ttk.Button(actions, text=f"Run {self.RUNS}×",
                    command=self.run_many).pack(side="left", padx=(6, 0))
         self.stability_var = tk.StringVar(value="")
@@ -294,7 +294,7 @@ class Workbench(tk.Tk):
         self.inputs_text.insert("1.0", scenario["inputs"])
         self.now_var.set(scenario["now_utc_ms"])
         self.stability_var.set("")
-        self._set_text(self.result_text, [("Scenario loaded. Compile && Run to evaluate.", None)])
+        self._set_text(self.result_text, [("Scenario loaded. Compile & Run to evaluate.", None)])
         self._set_text(self.trace_text, [])
 
     def _gather(self):
