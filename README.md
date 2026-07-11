@@ -14,6 +14,8 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 **Open vs closed.** This repository is the **SDK** — headers, language bindings, examples, documentation, and determinism evidence, source-available for integration. The **engine** ships as a licensed binary in [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases), not as open source. See [`LICENSE`](LICENSE) and [`EVALUATION_TERMS.md`](EVALUATION_TERMS.md).
 
 > **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
+>
+> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle.
 
 ## Quickstart
 
