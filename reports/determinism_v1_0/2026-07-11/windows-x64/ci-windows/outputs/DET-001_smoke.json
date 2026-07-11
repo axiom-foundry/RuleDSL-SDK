@@ -1,0 +1,1 @@
+{"det_id":"DET-001","equal":true,"notes":"Two fixed-input evaluations compared for bit-identical status+decision serialization.","run_a":{"output_hash_sha256":"f3714ba24ad7a84218874bff096eab721bd67bcd5641cd45d2973fd86d55c5e1","status_code":0},"run_b":{"output_hash_sha256":"f3714ba24ad7a84218874bff096eab721bd67bcd5641cd45d2973fd86d55c5e1","status_code":0},"status":"pass"}
