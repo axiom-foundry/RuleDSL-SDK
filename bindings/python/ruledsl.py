@@ -242,10 +242,19 @@ class Decision:
 class Bytecode:
     """Wrapper around compiled bytecode. Holds raw bytes."""
 
-    __slots__ = ("_data",)
+    __slots__ = ("_data", "_c_buf")
 
     def __init__(self, data: bytes):
         self._data = data
+        self._c_buf = None
+
+    def _ctypes_buffer(self):
+        # Built once and reused: the bytes are immutable and the engine only
+        # reads from it, so rebuilding it per evaluate() call would be pure
+        # overhead (it used to dominate the call cost).
+        if self._c_buf is None:
+            self._c_buf = (ctypes.c_ubyte * len(self._data)).from_buffer_copy(self._data)
+        return self._c_buf
 
     @classmethod
     def from_file(cls, path):
@@ -406,8 +415,11 @@ class RuleDSL:
             raise ArgumentError(ErrorCode.INVALID_ARGUMENT,
                                 "bytecode must be Bytecode or bytes")
 
+        if isinstance(bytecode, Bytecode):
+            c_bc_buf = bytecode._ctypes_buffer()
+        else:
+            c_bc_buf = (ctypes.c_ubyte * len(bc_data)).from_buffer_copy(bc_data)
         c_bc = _AXBytecode()
-        c_bc_buf = (ctypes.c_ubyte * len(bc_data))(*bc_data)
         c_bc.data = ctypes.cast(c_bc_buf, ctypes.POINTER(ctypes.c_ubyte))
         c_bc.size = len(bc_data)
 
@@ -511,7 +523,10 @@ class RuleDSL:
         info = _AXCompatibilityInfo()
         info.struct_size = ctypes.sizeof(_AXCompatibilityInfo)
 
-        buf = (ctypes.c_ubyte * len(bc_data))(*bc_data)
+        if isinstance(bytecode, Bytecode):
+            buf = bytecode._ctypes_buffer()
+        else:
+            buf = (ctypes.c_ubyte * len(bc_data)).from_buffer_copy(bc_data)
         status = self._lib.ax_check_bytecode_compatibility(
             buf, len(bc_data), ctypes.byref(info)
         )
