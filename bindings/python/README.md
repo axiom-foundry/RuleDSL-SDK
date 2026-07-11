@@ -2,6 +2,19 @@
 
 Pure Python (ctypes) wrapper for the RuleDSL C API. No compilation needed — just point it at your `ruledsl_capi.dll` or `libruledsl_capi.so`.
 
+## Install
+
+Three equivalent ways to get the binding (+ workbench):
+
+```sh
+pip install ruledsl          # from PyPI; adds the `ruledsl-workbench` command
+```
+
+…or use the files in this folder directly (they ship inside the SDK bundle's
+`bindings/python/`, and newer bundles include `workbench.py` too). The package
+is pure Python; the **engine library is not inside** — it comes from
+[Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases).
+
 ## Requirements
 
 - Python 3.7+

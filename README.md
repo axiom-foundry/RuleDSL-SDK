@@ -134,8 +134,18 @@ Not a C developer? Use the ready-made wrappers:
 
 | Language | Location | Dependencies |
 |----------|----------|-------------|
-| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) | None (pure ctypes) |
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | None (pure ctypes) |
 | C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke) |
+
+The [`ruledsl`](https://pypi.org/project/ruledsl/) package on PyPI carries the
+Python binding plus the desktop **workbench** (authoring & replay companion) as
+the `ruledsl-workbench` command. It is pure Python — the engine library itself
+still comes from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases):
+
+```sh
+pip install ruledsl
+ruledsl-workbench --dll path/to/bundle/bin/ruledsl_capi.dll
+```
 
 ## Documentation
 
