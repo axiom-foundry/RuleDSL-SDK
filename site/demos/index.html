@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuleDSL — Demos</title>
+    <meta name="description" content="Screen recordings of the RuleDSL SDK running live: the workbench, a Windows-vs-Ubuntu determinism comparison, and a single-thread throughput counter. No mockups — every frame is the real engine.">
+    <meta property="og:title" content="RuleDSL — Demos">
+    <meta property="og:description" content="The engine, on camera: workbench tour, Windows ↔ Ubuntu byte-identical decisions, and live throughput.">
+    <meta property="og:image" content="https://axiom-foundry.github.io/RuleDSL-SDK/assets/og-banner.png">
+    <meta property="og:url" content="https://axiom-foundry.github.io/RuleDSL-SDK/demos/">
+    <meta property="og:type" content="website">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3a;
+            --text: #e4e6ed;
+            --muted: #8b8fa3;
+            --accent: #6c8cff;
+            --accent2: #4ecdc4;
+            --code-bg: #141620;
+            --max-w: 960px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+        nav { border-bottom: 1px solid var(--border); padding: 16px 0; }
+        nav .container { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+        .logo span { color: var(--muted); font-weight: 400; }
+        nav a { color: var(--muted); text-decoration: none; margin-left: 24px; font-size: 0.9rem; }
+        nav a:hover { color: var(--text); }
+        header { text-align: center; padding: 56px 0 8px; }
+        header h1 { font-size: 2.1rem; line-height: 1.2; margin-bottom: 14px; }
+        header h1 em { font-style: normal; color: var(--accent); }
+        header p { color: var(--muted); max-width: 640px; margin: 0 auto; }
+        .demo {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px;
+            margin: 36px 0;
+        }
+        .demo h2 { font-size: 1.25rem; margin-bottom: 6px; }
+        .demo .meta { color: var(--accent2); font-size: 0.85rem; margin-bottom: 14px; }
+        .demo video {
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #000;
+            display: block;
+        }
+        .demo p.caption { color: var(--muted); font-size: 0.95rem; margin-top: 14px; }
+        .honesty {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent2);
+            border-radius: 6px;
+            padding: 18px 22px;
+            margin: 44px 0 60px;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+        footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+        footer a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="../" class="logo">RuleDSL <span>SDK</span></a>
+            <div>
+                <a href="../">Home</a>
+                <a href="../language/">Language</a>
+                <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <div class="container">
+            <h1>The engine, <em>on camera</em></h1>
+            <p>Screen recordings of the shipped v1.0.2 binaries running live. No mockups, no animations —
+               every number and every trace line on screen was produced by the engine while recording.</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="demo">
+            <h2>Workbench tour</h2>
+            <div class="meta">43 s · Windows 11 · shipped ruledsl_capi.dll · bindings/python/workbench.py</div>
+            <video controls preload="metadata" src="../assets/ruledsl-workbench-demo.mp4"></video>
+            <p class="caption">
+                Rules on the left, inputs on the right: compile &amp; run, the decision with its output fields
+                and canonical decision hash, the engine's own evaluation trace (why this decision), a live
+                input change, and the deterministic <code>MISSING_NOW_UTC_MS</code> error when the explicit
+                clock is removed — the engine never reads the system clock. The "Run 100×" check re-evaluates
+                and asserts every run produced the identical decision hash.
+            </p>
+        </div>
+
+        <div class="demo">
+            <h2>Windows ↔ Ubuntu — byte-identical decisions</h2>
+            <div class="meta">40 s · Windows 11 + Ubuntu 24.04 (WSLg) · both on shipped v1.0.2 binaries</div>
+            <video controls preload="metadata" src="../assets/ruledsl-duo-demo.mp4"></video>
+            <p class="caption">
+                The same ruleset and the same input, loaded, edited and executed simultaneously on two
+                operating systems. The banner at the bottom is a live instrument, not a caption: the Ubuntu
+                side exports its decision hash after every run and the Windows side compares — green means
+                the hashes are equal; a genuine mismatch would print red. Traces match line for line, and a
+                live input change produces a new decision whose hash is again identical on both systems.
+            </p>
+        </div>
+
+        <div class="demo">
+            <h2>Throughput — live counter, single thread</h2>
+            <div class="meta">13.5 s · 12th Gen Intel Core i5-1235U (laptop-class) · C API, in-process, no server</div>
+            <video controls preload="metadata" src="../assets/ruledsl-throughput-demo.mp4"></video>
+            <p class="caption">
+                The counter counts real <code>ax_eval_bytecode()</code> calls streamed from a running
+                benchmark — hundreds of thousands of evaluations in five seconds on one laptop thread, with
+                zero decision mismatches across the entire run. The number on screen is that run's live
+                measurement, recorded as it happened.
+            </p>
+        </div>
+
+        <div class="honesty">
+            <strong>How to read these numbers.</strong> One machine, one workload, single thread — throughput
+            varies with hardware, ruleset and load; measure on your own machine (the bundle ships everything
+            needed). What does not vary is the decision: same bytecode, same input, same options → the same
+            decision bytes, on every run and on both platforms shown. That claim is not a video — it is
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK/tree/main/reports/determinism_compare_v1"
+               style="color: var(--accent);">published, recomputable evidence</a>.
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            RuleDSL SDK · <a href="../">home</a> ·
+            <a href="https://github.com/axiom-foundry/RuleDSL-SDK">github.com/axiom-foundry/RuleDSL-SDK</a>
+        </div>
+    </footer>
+</body>
+</html>
