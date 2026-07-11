@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ruledsl"
-version = "1.0.2"
+version = "1.0.3"
 description = "Python binding and desktop workbench (authoring & replay companion) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
 readme = "README-pypi.md"
 requires-python = ">=3.7"
