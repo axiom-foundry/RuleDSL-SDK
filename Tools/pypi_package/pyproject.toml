@@ -1,0 +1,42 @@
+# PyPI packaging for the `ruledsl` package: the Python binding + the desktop
+# workbench (authoring & replay companion). Pure Python — the engine library
+# itself is NOT in this package; it ships separately via GitHub Releases.
+#
+# Sources are assembled from bindings/python/ at build time (assemble.py), so
+# the repository layout stays untouched and the files exist exactly once.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ruledsl"
+version = "1.0.2"
+description = "Python binding and desktop workbench (authoring & replay companion) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
+readme = "README-pypi.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+authors = [{ name = "Tanzer Cakir" }]
+keywords = ["rules", "rule-engine", "deterministic", "bytecode", "decisioning", "compliance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://axiom-foundry.github.io/RuleDSL-SDK/"
+Repository = "https://github.com/axiom-foundry/RuleDSL-SDK"
+Demos = "https://axiom-foundry.github.io/RuleDSL-SDK/demos/"
+Releases = "https://github.com/axiom-foundry/RuleDSL-SDK/releases"
+
+[project.scripts]
+ruledsl-workbench = "ruledsl.workbench:main"
+
+[tool.setuptools]
+package-dir = { "" = "build_src" }
+packages = ["ruledsl"]

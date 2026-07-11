@@ -1,0 +1,4 @@
+build_src/
+dist/
+LICENSE
+*.egg-info/

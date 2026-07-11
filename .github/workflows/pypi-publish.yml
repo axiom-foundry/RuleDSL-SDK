@@ -1,0 +1,67 @@
+name: pypi-publish
+
+# Publishes the `ruledsl` package (Python binding + workbench) assembled from
+# bindings/python/ by Tools/pypi_package/assemble.py. Pure Python; the engine
+# library is NOT in the package (it ships via GitHub Releases).
+#
+# Publishing uses PyPI Trusted Publishing (OIDC) — no tokens or secrets.
+# One-time setup on (test.)pypi.org: Account -> Publishing -> add publisher
+#   project: ruledsl · owner: axiom-foundry · repo: RuleDSL-SDK
+#   workflow: pypi-publish.yml · environment: pypi
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    name: build-and-publish (${{ inputs.target }})
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Assemble package sources from bindings/python
+        run: python Tools/pypi_package/assemble.py
+
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build Tools/pypi_package
+
+      - name: Smoke-test the wheel (import + console script)
+        run: |
+          python -m pip install Tools/pypi_package/dist/*.whl
+          python -c "import ruledsl; print('import ok:', ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)"
+          ruledsl-workbench --help
+
+      - name: Publish to TestPyPI
+        if: inputs.target == 'testpypi'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: Tools/pypi_package/dist
+
+      - name: Publish to PyPI
+        if: inputs.target == 'pypi'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: Tools/pypi_package/dist

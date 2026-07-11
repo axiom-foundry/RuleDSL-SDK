@@ -192,14 +192,27 @@ print("\n".join(trace))
 An exception raised inside `on_trace` never crosses the C boundary — it is
 caught and re-raised after evaluation completes.
 
-## Workbench (GUI)
+## Workbench (GUI) — authoring & replay companion
 
-`workbench.py` is a zero-dependency Tkinter app for exploring the engine: a
-rule editor with three ready scenarios (from the shipped `examples/`), an input
-panel, the decision with its output fields and evaluation trace, a canonical
-decision hash (the `replay_proof_producer.py` convention), and a "Run 100×"
-button that demonstrates the determinism contract live — every run must produce
-the identical decision hash.
+`workbench.py` is a zero-dependency Tkinter desktop tool for the two human ends
+of the rule pipeline. It is not a server component: production rulesets are
+compiled by `ruledslc` and evaluated in-process by your server via the C ABI.
+
+**Authoring** — a rule editor with three ready scenarios (from the shipped
+`examples/`), `File > Open Rules… / Save Rules As…` for real `.rule` files, an
+input panel, the decision with its output fields and evaluation trace, a
+canonical decision hash (the `replay_proof_producer.py` convention), and a
+"Run 100×" button that demonstrates the determinism contract live — every run
+must produce the identical decision hash.
+
+**Replay** — `File > Open Bytecode (Replay)…` loads a compiled `.axbc` exactly
+as the server ran it (no recompilation; the rules editor is disabled and the
+bytecode's SHA-256 is shown), and `File > Load Inputs from JSON…` restores an
+incident's inputs (flat fields dict, or `{"fields": …, "now_utc_ms": …}`).
+Same bytecode, same input → the same decision and trace, on your desk.
+
+The workbench deliberately does **not** export `.axbc`: production artifacts
+come from `ruledslc`, which stamps the authenticity manifest.
 
 ```sh
 python workbench.py                      # bundle layout: finds ../../bin automatically
