@@ -287,6 +287,7 @@ New-Item -ItemType Directory -Force -Path $pythonOut, $pythonExamplesOut | Out-N
 
 $pythonFiles = @(
     @{ src = "bindings/python/ruledsl.py";              dst = "ruledsl.py" },
+    @{ src = "bindings/python/workbench.py";            dst = "workbench.py" },
     @{ src = "bindings/python/README.md";               dst = "README.md" }
 )
 foreach ($f in $pythonFiles) {
