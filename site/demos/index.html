@@ -102,6 +102,15 @@
                 clock is removed — the engine never reads the system clock. The "Run 100×" check re-evaluates
                 and asserts every run produced the identical decision hash.
             </p>
+            <p class="caption">
+                <strong style="color: var(--accent2);">Run it yourself:</strong>
+                <code>pip install ruledsl</code> then
+                <code>ruledsl-workbench --dll path/to/bundle/bin/ruledsl_capi.dll</code>
+                — the engine DLL comes from the
+                <a href="https://github.com/axiom-foundry/RuleDSL-SDK/releases" style="color: var(--accent);">SDK bundle</a>.
+                It also replays production bytecode: <em>File &gt; Open Bytecode (Replay)</em> loads an
+                <code>.axbc</code> exactly as your server ran it.
+            </p>
         </div>
 
         <div class="demo">
