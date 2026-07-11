@@ -100,7 +100,7 @@ your target hardware and workload.
 
 "Same input, same decision" is a published, recomputable proof — not a slogan. On every release the same bytecode is evaluated on **real Linux and real Windows** (x86_64), the decision output is serialized and hashed, and the two platforms' hashes are byte-identical. The evidence lives in this repository, so you can verify it yourself:
 
-- Cross-platform comparison reports (Windows-x64 vs Linux-x64) — [`reports/determinism_compare_v1/2026-06-23/`](reports/determinism_compare_v1/2026-06-23/) — each `status: pass`, every hash byte-identical (e.g. [the DET-001 comparison](reports/determinism_compare_v1/2026-06-23/DET-001/windows-x64__linux-x64/comparison.json)).
+- Cross-platform comparison reports (Windows-x64 vs Linux-x64) — [`reports/determinism_compare_v1/2026-07-11/`](reports/determinism_compare_v1/2026-07-11/) — each `status: pass`, every hash byte-identical (e.g. [the DET-001 comparison](reports/determinism_compare_v1/2026-07-11/DET-001/windows-x64__linux-x64/comparison.json)). This set was produced by the **v1.0.2 engine** — the same binaries you can download and run — and its hashes are identical to the earlier published sets (`2026-06-21`, `2026-06-23`), which remain committed as history.
 - Each bundle ships the raw `output.bin`, inputs, options, and a `SHA256SUMS.txt` — recompute the hashes and compare the two platforms yourself.
 
 Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
