@@ -146,8 +146,12 @@ jobs:
         # path against the SHIPPED binaries (not the CI build): the 5 example folders,
         # the quickstart loop, the examples/c set, and the replay produce->verify loop.
         # This is the per-build proof that the shipped bundle is self-sufficient.
+        # The engine checkout is DELETED first: shipped v1.0.0/v1.0.1 binaries loaded the
+        # grammar from a path baked at configure time, and this gate passed because that
+        # path still existed on the runner. A clean room must not contain the build tree.
         run: |
           set -euo pipefail
+          rm -rf "$GITHUB_WORKSPACE/engine"
           B=/tmp/bundle-smoke
           rm -rf "$B"; cp -a "$GITHUB_WORKSPACE/dist/bundle" "$B"
           chmod +x "$B/bin/ruledslc"
@@ -178,7 +182,7 @@ jobs:
             ./bin/ruledslc compile examples/01_risk_scoring/rules.rule -o /tmp/qs.axbc --lang 0.9 --target axbc3
             cc examples/c/minimal_eval.c -I include -L bin -lruledsl_capi -o /tmp/minimal_eval
             got=$(/tmp/minimal_eval /tmp/qs.axbc)
-            exp=$'RuleDSL/1.0.1 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
+            exp=$'RuleDSL/1.0.2 (abi=1)\nDecision: matched=1 action_type=0\nDETERMINISTIC_OK'
             if [ "$got" != "$exp" ]; then
               echo "::error::quickstart loop mismatch"; printf 'got:\n%s\nexpected:\n%s\n' "$got" "$exp"; exit 1
             fi
@@ -254,7 +258,7 @@ jobs:
         with:
           # Release body is sourced from the committed, gate-checked note (same file on
           # both platform workflows, so order doesn't matter).
-          body_path: sdk/docs/release_notes/v1.0.1.md
+          body_path: sdk/docs/release_notes/v1.0.2.md
           files: |
             out/${{ steps.pkg.outputs.prefix }}.tar.gz
             out/${{ steps.pkg.outputs.prefix }}.zip

@@ -105,8 +105,12 @@ jobs:
       - name: Clean-room — verify the SHIPPED bundle (every documented onboarding path)
         # Fresh scratch copy of the REAL bundle; exercise every documented onboarding path
         # against the SHIPPED Windows binaries (dll/lib) with the documented `cl` line.
+        # The engine checkout is DELETED first: shipped v1.0.0/v1.0.1 binaries loaded the
+        # grammar from a path baked at configure time, and this gate passed because that
+        # path still existed on the runner. A clean room must not contain the build tree.
         shell: pwsh
         run: |
+          Remove-Item -Recurse -Force "$env:GITHUB_WORKSPACE\engine"
           $B = "$env:RUNNER_TEMP\bundle-smoke"
           if (Test-Path $B) { Remove-Item -Recurse -Force $B }
           Copy-Item -Recurse -Force "$env:GITHUB_WORKSPACE/dist/bundle" $B
@@ -135,7 +139,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { Write-Host "::error::quickstart cl build failed"; $fail = 1 }
           else {
             $got = (& .\minimal_eval.exe qs.axbc 2>&1 | Out-String) -replace "`r`n", "`n"
-            $exp = "RuleDSL/1.0.1 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
+            $exp = "RuleDSL/1.0.2 (abi=1)`nDecision: matched=1 action_type=0`nDETERMINISTIC_OK"
             if ($got.Trim() -eq $exp.Trim()) { Write-Host "OK    quickstart loop" }
             else { Write-Host "::error::quickstart mismatch"; Write-Host "got:`n$($got.Trim())`nexpected:`n$exp"; $fail = 1 }
           }
@@ -195,7 +199,7 @@ jobs:
         with:
           # Release body is sourced from the committed, gate-checked note (same file on
           # both platform workflows, so order doesn't matter).
-          body_path: sdk/docs/release_notes/v1.0.1.md
+          body_path: sdk/docs/release_notes/v1.0.2.md
           files: |
             out/${{ steps.pkg.outputs.prefix }}.zip
             out/${{ steps.pkg.outputs.prefix }}.SHA256SUMS.txt
