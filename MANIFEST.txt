@@ -140,6 +140,10 @@ include/axiom/export.h
 include/axiom/ruledsl_c.h
 include/axiom/version.h
 site/assets/og-banner.png
+site/assets/ruledsl-duo-demo.mp4
+site/assets/ruledsl-throughput-demo.mp4
+site/assets/ruledsl-workbench-demo.mp4
+site/demos/index.html
 site/index.html
 site/language/index.html
 tests/fixtures/evidence_sample.json
