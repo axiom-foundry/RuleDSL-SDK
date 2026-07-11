@@ -1,12 +1,23 @@
 """
-RuleDSL Workbench — a zero-dependency Tkinter GUI for exploring the engine.
+RuleDSL Workbench — the desktop authoring & replay companion for the engine.
 
-Edit a ruleset on the left, inputs on the right, then:
-  - "Compile & Run" shows the decision, its output fields, the engine's
-    evaluation trace (why this decision), and a canonical decision hash.
-  - "Run 100x" re-evaluates the same bytecode and inputs 100 times and
-    reports whether every run produced the identical decision hash — the
-    determinism contract, live.
+It is a developer-desktop tool, never a server component: production rulesets
+are compiled to artifacts by `ruledslc` and evaluated in-process by your
+server through the C ABI. The workbench covers the two human ends of that
+pipeline:
+
+  Authoring — edit a ruleset (or File > Open Rules…), run it against sample
+  inputs, and read the decision, its output fields, the engine's own
+  evaluation trace (why this decision), and a canonical decision hash.
+  "Run 100x" re-evaluates and asserts every run produced the identical
+  decision hash — the determinism contract, live.
+
+  Replay — File > Open Bytecode (Replay)… loads a compiled .axbc exactly as
+  the server ran it (no recompilation; the rules editor is disabled), and
+  File > Load Inputs from JSON… restores an incident's inputs. Same bytecode,
+  same input, same options -> the same decision and trace, on your desk.
+  The workbench deliberately does NOT export .axbc: production artifacts come
+  from `ruledslc`, which stamps the authenticity manifest.
 
 The decision hash is the producer-side convention used by
 examples/replay_proof_producer.py: SHA-256 over a canonical JSON view of the
@@ -32,10 +43,10 @@ import platform
 import sys
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ruledsl import RuleDSL, RuleDSLError  # noqa: E402
+from ruledsl import Bytecode, RuleDSL, RuleDSLError  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -209,11 +220,33 @@ class Workbench(tk.Tk):
     def __init__(self, engine, library_label):
         super().__init__()
         self.engine = engine
+        self.replay_bc = None          # Bytecode loaded from an .axbc file
+        self.replay_path = None
         self.title(f"RuleDSL Workbench — {engine.version()}")
         self.geometry("1080x720")
         self.minsize(860, 560)
+        self._build_menu()
         self._build_ui(library_label)
         self.load_scenario(next(iter(SCENARIOS)))
+
+    def _build_menu(self):
+        menubar = tk.Menu(self)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open Rules…", accelerator="Ctrl+O",
+                             command=self.open_rules)
+        filemenu.add_command(label="Save Rules As…", accelerator="Ctrl+S",
+                             command=self.save_rules)
+        filemenu.add_separator()
+        filemenu.add_command(label="Open Bytecode (Replay)…",
+                             command=self.open_replay)
+        filemenu.add_command(label="Load Inputs from JSON…",
+                             command=self.load_inputs)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit Replay Mode", command=self.exit_replay)
+        menubar.add_cascade(label="File", menu=filemenu)
+        self.configure(menu=menubar)
+        self.bind_all("<Control-o>", lambda _e: self.open_rules())
+        self.bind_all("<Control-s>", lambda _e: self.save_rules())
 
     # -- UI construction ----------------------------------------------------
 
@@ -232,8 +265,15 @@ class Workbench(tk.Tk):
                                lambda _e: self.load_scenario(self.scenario_var.get()))
         ttk.Label(top, text=self.engine.version()).pack(side="right")
 
+        # Replay strip — visible only while evaluating a loaded .axbc.
+        self.replay_strip = tk.Frame(self, bg="#B45309")
+        self.replay_var = tk.StringVar()
+        tk.Label(self.replay_strip, textvariable=self.replay_var, bg="#B45309",
+                 fg="white", font=("Segoe UI", 10, "bold")).pack(padx=10, pady=4)
+
         panes = ttk.PanedWindow(self, orient="horizontal")
         panes.pack(fill="both", expand=True, padx=8)
+        self._panes = panes
 
         left = ttk.Frame(panes)
         ttk.Label(left, text="Rules").pack(anchor="w")
@@ -286,6 +326,7 @@ class Workbench(tk.Tk):
     # -- Behaviors ----------------------------------------------------------
 
     def load_scenario(self, name):
+        self.exit_replay()
         scenario = SCENARIOS[name]
         self.scenario_var.set(name)
         self.rules_text.delete("1.0", "end")
@@ -297,11 +338,99 @@ class Workbench(tk.Tk):
         self._set_text(self.result_text, [("Scenario loaded. Compile & Run to evaluate.", None)])
         self._set_text(self.trace_text, [])
 
+    # -- Files: authoring & replay ------------------------------------------
+
+    def open_rules(self, path=None):
+        path = path or filedialog.askopenfilename(
+            title="Open rules", filetypes=[("RuleDSL rules", "*.rule"),
+                                           ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.exit_replay()
+        self.rules_text.delete("1.0", "end")
+        self.rules_text.insert("1.0", content)
+        self.stability_var.set("")
+        self.status_var.set(f"rules loaded: {path}")
+
+    def save_rules(self, path=None):
+        path = path or filedialog.asksaveasfilename(
+            title="Save rules as", defaultextension=".rule",
+            filetypes=[("RuleDSL rules", "*.rule"), ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(self.rules_text.get("1.0", "end-1c"))
+        self.status_var.set(f"rules saved: {path}")
+
+    def open_replay(self, path=None):
+        """Load a compiled .axbc and evaluate IT — exactly what the server ran.
+        No recompilation happens; the rules editor is disabled to make that
+        unmistakable."""
+        path = path or filedialog.askopenfilename(
+            title="Open bytecode for replay",
+            filetypes=[("RuleDSL bytecode", "*.axbc"), ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "rb") as f:
+            data = f.read()
+        self.replay_bc = Bytecode(data)
+        self.replay_path = path
+        sha = hashlib.sha256(data).hexdigest()
+        self.rules_text.configure(state="disabled", bg="#F3F4F6")
+        self.replay_var.set(
+            f"REPLAY MODE — {os.path.basename(path)} · {len(data)} bytes · "
+            f"sha256 {sha[:16]}… · rules editor disabled, evaluating the loaded bytecode")
+        self.replay_strip.pack(fill="x", before=self._panes)
+        self.stability_var.set("")
+        self._set_text(self.result_text,
+                       [("Bytecode loaded for replay. Set the inputs "
+                         "(File > Load Inputs from JSON…) and Run.", None)])
+        self._set_text(self.trace_text, [])
+        self.status_var.set(f"replaying {path}")
+
+    def exit_replay(self):
+        if self.replay_bc is None:
+            return
+        self.replay_bc = None
+        self.replay_path = None
+        self.rules_text.configure(state="normal", bg="white")
+        self.replay_strip.pack_forget()
+
+    def load_inputs(self, path=None):
+        """Accepts a flat fields dict, or {"fields": {...}, "now_utc_ms": ...}
+        — the shapes used by the replay tooling."""
+        path = path or filedialog.askopenfilename(
+            title="Load inputs from JSON",
+            filetypes=[("JSON", "*.json"), ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            self._show_error(ValueError("inputs JSON must be an object"))
+            return
+        if isinstance(data.get("fields"), dict):
+            fields = dict(data["fields"])
+            now = data.get("now_utc_ms", fields.pop("now_utc_ms", ""))
+        else:
+            fields = dict(data)
+            now = fields.pop("now_utc_ms", "")
+        self.inputs_text.delete("1.0", "end")
+        for name, value in fields.items():
+            self.inputs_text.insert("end", f"{name} = {json.dumps(value)}\n")
+        self.now_var.set("" if now == "" else f"{float(now):.0f}")
+        self.status_var.set(f"inputs loaded: {path}")
+
     def _gather(self):
-        """Read the editors; returns (bytecode, fields, now_utc_ms)."""
+        """Returns (bytecode, fields, now_utc_ms) — the loaded .axbc in replay
+        mode, a fresh compile of the editor otherwise."""
         fields = parse_inputs(self.inputs_text.get("1.0", "end"))
         now_raw = self.now_var.get().strip()
         now_utc_ms = float(now_raw) if now_raw else None
+        if self.replay_bc is not None:
+            return self.replay_bc, fields, now_utc_ms
         bytecode = self.engine.compile(self.rules_text.get("1.0", "end"))
         return bytecode, fields, now_utc_ms
 
