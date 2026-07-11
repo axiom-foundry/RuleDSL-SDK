@@ -42,6 +42,7 @@ import os
 import platform
 import sys
 import tkinter as tk
+from datetime import datetime, timezone
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -134,7 +135,8 @@ rule allow_small {
         "inputs": "amount = 2500\n",
         # Time-based rules REQUIRE an explicit clock — the engine never reads
         # the system clock. Clear this box to see the deterministic error.
-        "now_utc_ms": "1700000000000",
+        # (This ISO timestamp is exactly 1700000000000 ms.)
+        "now_utc_ms": "2023-11-14T22:13:20Z",
     },
 }
 
@@ -178,6 +180,31 @@ def parse_inputs(text):
             except ValueError:
                 fields[name] = value
     return fields
+
+
+def parse_now(text):
+    """Parse the explicit clock: epoch milliseconds or ISO-8601 (UTC assumed
+    for naive timestamps). Returns float ms, or None for empty. The engine
+    never reads the system clock — this field is an INPUT, so the workbench
+    only ever fills it on an explicit user action.
+    """
+    text = text.strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    iso = text[:-1] + "+00:00" if text.endswith(("Z", "z")) else text
+    try:
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        raise ValueError(
+            f"clock {text!r} is neither epoch milliseconds nor ISO-8601 "
+            f"(e.g. 2023-11-14T22:13:20Z)")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.timestamp() * 1000.0
 
 
 def decision_hash(decision):
@@ -241,6 +268,8 @@ class Workbench(tk.Tk):
                              command=self.open_replay)
         filemenu.add_command(label="Load Inputs from JSON…",
                              command=self.load_inputs)
+        filemenu.add_command(label="Open Cases (JSON / JSONL)…",
+                             command=self.open_cases)
         filemenu.add_separator()
         filemenu.add_command(label="Exit Replay Mode", command=self.exit_replay)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -287,11 +316,15 @@ class Workbench(tk.Tk):
         self.inputs_text.pack(fill="both", expand=True)
         clock = ttk.Frame(right)
         clock.pack(fill="x", pady=(6, 0))
-        ttk.Label(clock, text="now_utc_ms:").pack(side="left")
+        ttk.Label(clock, text="clock:").pack(side="left")
         self.now_var = tk.StringVar()
-        ttk.Entry(clock, textvariable=self.now_var, width=18).pack(side="left", padx=(6, 4))
-        ttk.Label(clock, text="(explicit clock; empty = omitted — the engine never reads"
-                              " the system clock)").pack(side="left")
+        ttk.Entry(clock, textvariable=self.now_var, width=22).pack(side="left", padx=(6, 4))
+        ttk.Button(clock, text="Now (UTC)", width=10,
+                   command=self._fill_now).pack(side="left", padx=(0, 6))
+        self.now_echo = tk.StringVar()
+        tk.Label(clock, textvariable=self.now_echo, fg="#5B6774").pack(side="left")
+        self.now_var.trace_add("write", lambda *_: self._update_now_echo())
+        self._update_now_echo()
         panes.add(right, weight=2)
 
         actions = ttk.Frame(self, padding=(8, 6))
@@ -305,6 +338,7 @@ class Workbench(tk.Tk):
 
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=8, pady=(0, 4))
+        self.notebook = notebook
         result_tab = ttk.Frame(notebook)
         self.result_text = tk.Text(result_tab, font=mono, wrap="word", state="disabled", height=12)
         self.result_text.pack(fill="both", expand=True)
@@ -313,6 +347,33 @@ class Workbench(tk.Tk):
         self.trace_text = tk.Text(trace_tab, font=mono, wrap="none", state="disabled", height=12)
         self.trace_text.pack(fill="both", expand=True)
         notebook.add(trace_tab, text="Trace — why this decision")
+
+        cases_tab = ttk.Frame(notebook)
+        self.cases_summary = tk.StringVar(
+            value="File > Open Cases (JSON / JSONL)… — run many inputs against "
+                  "the current ruleset (or the loaded bytecode in replay mode)")
+        tk.Label(cases_tab, textvariable=self.cases_summary, anchor="w",
+                 fg="#5B6774").pack(fill="x", padx=4, pady=(4, 2))
+        columns = ("case", "inputs", "action", "rule", "outputs", "hash")
+        self.cases_tree = ttk.Treeview(cases_tab, columns=columns,
+                                       show="headings", height=10)
+        widths = {"case": 50, "inputs": 320, "action": 90, "rule": 170,
+                  "outputs": 260, "hash": 140}
+        for col in columns:
+            self.cases_tree.heading(col, text=col)
+            self.cases_tree.column(col, width=widths[col],
+                                   anchor="w", stretch=(col in ("inputs", "outputs")))
+        scroll = ttk.Scrollbar(cases_tab, orient="vertical",
+                               command=self.cases_tree.yview)
+        self.cases_tree.configure(yscrollcommand=scroll.set)
+        scroll.pack(side="right", fill="y")
+        self.cases_tree.pack(fill="both", expand=True, padx=(4, 0), pady=(0, 4))
+        for action, color in _ACTION_COLORS.items():
+            self.cases_tree.tag_configure(action, foreground=color)
+        self.cases_tree.tag_configure("ERROR", foreground="#c62828")
+        self.cases_tree.bind("<Double-1>", self._case_selected)
+        self._cases = []
+        notebook.add(cases_tab, text="Cases")
         for text in (self.result_text, self.trace_text):
             for action, color in _ACTION_COLORS.items():
                 text.tag_configure(action, foreground=color, font=mono + ("bold",))
@@ -427,12 +488,120 @@ class Workbench(tk.Tk):
         """Returns (bytecode, fields, now_utc_ms) — the loaded .axbc in replay
         mode, a fresh compile of the editor otherwise."""
         fields = parse_inputs(self.inputs_text.get("1.0", "end"))
-        now_raw = self.now_var.get().strip()
-        now_utc_ms = float(now_raw) if now_raw else None
+        now_utc_ms = parse_now(self.now_var.get())
         if self.replay_bc is not None:
             return self.replay_bc, fields, now_utc_ms
         bytecode = self.engine.compile(self.rules_text.get("1.0", "end"))
         return bytecode, fields, now_utc_ms
+
+    # -- Explicit clock helpers ----------------------------------------------
+
+    def _fill_now(self):
+        """Explicit user action: stamp the CURRENT time into the clock field
+        (readable ISO form; the echo shows the milliseconds)."""
+        self.now_var.set(datetime.now(timezone.utc)
+                         .strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    def _update_now_echo(self):
+        raw = self.now_var.get().strip()
+        if not raw:
+            self.now_echo.set("empty = omitted — the engine never reads the system clock")
+            return
+        try:
+            ms = parse_now(raw)
+        except ValueError:
+            self.now_echo.set("unrecognized — use epoch ms or ISO-8601 (…T…Z)")
+            return
+        try:
+            float(raw)
+            dt = datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc)
+            self.now_echo.set(dt.strftime("= %Y-%m-%d %H:%M:%S UTC"))
+        except ValueError:
+            self.now_echo.set(f"= {ms:.0f} ms")
+
+    # -- Cases: many inputs against one ruleset -------------------------------
+
+    def open_cases(self, path=None):
+        """Load a JSON array or JSONL file of input cases and run them all
+        against the current ruleset (or the loaded bytecode in replay mode).
+        Each case uses the panel clock unless it carries its own now_utc_ms."""
+        path = path or filedialog.askopenfilename(
+            title="Open cases (JSON array or JSONL)",
+            filetypes=[("JSON / JSONL", "*.json *.jsonl"), ("All files", "*.*")])
+        if not path:
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            raw = f.read()
+        try:
+            data = json.loads(raw)
+            entries = data if isinstance(data, list) else [data]
+        except ValueError:
+            entries = [json.loads(line) for line in raw.splitlines() if line.strip()]
+        self._cases = []
+        for entry in entries:
+            if isinstance(entry.get("fields"), dict):
+                fields = dict(entry["fields"])
+                now = entry.get("now_utc_ms", fields.pop("now_utc_ms", None))
+            else:
+                fields = dict(entry)
+                now = fields.pop("now_utc_ms", None)
+            self._cases.append((fields, now))
+        self._run_cases(os.path.basename(path))
+
+    def _run_cases(self, label):
+        for item in self.cases_tree.get_children():
+            self.cases_tree.delete(item)
+        try:
+            panel_now = parse_now(self.now_var.get())
+            if self.replay_bc is not None:
+                bytecode = self.replay_bc
+            else:
+                bytecode = self.engine.compile(self.rules_text.get("1.0", "end"))
+        except (RuleDSLError, ValueError) as exc:
+            self._show_error(exc)
+            return
+        counts, errors = {}, 0
+        for i, (fields, now) in enumerate(self._cases, 1):
+            inputs_str = json.dumps(fields, ensure_ascii=False)
+            try:
+                decision = self.engine.evaluate(
+                    bytecode, fields,
+                    now_utc_ms=panel_now if now is None else float(now))
+                outputs = ", ".join(f"{k}={decision.outputs[k]!r}"
+                                    for k in sorted(decision.outputs))
+                self.cases_tree.insert(
+                    "", "end", tags=(decision.action,),
+                    values=(i, inputs_str, decision.action,
+                            decision.rule_name or "-", outputs,
+                            decision_hash(decision)[:16] + "…"))
+                counts[decision.action] = counts.get(decision.action, 0) + 1
+            except RuleDSLError as exc:
+                errors += 1
+                self.cases_tree.insert(
+                    "", "end", tags=("ERROR",),
+                    values=(i, inputs_str, "ERROR", exc.code_name, str(exc)[:60], "—"))
+        summary = " · ".join(f"{n} {a}" for a, n in sorted(counts.items()))
+        mode = "replay bytecode" if self.replay_bc is not None else "current ruleset"
+        self.cases_summary.set(
+            f"{label}: {len(self._cases)} cases against the {mode} — {summary}"
+            + (f" · {errors} ERROR" if errors else "")
+            + "   (double-click a row to inspect it in Result/Trace)")
+        self.notebook.select(2)
+        self.status_var.set(f"cases run: {label}")
+
+    def _case_selected(self, _event):
+        selection = self.cases_tree.selection()
+        if not selection:
+            return
+        index = int(self.cases_tree.item(selection[0], "values")[0]) - 1
+        fields, now = self._cases[index]
+        self.inputs_text.delete("1.0", "end")
+        for name, value in fields.items():
+            self.inputs_text.insert("end", f"{name} = {json.dumps(value)}\n")
+        if now is not None:
+            self.now_var.set(f"{float(now):.0f}")
+        self.run_once()
+        self.notebook.select(0)
 
     def run_once(self):
         self.stability_var.set("")

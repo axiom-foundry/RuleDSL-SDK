@@ -224,6 +224,18 @@ bytecode's SHA-256 is shown), and `File > Load Inputs from JSON…` restores an
 incident's inputs (flat fields dict, or `{"fields": …, "now_utc_ms": …}`).
 Same bytecode, same input → the same decision and trace, on your desk.
 
+**Cases** — `File > Open Cases (JSON / JSONL)…` runs many inputs against the
+current ruleset (or the loaded bytecode in replay mode) and lists one decision
+per row: action, matched rule, outputs, and decision-hash prefix, with a
+per-action summary. Double-click a row to inspect that case in Result/Trace.
+Each case may carry its own `now_utc_ms`; otherwise the panel clock applies.
+
+**Explicit clock, humane input** — the clock field accepts epoch milliseconds
+*or* ISO-8601 (`2023-11-14T22:13:20Z`), translates between the two live, and a
+**Now (UTC)** button stamps the current time on explicit click. Empty still
+means omitted: the engine never reads the system clock, so time-based rules
+without a clock raise the deterministic `MISSING_NOW_UTC_MS` error.
+
 The workbench deliberately does **not** export `.axbc`: production artifacts
 come from `ruledslc`, which stamps the authenticity manifest.
 
