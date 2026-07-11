@@ -142,10 +142,14 @@ class _AXBytecode(ctypes.Structure):
     ]
 
 
+# Matches AXTraceCallback in ruledsl_c.h: void (*)(void* user, const char* line).
+_AXTraceCallback = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_char_p)
+
+
 class _AXEvalOptions(ctypes.Structure):
     _fields_ = [
         ("struct_size", ctypes.c_uint32),
-        ("trace_cb", ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_char_p)),
+        ("trace_cb", _AXTraceCallback),
         ("trace_user", ctypes.c_void_p),
         ("reserved", ctypes.c_uint64 * 4),
     ]
@@ -349,7 +353,7 @@ class RuleDSL:
         return Bytecode(data)
 
     def evaluate(self, bytecode: Bytecode, fields: dict,
-                 now_utc_ms: float = None) -> Decision:
+                 now_utc_ms: float = None, on_trace=None) -> Decision:
         """
         Evaluate bytecode against input fields.
 
@@ -365,6 +369,12 @@ class RuleDSL:
                         the engine never reads the system clock — reproducibility
                         requires an explicit value. Omitting it for a time-based
                         rule raises EvalError (MISSING_NOW_UTC_MS).
+            on_trace: Optional callable(str) invoked for each engine trace line.
+                      The shipped evaluator emits one line per action assignment,
+                      per decision, and per runtime error (see AXTraceCallback in
+                      ruledsl_c.h). An exception raised inside on_trace never
+                      crosses the C boundary: it is caught and re-raised after
+                      evaluation completes.
 
         Returns:
             Decision object with matched, action, amount, currency, etc.
@@ -404,6 +414,20 @@ class RuleDSL:
         # Init options and decision
         opts = _AXEvalOptions()
         opts.struct_size = ctypes.sizeof(_AXEvalOptions)
+
+        # trace_ref must stay referenced for the whole ax_eval_bytecode call —
+        # ctypes does not keep the callback alive on its own.
+        trace_ref = None
+        trace_exc = []
+        if on_trace is not None:
+            def _trace_bridge(_user, line):
+                try:
+                    on_trace(line.decode("utf-8", errors="replace") if line else "")
+                except BaseException as exc:
+                    if not trace_exc:
+                        trace_exc.append(exc)
+            trace_ref = _AXTraceCallback(_trace_bridge)
+            opts.trace_cb = trace_ref
 
         dec = _AXDecision()
         dec.struct_size = ctypes.sizeof(_AXDecision)
@@ -463,6 +487,9 @@ class RuleDSL:
             )
 
             self._lib.ax_decision_reset(ctypes.byref(dec))
+
+        if trace_exc:
+            raise trace_exc[0]
         return result
 
     def check_compatibility(self, bytecode) -> dict:

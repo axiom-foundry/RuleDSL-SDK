@@ -20,6 +20,7 @@ bindings/python/examples/quick_test.py
 bindings/python/examples/replay_proof_producer.py
 bindings/python/examples/risk_scoring.py
 bindings/python/ruledsl.py
+bindings/python/workbench.py
 docs/README.md
 docs/adr/0001-abi-evolution.md
 docs/adr/0002-error-contract.md

@@ -172,6 +172,43 @@ Each `RuleDSL` instance uses an internal lock to serialize `compile()` and `eval
 
 For maximum throughput, create one `RuleDSL` instance per thread to avoid lock contention.
 
+## Evaluation Trace
+
+`evaluate()` accepts an optional `on_trace` callable. The engine invokes it once
+per action assignment, per decision, and per runtime error — the "why" behind a
+decision (`AXTraceCallback` in the C API):
+
+```python
+trace = []
+decision = engine.evaluate(bytecode, {"amount": 2500.0},
+                           now_utc_ms=1700000000000.0,
+                           on_trace=trace.append)
+print("\n".join(trace))
+# Set reason = "hourly_cap"
+# Set risk_score = 25
+# Decision = LIMIT 10000 USD PER 1 H
+```
+
+An exception raised inside `on_trace` never crosses the C boundary — it is
+caught and re-raised after evaluation completes.
+
+## Workbench (GUI)
+
+`workbench.py` is a zero-dependency Tkinter app for exploring the engine: a
+rule editor with three ready scenarios (from the shipped `examples/`), an input
+panel, the decision with its output fields and evaluation trace, a canonical
+decision hash (the `replay_proof_producer.py` convention), and a "Run 100×"
+button that demonstrates the determinism contract live — every run must produce
+the identical decision hash.
+
+```sh
+python workbench.py                      # bundle layout: finds ../../bin automatically
+python workbench.py --dll path/to/ruledsl_capi.dll
+```
+
+Requires a standard CPython install (Tkinter ships with it). No third-party
+dependencies.
+
 ## Engine Version
 
 ```python
