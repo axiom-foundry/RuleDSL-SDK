@@ -1,0 +1,10 @@
+{
+  "schema_version": "replay_proof_v1",
+  "engine_version_string": "RuleDSL/1.0.2 (abi=1)",
+  "abi_level": 1,
+  "bytecode_hash": "d9707fb46f7f7bd62bfa16615bf6739b9f7d607f67df663539b0df168738f131",
+  "decision_hash": "218dd05dcffc230e17a149c5bdf985fe793ad5a25a616729c0014967e2e44b8b",
+  "input_hash": "7bef1a23f4ce83155d3a21e55b2de83a2e140242bfd8e0878a745ce7e3151101",
+  "input_descriptor": "DET-001 canonical input",
+  "notes": "cross-machine reproduction; DET-001 decision path"
+}

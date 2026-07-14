@@ -1,0 +1,32 @@
+RuleDSL cross-machine determinism reproduction
+==============================================================
+platform             : windows-x64
+python               : CPython 3.12.10
+engine               : RuleDSL/1.0.2 (abi=1)
+
+Integrity chain
+  engine binary        : bin/ruledsl_capi.dll
+  engine sha256        : 1e8725577c780819adb0aa4f8e669c5b9166840fce7822ca303b157c36a2ac66
+  manifest sha256      : 1e8725577c780819adb0aa4f8e669c5b9166840fce7822ca303b157c36a2ac66
+  integrity            : MATCH
+
+DET-001 (standard decision path)
+  bytecode sha256      : d9707fb46f7f7bd62bfa16615bf6739b9f7d607f67df663539b0df168738f131
+  bytecode golden      : d9707fb46f7f7bd62bfa16615bf6739b9f7d607f67df663539b0df168738f131
+  decision             : matched=True action=ALLOW rule='det001_allow_default'
+  output sha256        : f3714ba24ad7a84218874bff096eab721bd67bcd5641cd45d2973fd86d55c5e1
+  output golden        : f3714ba24ad7a84218874bff096eab721bd67bcd5641cd45d2973fd86d55c5e1
+  bytes == committed   : True
+  DET-001              : PASS
+
+DET-003 (deterministic error path)
+  status_code          : 10 (expected 10 = AX_ERR_BAD_STRUCT_SIZE)
+  error payload        : b'options struct_size too small'
+  error sha256         : 9b0dd8f9caeadd8e6ed1fabd65305041bc5d518cbf5716f54178691d88727a65
+  error golden         : 9b0dd8f9caeadd8e6ed1fabd65305041bc5d518cbf5716f54178691d88727a65
+  bytes == committed   : True
+  DET-003              : PASS
+
+==============================================================
+RESULT: PASS - golden hashes reproduced on this machine.
+==============================================================

@@ -63,6 +63,9 @@ reports/*
 # published_evidence_index_v1_0.md §2 (published evidence is a committed bundle directory).
 !reports/determinism_v1_0/
 !reports/determinism_compare_v1/
+# Same scoped exception for the cross-machine replay evidence family
+# (committed-but-not-shipped; see reports/cross_machine_replay_v1/<date>/README.md).
+!reports/cross_machine_replay_v1/
 
 # Keep fixture placeholder binaries tracked for public bundle audit in CI.
 !Tools/release_bundle/fixtures/min_bundle/bin/
