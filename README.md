@@ -104,6 +104,7 @@ your target hardware and workload.
 
 - Cross-platform comparison reports (Windows-x64 vs Linux-x64) — [`reports/determinism_compare_v1/2026-07-11/`](reports/determinism_compare_v1/2026-07-11/) — each `status: pass`, every hash byte-identical (e.g. [the DET-001 comparison](reports/determinism_compare_v1/2026-07-11/DET-001/windows-x64__linux-x64/comparison.json)). This set was produced by the **v1.0.2 engine** — the same binaries you can download and run — and its hashes are identical to the earlier published sets (`2026-06-21`, `2026-06-23`), which remain committed as history.
 - Each bundle ships the raw `output.bin`, inputs, options, and a `SHA256SUMS.txt` — recompute the hashes and compare the two platforms yourself.
+- Cross-machine (same-platform) reproduction — a fresh Windows-x64 desktop, running the shipped v1.0.2 binaries, reproduced the published DET-001/DET-003 golden hashes byte-for-byte: [`reports/cross_machine_replay_v1/2026-07-14/`](reports/cross_machine_replay_v1/2026-07-14/). One operator, two machines; broader multi-host and independent third-party reproduction remain open.
 
 Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
 
