@@ -15,7 +15,7 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 
 > **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
 >
-> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle. **New:** `pip install "ruledsl[mcp]"` adds an EXPERIMENTAL [MCP server](docs/mcp_quickstart.md) — AI agents can invoke the engine directly.
+> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle. **New:** `pip install "ruledsl[mcp]"` adds an early-access [MCP server](docs/mcp_quickstart.md) — AI agents can invoke the engine directly.
 
 ## Quickstart
 
@@ -108,13 +108,15 @@ your target hardware and workload.
 
 Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
 
-## AI agents (MCP) — EXPERIMENTAL
+## AI agents (MCP) — early access
 
 AI agents are getting real work in regulated flows. The question is never whether the model is smart — it's whether the decision can be **replayed**. RuleDSL's answer ships as an MCP server: **the agent invokes; the engine decides.**
 
 - **Three tools, closed surface:** `list_rules` · `evaluate_case` · `engine_info`. There is deliberately no `decide`, no `write_rule`, no free-text compile — an agent can invoke decision logic, never alter it.
 - **Every evaluation leaves evidence:** a canonical, hash-pinned decision record that matches the published replay convention — same bytes, replayable later.
 - **Install:** `pip install "ruledsl[mcp]"` → `ruledsl-mcp`. Setup incl. Claude Desktop config: [docs/mcp_quickstart.md](docs/mcp_quickstart.md).
+
+Early access: the tool surface may still evolve before it joins the frozen compatibility contract.
 
 ## Why RuleDSL (vs other rule engines)
 
@@ -166,7 +168,7 @@ ruledsl-workbench --dll path/to/bundle/bin/ruledsl_capi.dll
 | Error handling | [`docs/errors.md`](docs/errors.md) |
 | Troubleshooting | [`docs/troubleshooting.md`](docs/troubleshooting.md) |
 | Integration snippets | [`docs/integration_snippets.md`](docs/integration_snippets.md) |
-| MCP server quickstart (EXPERIMENTAL) | [`docs/mcp_quickstart.md`](docs/mcp_quickstart.md) |
+| MCP server quickstart (early access) | [`docs/mcp_quickstart.md`](docs/mcp_quickstart.md) |
 | MCP design contract | [`docs/design/mcp_server_v0.md`](docs/design/mcp_server_v0.md) |
 
 Full documentation index: [`docs/README.md`](docs/README.md)
