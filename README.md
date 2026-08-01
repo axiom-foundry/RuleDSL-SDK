@@ -3,9 +3,9 @@
 RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
 Same input, same bytecode, same decision — guaranteed across supported platforms.
 
-**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec).**
+**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec) · Python package 1.1.0 (pip).**
 
-**Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation.
+**Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation, **and a deterministic decision layer for AI agents (via MCP)**.
 
 **What it is**: an in-process library (`.dll` / `.so`). No daemon, no network hop, no database dependency.
 
@@ -15,7 +15,7 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 
 > **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
 >
-> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle.
+> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle. **New:** `pip install "ruledsl[mcp]"` adds an EXPERIMENTAL [MCP server](docs/mcp_quickstart.md) — AI agents can invoke the engine directly.
 
 ## Quickstart
 
@@ -108,6 +108,14 @@ your target hardware and workload.
 
 Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
 
+## AI agents (MCP) — EXPERIMENTAL
+
+AI agents are getting real work in regulated flows. The question is never whether the model is smart — it's whether the decision can be **replayed**. RuleDSL's answer ships as an MCP server: **the agent invokes; the engine decides.**
+
+- **Three tools, closed surface:** `list_rules` · `evaluate_case` · `engine_info`. There is deliberately no `decide`, no `write_rule`, no free-text compile — an agent can invoke decision logic, never alter it.
+- **Every evaluation leaves evidence:** a canonical, hash-pinned decision record that matches the published replay convention — same bytes, replayable later.
+- **Install:** `pip install "ruledsl[mcp]"` → `ruledsl-mcp`. Setup incl. Claude Desktop config: [docs/mcp_quickstart.md](docs/mcp_quickstart.md).
+
 ## Why RuleDSL (vs other rule engines)
 
 Most rule engines evaluate rules; RuleDSL is built so you can **prove and audit** the result.
@@ -137,7 +145,7 @@ Not a C developer? Use the ready-made wrappers:
 
 | Language | Location | Dependencies |
 |----------|----------|-------------|
-| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | None (pure ctypes) |
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` (optional `[mcp]` extra: MCP server) | None (pure ctypes; `[mcp]` extra pulls the official `mcp` SDK) |
 | C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke) |
 
 The [`ruledsl`](https://pypi.org/project/ruledsl/) package on PyPI carries the
@@ -158,5 +166,7 @@ ruledsl-workbench --dll path/to/bundle/bin/ruledsl_capi.dll
 | Error handling | [`docs/errors.md`](docs/errors.md) |
 | Troubleshooting | [`docs/troubleshooting.md`](docs/troubleshooting.md) |
 | Integration snippets | [`docs/integration_snippets.md`](docs/integration_snippets.md) |
+| MCP server quickstart (EXPERIMENTAL) | [`docs/mcp_quickstart.md`](docs/mcp_quickstart.md) |
+| MCP design contract | [`docs/design/mcp_server_v0.md`](docs/design/mcp_server_v0.md) |
 
 Full documentation index: [`docs/README.md`](docs/README.md)
