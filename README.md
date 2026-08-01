@@ -39,7 +39,7 @@ ruledslc verify rules.axbc
 
 Minimal C integration:
 
-```
+```c
 #include "axiom/ruledsl_c.h"
 
 char err[256] = {0};
