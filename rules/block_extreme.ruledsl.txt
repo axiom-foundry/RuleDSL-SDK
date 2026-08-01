@@ -1,0 +1,6 @@
+# Extreme-amount decline — single-rule variant of the workbench velocity set.
+
+rule block_extreme priority 200 {
+  when amount > 25000;
+  then reason = "extreme_amount", risk_score = 99, decline;
+}

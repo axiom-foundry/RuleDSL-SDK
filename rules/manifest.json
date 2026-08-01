@@ -1,0 +1,20 @@
+{
+  "manifest_version": 1,
+  "rules": {
+    "velocity_limits": {
+      "file": "velocity_limits.ruledsl.txt",
+      "sha256": "5233f31336a0a9beb08590a55d68fbab06e69c02c67f6b202f06a5a7ac9d0f97",
+      "version": "1.0.0"
+    },
+    "block_extreme": {
+      "file": "block_extreme.ruledsl.txt",
+      "sha256": "02e6d4245a1e8b5c24b09a42aecb6ba05771bec4510119dda2939b8d3f297851",
+      "version": "1.0.0"
+    },
+    "allow_small": {
+      "file": "allow_small.ruledsl.txt",
+      "sha256": "55652608ffd851d15a7c0291448947746518c72e6b319aa5cbcd10ce5ca616bf",
+      "version": "1.0.0"
+    }
+  }
+}

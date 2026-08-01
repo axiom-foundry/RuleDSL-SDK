@@ -49,9 +49,36 @@ Deterministic by contract: the engine never reads the system clock (time-based
 rules require an explicit `now_utc_ms`), never touches the network, and returns
 stable, append-only error codes.
 
+## The MCP server — optional `[mcp]` extra (EXPERIMENTAL)
+
+```sh
+pip install "ruledsl[mcp]"
+ruledsl-mcp --rules path/to/rules --decision-log decisions.jsonl --engine-lib path/to/libruledsl_capi.so
+```
+
+An MCP (Model Context Protocol) stdio server that lets an AI agent *invoke*
+deterministic rule evaluation — never *produce* the decision itself. Exactly
+three tools (`list_rules`, `evaluate_case`, `engine_info`), a hash-verified
+rule-library manifest, a mandatory explicit `now_utc_ms` (the server never
+reads a clock), and a canonical JSONL decision log with a replayable
+`decision_hash` per decision. Requires Python 3.10+; setup and Claude Desktop
+configuration:
+[MCP quickstart](https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/mcp_quickstart.md).
+
+## Changelog
+
+- **1.1.0** — MCP server migrated into the package as the optional
+  `[mcp]` extra + `ruledsl-mcp` console command (EXPERIMENTAL). Base
+  package unchanged and still zero-dependency.
+- **1.0.3** — workbench: Cases batch runner (JSON/JSONL) + humane explicit
+  clock (ISO-8601 ⇄ epoch-ms echo, Now (UTC) button).
+- **1.0.2** — first public release: binding (`on_trace`, cached buffers) +
+  workbench (authoring, replay, JSON inputs).
+
 ## Version & license
 
-Package versions track the SDK line (`1.0.x` works with engine `1.0.x`, ABI 1).
+Package `1.x` targets engine `1.0.x` (ABI 1); the minor version moves when the
+package itself gains capability (e.g. `1.1.0` added the `[mcp]` extra).
 Licensed under the **PolyForm Free Trial License 1.0.0** — evaluation use;
 commercial production use requires a separate agreement (see the
 [repository](https://github.com/axiom-foundry/RuleDSL-SDK)).

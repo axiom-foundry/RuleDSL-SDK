@@ -47,11 +47,13 @@ jobs:
           python -m pip install --upgrade build
           python -m build Tools/pypi_package
 
-      - name: Smoke-test the wheel (import + console script)
+      - name: Smoke-test the wheel (import + console scripts)
         run: |
           python -m pip install Tools/pypi_package/dist/*.whl
           python -c "import ruledsl; print('import ok:', ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)"
+          python -c "import ruledsl_mcp; print('mcp import ok:', ruledsl_mcp.__version__)"
           ruledsl-workbench --help
+          ruledsl-mcp --help
 
       - name: Publish to TestPyPI
         if: inputs.target == 'testpypi'

@@ -11,8 +11,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ruledsl"
-version = "1.0.3"
-description = "Python binding and desktop workbench (authoring & replay companion) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
+version = "1.1.0"
+description = "Python binding, desktop workbench (authoring & replay companion), and MCP server (optional [mcp] extra) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
 readme = "README-pypi.md"
 requires-python = ">=3.7"
 license = { file = "LICENSE" }
@@ -34,9 +34,16 @@ Repository = "https://github.com/axiom-foundry/RuleDSL-SDK"
 Demos = "https://axiom-foundry.github.io/RuleDSL-SDK/demos/"
 Releases = "https://github.com/axiom-foundry/RuleDSL-SDK/releases"
 
+[project.optional-dependencies]
+# The MCP server (EXPERIMENTAL, see docs/mcp_quickstart.md). The base
+# package stays zero-dependency; only the extra pulls the official `mcp` SDK.
+# The server needs Python 3.10+ (the `mcp` package's own floor).
+mcp = ["mcp"]
+
 [project.scripts]
 ruledsl-workbench = "ruledsl.workbench:main"
+ruledsl-mcp = "ruledsl_mcp.server:main"
 
 [tool.setuptools]
 package-dir = { "" = "build_src" }
-packages = ["ruledsl"]
+packages = ["ruledsl", "ruledsl_mcp"]
