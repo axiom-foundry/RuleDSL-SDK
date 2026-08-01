@@ -3,9 +3,10 @@
 The repository keeps the binding and the workbench as flat files (that is
 what the SDK bundle ships); this script maps them into a proper package:
 
-    bindings/python/ruledsl.py    ->  build_src/ruledsl/__init__.py
-    bindings/python/workbench.py  ->  build_src/ruledsl/workbench.py
-    LICENSE (repo root)           ->  LICENSE
+    bindings/python/ruledsl.py     ->  build_src/ruledsl/__init__.py
+    bindings/python/workbench.py   ->  build_src/ruledsl/workbench.py
+    bindings/python/ruledsl_mcp/   ->  build_src/ruledsl_mcp/   (already a package)
+    LICENSE (repo root)            ->  LICENSE
 
 Run from this directory, then `python -m build`.
 """
@@ -16,10 +17,14 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 SRC = REPO / "bindings" / "python"
 OUT = HERE / "build_src" / "ruledsl"
+OUT_MCP = HERE / "build_src" / "ruledsl_mcp"
 
 shutil.rmtree(HERE / "build_src", ignore_errors=True)
 OUT.mkdir(parents=True)
 shutil.copyfile(SRC / "ruledsl.py", OUT / "__init__.py")
 shutil.copyfile(SRC / "workbench.py", OUT / "workbench.py")
+OUT_MCP.mkdir()
+for module in sorted((SRC / "ruledsl_mcp").glob("*.py")):
+    shutil.copyfile(module, OUT_MCP / module.name)
 shutil.copyfile(REPO / "LICENSE", HERE / "LICENSE")
-print("assembled:", OUT)
+print("assembled:", OUT, "and", OUT_MCP)

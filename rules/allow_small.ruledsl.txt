@@ -1,0 +1,6 @@
+# Low-value allow — single-rule variant of the workbench velocity set.
+
+rule allow_small {
+  when amount <= 1000;
+  then reason = "low_value", risk_score = 5, allow;
+}

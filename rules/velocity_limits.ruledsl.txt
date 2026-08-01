@@ -1,0 +1,22 @@
+# Velocity Limits — arithmetic, limit clauses, and currency thresholds
+# Derived from the public workbench scenario "05 Velocity Limit".
+
+rule block_extreme priority 200 {
+  when amount > 25000;
+  then reason = "extreme_amount", risk_score = 99, decline;
+}
+
+rule high_value_daily_cap priority 100 {
+  when amount > 5000 and amount <= 25000;
+  then reason = "daily_cap", risk_score = (amount / 500) + 20, limit 3000 USD per 1 D;
+}
+
+rule medium_hourly_cap priority 50 {
+  when amount > 1000 and amount <= 5000;
+  then reason = "hourly_cap", risk_score = (amount / 1000) * 10, limit 10000 USD per 1 H;
+}
+
+rule allow_small {
+  when amount <= 1000;
+  then reason = "low_value", risk_score = 5, allow;
+}

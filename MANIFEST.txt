@@ -20,6 +20,10 @@ bindings/python/examples/quick_test.py
 bindings/python/examples/replay_proof_producer.py
 bindings/python/examples/risk_scoring.py
 bindings/python/ruledsl.py
+bindings/python/ruledsl_mcp/__init__.py
+bindings/python/ruledsl_mcp/handlers.py
+bindings/python/ruledsl_mcp/library.py
+bindings/python/ruledsl_mcp/server.py
 bindings/python/workbench.py
 docs/README.md
 docs/adr/0001-abi-evolution.md
@@ -49,6 +53,7 @@ docs/contracts/input_canonicalization_v1_0.md
 docs/contracts/published_evidence_index_v1_0.md
 docs/contracts/undefined_behavior_v1_0.md
 docs/contributing_notes.md
+docs/design/mcp_server_v0.md
 docs/determinism_value_model.md
 docs/distribution.md
 docs/distribution/bundle_standard.md
@@ -94,6 +99,7 @@ docs/language/spec_v1_0.md
 docs/language/status_v1_0.md
 docs/language/string_lexing_v1_0.md
 docs/legal/README.md
+docs/mcp_quickstart.md
 docs/migration_and_lockin_model.md
 docs/ownership_contract.md
 docs/product_brief.md
@@ -139,6 +145,10 @@ examples/c/unknown_error_code.c
 include/axiom/export.h
 include/axiom/ruledsl_c.h
 include/axiom/version.h
+rules/allow_small.ruledsl.txt
+rules/block_extreme.ruledsl.txt
+rules/manifest.json
+rules/velocity_limits.ruledsl.txt
 site/assets/og-banner.png
 site/assets/ruledsl-duo-demo.mp4
 site/assets/ruledsl-throughput-demo.mp4
@@ -147,3 +157,5 @@ site/demos/index.html
 site/index.html
 site/language/index.html
 tests/fixtures/evidence_sample.json
+tests/mcp/test_handlers.py
+tests/mcp/test_library.py

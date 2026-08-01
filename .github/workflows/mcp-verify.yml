@@ -1,0 +1,81 @@
+name: mcp-verify
+
+# Verifies the MCP server (EXPERIMENTAL surface) against the SHIPPED engine:
+# the pinned release bundle is downloaded from Releases and hash-verified
+# (SHA256SUMS.txt is authoritative) BEFORE anything runs against it — the same
+# binaries a user downloads, never a source-tree build. Loader + handler tests,
+# then the e2e smoke client (real server over MCP JSON-RPC/stdio), pinned to
+# the published golden decision hash. Finally the pip package is assembled and
+# the ruledsl-mcp console entry point smoke-tested from the built wheel.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Pinned engine release: bump deliberately when a newer engine is published.
+env:
+  ENGINE_RELEASE: v1.0.2
+  ENGINE_ASSET: RuleDSL-SDK-v1.0.2-linux-x86_64
+
+jobs:
+  mcp:
+    name: verify-mcp-python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download pinned engine release bundle + verify SHA256SUMS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$ENGINE_RELEASE" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ENGINE_ASSET.tar.gz" \
+            --pattern "$ENGINE_ASSET.SHA256SUMS.txt" \
+            --dir engine-bundle
+          cd engine-bundle
+          sha256sum --check --ignore-missing "$ENGINE_ASSET.SHA256SUMS.txt"
+          tar -xzf "$ENGINE_ASSET.tar.gz"
+          SO_PATH=$(find . -name 'libruledsl_capi.so' -print -quit)
+          test -n "$SO_PATH"
+          echo "ENGINE_LIB=$(readlink -f "$SO_PATH")" >> "$GITHUB_ENV"
+
+      - name: Install MCP SDK (transport smoke test)
+        run: pip install mcp
+
+      - name: Run MCP python tests against the shipped engine
+        run: |
+          set -euo pipefail
+          export RULEDSL_DLL="$ENGINE_LIB"
+          export RULEDSL_WRAPPER="$GITHUB_WORKSPACE/bindings/python"
+          python tests/mcp/test_library.py
+          python tests/mcp/test_handlers.py
+
+      - name: Run MCP e2e smoke client (real server over stdio, shipped engine)
+        run: |
+          set -euo pipefail
+          python Tools/mcp_demo/smoke_client.py \
+            --engine-lib "$ENGINE_LIB" \
+            --wrapper "$GITHUB_WORKSPACE/bindings/python" | tee smoke.out
+          # Pin to the published golden hash (docs/mcp_quickstart.md section 4).
+          grep -q "decision_hash=e1e99393ea54ee315439861eacb0de7cbfb9410bfb99627f03f7121fb3f921cd" smoke.out
+
+      - name: Assemble pip package + smoke the ruledsl-mcp entry point
+        run: |
+          set -euo pipefail
+          python Tools/pypi_package/assemble.py
+          python -m pip install --upgrade build
+          python -m build Tools/pypi_package
+          WHEEL=$(ls Tools/pypi_package/dist/*.whl)
+          python -m pip install "$WHEEL[mcp]"
+          python -c "import ruledsl_mcp; print('mcp import ok:', ruledsl_mcp.__version__)"
+          ruledsl-workbench --help
+          ruledsl-mcp --help
