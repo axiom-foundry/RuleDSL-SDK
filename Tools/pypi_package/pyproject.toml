@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ruledsl"
-version = "1.1.0"
+version = "1.1.1"
 description = "Python binding, desktop workbench (authoring & replay companion), and MCP server (optional [mcp] extra) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
 readme = "README-pypi.md"
 requires-python = ">=3.7"
@@ -47,3 +47,8 @@ ruledsl-mcp = "ruledsl_mcp.server:main"
 [tool.setuptools]
 package-dir = { "" = "build_src" }
 packages = ["ruledsl", "ruledsl_mcp"]
+
+[tool.setuptools.package-data]
+# The example rule library ships inside the wheel (self-contained pip path);
+# assembled from the repository's canonical rules/ by assemble.py.
+ruledsl_mcp = ["examples/rules/*"]

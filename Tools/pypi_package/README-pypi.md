@@ -67,6 +67,10 @@ configuration:
 
 ## Changelog
 
+- **1.1.1** — self-contained pip path for MCP: the example rule library ships
+  inside the wheel (`ruledsl-mcp --print-example-rules`), the smoke client is
+  a module (`python -m ruledsl_mcp.smoke`, no checkout needed), a clear
+  Python 3.10+ runtime message, and `serverInfo.version` reports the package.
 - **1.1.0** — MCP server migrated into the package as the optional
   `[mcp]` extra + `ruledsl-mcp` console command (EXPERIMENTAL). Base
   package unchanged and still zero-dependency.

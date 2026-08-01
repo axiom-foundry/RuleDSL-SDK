@@ -56,10 +56,11 @@ jobs:
           set -euo pipefail
           export RULEDSL_DLL="$ENGINE_LIB"
           export RULEDSL_WRAPPER="$GITHUB_WORKSPACE/bindings/python"
+          python tests/mcp/test_cli.py
           python tests/mcp/test_library.py
           python tests/mcp/test_handlers.py
 
-      - name: Run MCP e2e smoke client (real server over stdio, shipped engine)
+      - name: Run MCP e2e smoke client (checkout path, shipped engine)
         run: |
           set -euo pipefail
           python Tools/mcp_demo/smoke_client.py \
@@ -68,7 +69,7 @@ jobs:
           # Pin to the published golden hash (docs/mcp_quickstart.md section 4).
           grep -q "decision_hash=e1e99393ea54ee315439861eacb0de7cbfb9410bfb99627f03f7121fb3f921cd" smoke.out
 
-      - name: Assemble pip package + smoke the ruledsl-mcp entry point
+      - name: Assemble pip package + verify the self-contained pip path
         run: |
           set -euo pipefail
           python Tools/pypi_package/assemble.py
@@ -79,3 +80,12 @@ jobs:
           python -c "import ruledsl_mcp; print('mcp import ok:', ruledsl_mcp.__version__)"
           ruledsl-workbench --help
           ruledsl-mcp --help
+          # Discovery helper must resolve to the wheel's copy, and that copy
+          # must be byte-identical to the canonical rules/ (drift guard).
+          EX_DIR=$(cd "$RUNNER_TEMP" && ruledsl-mcp --print-example-rules)
+          echo "packaged examples: $EX_DIR"
+          case "$EX_DIR" in "$GITHUB_WORKSPACE"/*) echo "resolved to the checkout, not the wheel"; exit 1;; esac
+          diff -r "$EX_DIR" "$GITHUB_WORKSPACE/rules"
+          # Full pip path, from a neutral cwd: no checkout, no --wrapper, no --rules.
+          (cd "$RUNNER_TEMP" && python -m ruledsl_mcp.smoke --engine-lib "$ENGINE_LIB") | tee smoke_pip.out
+          grep -q "decision_hash=e1e99393ea54ee315439861eacb0de7cbfb9410bfb99627f03f7121fb3f921cd" smoke_pip.out
