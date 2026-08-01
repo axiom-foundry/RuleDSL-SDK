@@ -24,6 +24,7 @@ bindings/python/ruledsl_mcp/__init__.py
 bindings/python/ruledsl_mcp/handlers.py
 bindings/python/ruledsl_mcp/library.py
 bindings/python/ruledsl_mcp/server.py
+bindings/python/ruledsl_mcp/smoke.py
 bindings/python/workbench.py
 docs/README.md
 docs/adr/0001-abi-evolution.md
@@ -157,5 +158,6 @@ site/demos/index.html
 site/index.html
 site/language/index.html
 tests/fixtures/evidence_sample.json
+tests/mcp/test_cli.py
 tests/mcp/test_handlers.py
 tests/mcp/test_library.py

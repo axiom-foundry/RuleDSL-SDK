@@ -198,6 +198,9 @@ rules/
   package assembled from this repository's `bindings/python/`. The engine
   itself still ships as C ABI artifacts via Releases — see
   `docs/distribution.md`.
+- CLI discovery helper: `ruledsl-mcp --print-example-rules` prints the
+  shipped example rule-library path and exits — information only; `--rules`
+  remains required and explicit (§2.2 discipline applies to paths too).
 - Quickstart (setup, Claude Desktop config, e2e smoke client):
   `docs/mcp_quickstart.md`.
 - **Experimental status:** the MCP server is explicitly EXPERIMENTAL in
