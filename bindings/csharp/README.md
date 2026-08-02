@@ -4,7 +4,11 @@ P/Invoke wrapper for the RuleDSL C API. Single-file, no NuGet dependencies.
 
 ## Requirements
 
-- .NET 6+ or .NET Framework 4.7.2+
+- .NET 6+ — `Marshal.PtrToStringUTF8` and nullable reference types are used
+  throughout, and neither exists on .NET Framework. CI builds and runs the test
+  suite on **both** `net6.0` and `net8.0`, so the floor is proven rather than
+  asserted. Note that `net6.0` is out of upstream Microsoft support; `net8.0`
+  is the recommended target.
 - RuleDSL shared library (`ruledsl_capi.dll` on Windows, `libruledsl_capi.so` on Linux) in the application directory or system PATH
 
 ## Quick Start

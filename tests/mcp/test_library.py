@@ -82,8 +82,17 @@ def assert_raises(exc_type, fn, contains=()):
     raise AssertionError(f"{exc_type.__name__} not raised")
 
 
-def write_fixture_library(root, rules, manifest_version=1, tamper_sha=None,
-                          extra_files=(), omit_version=False):
+SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["amount"],
+    "properties": {"amount": {"type": "number"}},
+}
+
+
+def write_fixture_library(root, rules, manifest_version=2, tamper_sha=None,
+                          extra_files=(), omit_version=False,
+                          input_schema=SCHEMA, omit_schema=False):
     """Write a temp library. rules: {rule_id: source}. Returns library dir."""
     root = Path(root)
     manifest = {} if omit_version else {"manifest_version": manifest_version}
@@ -95,7 +104,10 @@ def write_fixture_library(root, rules, manifest_version=1, tamper_sha=None,
         sha = hashlib.sha256(data).hexdigest()
         if tamper_sha == rule_id:
             sha = "0" * 64
-        manifest["rules"][rule_id] = {"file": fname, "sha256": sha, "version": "1.0.0"}
+        entry = {"file": fname, "sha256": sha, "version": "1.0.0"}
+        if not omit_schema:
+            entry["input_schema"] = input_schema
+        manifest["rules"][rule_id] = entry
     for fname, source in extra_files:
         (root / fname).write_bytes(source.encode("utf-8"))
     (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -152,6 +164,68 @@ def _():
         assert_raises(ManifestVersionError, lambda: load_library(root), contains=["99"])
 
 
+@test("fatal: manifest_version 1 is refused, and the message says why")
+def _():
+    # v1 declares no input_schema. Accepting it would keep the unvalidated
+    # input path alive under a "supported" banner - the exact fail-open that
+    # manifest v2 exists to close - so it is refused, not tolerated.
+    with tempfile.TemporaryDirectory() as td:
+        root = write_fixture_library(td, {"r1": VALID_RULE},
+                                     manifest_version=1, omit_schema=True)
+        assert_raises(ManifestVersionError, lambda: load_library(root),
+                      contains=["input_schema", "unvalidated"])
+
+
+@test("fatal: a rule entry without input_schema")
+def _():
+    with tempfile.TemporaryDirectory() as td:
+        root = write_fixture_library(td, {"r1": VALID_RULE}, omit_schema=True)
+        assert_raises(LibraryError, lambda: load_library(root),
+                      contains=["input_schema"])
+
+
+@test("fatal: a malformed input_schema is refused at load")
+def _():
+    # Engine-free: no compiler is passed, so this is pure declaration checking.
+    bad_schemas = [
+        # an unknown keyword must never be silently ignored
+        {"type": "object", "properties": {"a": {"type": "string", "pattern": "^x"}}},
+        # object/array cannot cross the engine's value boundary
+        {"type": "object", "properties": {"a": {"type": "object"}}},
+        # the closed world is the contract
+        {"type": "object", "properties": {}, "additionalProperties": True},
+        # a field schema must declare a type
+        {"type": "object", "properties": {"a": {}}},
+        # required must name a declared property
+        {"type": "object", "properties": {}, "required": ["ghost"]},
+    ]
+    for schema in bad_schemas:
+        with tempfile.TemporaryDirectory() as td:
+            root = write_fixture_library(td, {"r1": VALID_RULE}, input_schema=schema)
+            assert_raises(LibraryError, lambda: load_library(root), contains=["'r1'"])
+
+
+@test("fatal: a rule source containing a NUL byte")
+def _():
+    # The manifest sha256 covers every byte of the file, but the compiler gets
+    # a NUL-terminated C string and stops at the NUL - so the hash would attest
+    # to more than what actually compiled. Engine-free: refused before the
+    # compiler is ever called.
+    source = VALID_RULE + "\x00rule hidden { when amount > 0; then allow; }"
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        data = source.encode("utf-8")
+        (root / "r1.ruledsl.txt").write_bytes(data)
+        (root / "manifest.json").write_text(json.dumps({
+            "manifest_version": 2,
+            "rules": {"r1": {"file": "r1.ruledsl.txt",
+                             "sha256": hashlib.sha256(data).hexdigest(),
+                             "version": "1.0.0", "input_schema": SCHEMA}},
+        }), encoding="utf-8")
+        assert_raises(LibraryError, lambda: load_library(root),
+                      contains=["NUL", str(len(data))])
+
+
 @test("fatal: missing manifest_version")
 def _():
     with tempfile.TemporaryDirectory() as td:
@@ -187,9 +261,10 @@ def _():
         libdir.mkdir()
         sha = hashlib.sha256(VALID_RULE.encode()).hexdigest()
         (libdir / "manifest.json").write_text(json.dumps({
-            "manifest_version": 1,
+            "manifest_version": 2,
             "rules": {"r1": {"file": "../outside.ruledsl.txt",
-                             "sha256": sha, "version": "1.0.0"}},
+                             "sha256": sha, "version": "1.0.0",
+                             "input_schema": SCHEMA}},
         }), encoding="utf-8")
         assert_raises(LibraryError, lambda: load_library(libdir), contains=["escapes"])
 
@@ -230,6 +305,70 @@ def _():
                       contains=["no_such_rule"])
     assert_eq(e.server_error_code, 1)
     assert_eq(e.server_error_name, "SRV_UNKNOWN_RULE_ID")
+
+
+# ---------------------------------------------------------------------------
+# Manifest values that cannot cross the wire
+# ---------------------------------------------------------------------------
+
+@test("manifest: NaN / Infinity tokens are a fatal load error")
+def _():
+    """Python's json accepts the non-standard NaN, Infinity and -Infinity
+    tokens. A bound or enum entry holding one is a constraint no comparison
+    can ever satisfy - it looks enforced and never fires."""
+    for token in ("NaN", "Infinity", "-Infinity"):
+        with tempfile.TemporaryDirectory() as td:
+            lib = write_fixture_library(td, {"r": VALID_RULE})
+            path = Path(lib) / "manifest.json"
+            text = path.read_text(encoding="utf-8")
+            text = text.replace('"input_schema": {',
+                                '"input_schema": {"description": %s, ' % token, 1) \
+                if False else text.replace('"manifest_version": 2',
+                                           '"manifest_version": 2, "note": %s' % token, 1)
+            path.write_text(text, encoding="utf-8")
+            assert_raises(LibraryError, lambda p=lib: load_library(p),
+                          contains=["non-standard"])
+
+
+@test("manifest: a literal that overflows to infinity is a fatal load error")
+def _():
+    """parse_constant never sees 1e400 - it is a well-formed decimal literal
+    that float() silently turns into inf."""
+    with tempfile.TemporaryDirectory() as td:
+        lib = write_fixture_library(td, {"r": VALID_RULE})
+        path = Path(lib) / "manifest.json"
+        text = path.read_text(encoding="utf-8").replace(
+            '"manifest_version": 2', '"manifest_version": 2, "note": 1e400', 1)
+        path.write_text(text, encoding="utf-8")
+        assert_raises(LibraryError, lambda: load_library(lib),
+                      contains=["not finite"])
+
+
+@test("manifest: text with no UTF-8 form is a fatal load error")
+def _():
+    """A \\ud800 escape is legal JSON input and produces a lone surrogate. A
+    rule id like that used to be servable: the decision log write succeeded
+    (canonical JSON escapes it back) while the response to the client failed
+    to encode - a decision recorded that the caller is told never happened."""
+    with tempfile.TemporaryDirectory() as td:
+        lib = write_fixture_library(td, {"r": VALID_RULE})
+        path = Path(lib) / "manifest.json"
+        text = path.read_text(encoding="utf-8").replace('"r":', '"r\\ud800x":', 1)
+        path.write_text(text, encoding="utf-8")
+        assert_raises(LibraryError, lambda: load_library(lib),
+                      contains=["UTF-8"])
+
+
+@test("manifest: an enum entry no call could ever match is refused")
+def _():
+    with tempfile.TemporaryDirectory() as td:
+        lib = write_fixture_library(td, {"r": VALID_RULE})
+        path = Path(lib) / "manifest.json"
+        text = path.read_text(encoding="utf-8").replace(
+            '"type": "number"', '"type": "number", "enum": [NaN]', 1)
+        path.write_text(text, encoding="utf-8")
+        assert_raises(LibraryError, lambda: load_library(lib),
+                      contains=["non-standard"])
 
 
 # ---------------------------------------------------------------------------

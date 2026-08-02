@@ -1,0 +1,45 @@
+# Pinned transitive closure for the MCP transport contract tests.
+#
+# Pinning `mcp` alone is not reproducible. The behaviour this server depends
+# on lives partly in pydantic: argument-model construction, lax-mode coercion,
+# and the extra="forbid" rebuild in server.py _attach_schemas. A pydantic minor
+# release could change any of those without the mcp version moving at all, and
+# CI would silently start verifying something else.
+#
+# Regenerate deliberately, never automatically:
+#     python -m venv .venv && .venv/bin/pip install "mcp==<version>"
+#     .venv/bin/pip freeze > Tools/ci/constraints-mcp-<version>.txt
+#
+# Windows-only entry (pywin32) is deliberately absent: CI runs on Linux and pip
+# would fail on an unsatisfiable constraint. It is a platform dependency of the
+# resolver's, not of the contract under test.
+
+annotated-types==0.8.0
+anyio==4.14.2
+attrs==26.1.0
+cffi==2.1.0
+click==8.4.2
+colorama==0.4.6
+cryptography==50.0.0
+h11==0.16.0
+httpcore2==2.9.1
+httpx2==2.9.1
+idna==3.18
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+mcp==2.0.0
+mcp-types==2.0.0
+opentelemetry-api==1.44.0
+pycparser==3.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+PyJWT==2.13.0
+python-multipart==0.0.32
+referencing==0.37.0
+rpds-py==2026.6.3
+sse-starlette==3.4.6
+starlette==1.3.1
+truststore==0.10.4
+typing-inspection==0.4.2
+typing_extensions==4.16.0
+uvicorn==0.52.1

@@ -44,7 +44,12 @@ __pycache__/
 *.pyc
 
 # .NET
+# The `!bin/` un-ignore above (for intentionally published SDK binaries) also
+# un-ignores .NET build output, so the C# project directories are excluded
+# explicitly and by path — narrowly, so a published bin/ elsewhere is untouched.
 bin/obj/
+bindings/csharp/**/bin/
+bindings/csharp/**/obj/
 *.nupkg
 
 # OS/editor

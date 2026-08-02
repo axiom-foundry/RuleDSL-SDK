@@ -21,8 +21,18 @@ env:
 
 jobs:
   mcp:
-    name: verify-mcp-python
+    name: verify-mcp-python (mcp ${{ matrix.mcp }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every SDK version this project CLAIMS to work with is listed here and
+        # verified. The package declares mcp>=2.0,<3, which today contains
+        # exactly one release - so this matrix has one entry, not because the
+        # range is narrow but because the 2.x line is. When a second 2.x ships,
+        # add it here BEFORE claiming it works; a permissive range is not
+        # evidence, and no document in this repository says otherwise.
+        mcp: ["2.0.0"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +41,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # Engine-free, so it runs BEFORE the engine download: the cheapest
+      # failures surface first. Needs neither the DLL nor the mcp package.
+      - name: Run engine-free input-validation tests
+        run: python tests/mcp/test_validate.py
 
       - name: Download pinned engine release bundle + verify SHA256SUMS
         env:
@@ -48,8 +63,19 @@ jobs:
           test -n "$SO_PATH"
           echo "ENGINE_LIB=$(readlink -f "$SO_PATH")" >> "$GITHUB_ENV"
 
-      - name: Install MCP SDK (transport smoke test)
-        run: pip install mcp
+      # Pinned exactly, and with its TRANSITIVE closure pinned too. Pinning
+      # `mcp` alone is not reproducible: argument-model construction, lax-mode
+      # coercion and the extra="forbid" rebuild all live in pydantic, which
+      # could change under an unchanged mcp version. The package range stays
+      # >=2.0,<3 so users are not over-constrained - but the range is
+      # permission, not evidence: only the versions in this matrix are tested.
+      - name: Install MCP SDK (transport contract tests)
+        run: |
+          pip install "mcp==${{ matrix.mcp }}" \
+            -c "Tools/ci/constraints-mcp-${{ matrix.mcp }}.txt"
+          pip freeze | sort > installed.txt
+          echo "--- resolved environment ---"
+          cat installed.txt
 
       - name: Run MCP python tests against the shipped engine
         run: |
@@ -59,6 +85,14 @@ jobs:
           python tests/mcp/test_cli.py
           python tests/mcp/test_library.py
           python tests/mcp/test_handlers.py
+          python tests/mcp/test_binding_lifecycle.py
+          # The transport contract over a REAL stdio session. In-process calls
+          # skip the SDK's argument pre-parsing, which is where the wire and
+          # the handler were able to disagree.
+          python tests/mcp/test_wire_parity.py
+          # Asserts stripped: the decision-record shape check must still be
+          # enforced, which is why it is no longer a bare `assert`.
+          python -O tests/mcp/test_handlers.py
 
       - name: Run MCP e2e smoke client (checkout path, shipped engine)
         run: |
@@ -67,6 +101,10 @@ jobs:
             --engine-lib "$ENGINE_LIB" \
             --wrapper "$GITHUB_WORKSPACE/bindings/python" | tee smoke.out
           # Pin to the published golden hash (docs/mcp_quickstart.md section 4).
+          # This hash covers the DECISION PAYLOAD only, so it deliberately
+          # survives changes to the request contract (manifest v2, isError,
+          # explicit schemas). If it ever moves, the decision path itself
+          # changed - investigate, do not regenerate the pin.
           grep -q "decision_hash=e1e99393ea54ee315439861eacb0de7cbfb9410bfb99627f03f7121fb3f921cd" smoke.out
 
       - name: Assemble pip package + verify the self-contained pip path
@@ -76,7 +114,8 @@ jobs:
           python -m pip install --upgrade build
           python -m build Tools/pypi_package
           WHEEL=$(ls Tools/pypi_package/dist/*.whl)
-          python -m pip install "$WHEEL[mcp]"
+          python -m pip install "$WHEEL[mcp]" "mcp==${{ matrix.mcp }}" \
+            -c "Tools/ci/constraints-mcp-${{ matrix.mcp }}.txt"
           python -c "import ruledsl_mcp; print('mcp import ok:', ruledsl_mcp.__version__)"
           ruledsl-workbench --help
           ruledsl-mcp --help

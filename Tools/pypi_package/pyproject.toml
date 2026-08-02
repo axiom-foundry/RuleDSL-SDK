@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ruledsl"
-version = "1.1.1"
+version = "1.2.0"
 description = "Python binding, desktop workbench (authoring & replay companion), and MCP server (optional [mcp] extra) for the RuleDSL deterministic rule engine. The engine library ships separately via GitHub Releases."
 readme = "README-pypi.md"
 requires-python = ">=3.7"
@@ -37,8 +37,16 @@ Releases = "https://github.com/axiom-foundry/RuleDSL-SDK/releases"
 [project.optional-dependencies]
 # The MCP server (EXPERIMENTAL, see docs/mcp_quickstart.md). The base
 # package stays zero-dependency; only the extra pulls the official `mcp` SDK.
-# The server needs Python 3.10+ (the `mcp` package's own floor).
-mcp = ["mcp"]
+# The server needs Python 3.10+ (the `mcp` package's own floor), which cannot
+# be expressed here because requires-python covers the whole package - it is
+# enforced at startup with a clear message instead.
+#
+# Bounded to the 2.x line: the server's failure contract (CallToolResult with
+# isError and structuredContent) and its explicit tool schemas depend on 2.x
+# behaviour. 1.x could not produce that shape, and 3.x is unknown. CI verifies
+# against exactly mcp==2.0.0; this range stays wide so users are not
+# over-constrained.
+mcp = ["mcp>=2.0,<3"]
 
 [project.scripts]
 ruledsl-workbench = "ruledsl.workbench:main"

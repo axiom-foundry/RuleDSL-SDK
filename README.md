@@ -3,7 +3,7 @@
 RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
 Same input, same bytecode, same decision — guaranteed across supported platforms.
 
-**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec) · Python package 1.1.0 (pip).**
+**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec) · Python package: `pip install ruledsl` gives **1.1.1**; this tree is source candidate **1.2.0**, not yet published.**
 
 **Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation, **and a deterministic decision layer for AI agents (via MCP)**.
 
@@ -147,8 +147,9 @@ Not a C developer? Use the ready-made wrappers:
 
 | Language | Location | Dependencies |
 |----------|----------|-------------|
-| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` (optional `[mcp]` extra: MCP server) | None (pure ctypes; `[mcp]` extra pulls the official `mcp` SDK) |
-| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke) |
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | None (pure ctypes) |
+| Python 3.10+ | `pip install "ruledsl[mcp]"` — adds the [MCP server](docs/mcp_quickstart.md) | the official `mcp` SDK; the range is `>=2.0,<3`, and CI verifies every version it claims (today: `2.0.0`, the only 2.x release, with its transitive closure pinned). 3.10 is that SDK's floor, not ours |
+| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke). CI builds **and runs** the suite on `net6.0` and `net8.0` |
 
 The [`ruledsl`](https://pypi.org/project/ruledsl/) package on PyPI carries the
 Python binding plus the desktop **workbench** (authoring & replay companion) as

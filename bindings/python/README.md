@@ -90,6 +90,38 @@ Time units: `s` (second), `m` (minute), `h` (hour), `d` (day) — case-insensiti
 | `bool` | BOOL | `{"is_vip": True}` |
 | `None` | MISSING | `{"country": None}` |
 
+### Rejected values
+
+The engine sees a field as a `double`, a NUL-terminated C string, a bool, or
+missing. A value that survives that boundary only *partially* is refused rather
+than quietly altered — otherwise the binding would report an input the engine
+never evaluated, and anything logged alongside it would attest to the wrong
+thing.
+
+| Value | Raises | Code |
+|-------|--------|------|
+| `str` containing `"\x00"` | `ArgumentError` | `AX_ERR_INVALID_ARGUMENT` |
+| `int` with `abs(value) > 2**53 - 1` | `ArgumentError` | `AX_ERR_INVALID_ARGUMENT` |
+| `float("nan")` / `inf` / `-inf` | `EvalError` | `AX_ERR_NON_FINITE` |
+| `str` with no UTF-8 form (a lone surrogate, e.g. `"\ud800"`) | `ArgumentError` | `AX_ERR_INVALID_ARGUMENT` |
+| anything else (`dict`, `list`, `bytes`, `Decimal`, …) | `ArgumentError` | `AX_ERR_INVALID_ARGUMENT` |
+| field name that is not a non-empty, NUL-free, UTF-8-encodable `str` | `ArgumentError` | `AX_ERR_INVALID_ARGUMENT` |
+
+`2**53 - 1` is the largest integer that survives a round trip through IEEE 754
+binary64. A larger one converts to a *different* number: `9007199254740993`
+would be evaluated as `9007199254740992`. **Pass identifiers (account numbers,
+ledger ids) as strings** — that is the correct type for them regardless.
+
+A lone surrogate is a legal Python `str` and an illegal UTF-8 sequence. It is
+refused rather than encoded with `errors="replace"`, because replacement would
+hand the engine a U+FFFD the caller never sent — the same class of defect as
+the NUL and 2^53 cases. Strings the engine returns are likewise decoded
+strictly; a failure is a typed `RuleDSLError`, never a silent substitution.
+
+`compile()` likewise rejects a rule source containing NUL, or one that is not
+encodable as UTF-8: the compiler would otherwise silently compile only the
+prefix while a hash over the file attests to all of its bytes.
+
 ## Time
 
 Time-based rules require `now_utc_ms` (epoch milliseconds). It must be supplied
@@ -97,12 +129,25 @@ Time-based rules require `now_utc_ms` (epoch milliseconds). It must be supplied
 because a deterministic engine must be a pure function of explicit inputs. Omitting
 it for a time-based rule raises `EvalError` (`MISSING_NOW_UTC_MS`).
 
+`now_utc_ms` is epoch *milliseconds*, so it must be a whole number: `int` or an
+integral `float` (`1700000000000` and `1700000000000.0` are the same instant).
+A numeric string raises `EvalError` (`AX_ERR_NOW_UTC_MS_NOT_NUMBER`) — it is not
+coerced; a fractional value, one beyond `2**53 - 1`, or a negative one raises
+`ArgumentError`. Epoch milliseconds start at 1970, so a negative value is a
+unit or sign mistake far more often than a deliberate pre-1970 timestamp.
+
+There are two entry points and **they enforce the same rules**. Supplying both
+at once is an error rather than letting the argument silently overwrite the
+field:
+
 ```python
 # Supply the time from your host application's clock at the call site:
 decision = engine.evaluate(bytecode, {"amount": 100.0}, now_utc_ms=1700000000000.0)
 
-# ...or pass it as an explicit field:
+# ...or pass it as an explicit field — validated identically:
 decision = engine.evaluate(bytecode, {"amount": 100.0, "now_utc_ms": 1700000000000.0})
+
+# ...but not both: ArgumentError (AX_ERR_INVALID_ARGUMENT).
 ```
 
 ## Bytecode I/O
@@ -181,9 +226,29 @@ except EvalError as e:
 
 ## Thread Safety
 
-Each `RuleDSL` instance uses an internal lock to serialize `compile()` and `evaluate()` calls. Multiple threads can safely share a single instance — the lock prevents concurrent access to the underlying C compiler state.
+Each `RuleDSL` instance uses an internal lock to serialize **every** native call —
+`compile()`, `evaluate()`, `version()`, and `check_compatibility()`. Multiple
+threads can safely share a single instance.
 
-For maximum throughput, create one `RuleDSL` instance per thread to avoid lock contention.
+`close()` participates in the same lock: it waits for any in-flight call to
+return before destroying the compiler, and it is idempotent. Destroying the
+compiler under a running call is a use-after-free the engine cannot report — it
+surfaces as a "successful" decision with silently empty `outputs`, or a crash.
+
+Calling `close()` from **inside** an in-flight call on the same thread — from an
+`on_trace` callback, which the engine invokes from within `evaluate()` — is
+refused with `RuleDSLError` (`AX_ERR_RUNTIME`) rather than honoured, for the same
+reason. Close after `evaluate()` returns.
+
+`__del__` never blocks: if another thread holds the lock or a call is in flight
+it skips destruction. A leaked compiler is reclaimed at process exit; a
+use-after-free is not recoverable.
+
+After `close()`, every public call raises `RuleDSLError` (`AX_ERR_RUNTIME`) —
+never an `AttributeError`.
+
+For maximum throughput, create one `RuleDSL` instance per thread to avoid lock
+contention. Correctness does not require it.
 
 ## Evaluation Trace
 

@@ -67,6 +67,11 @@ configuration:
 
 ## Changelog
 
+- **1.2.0** — MCP contract stabilization. The experimental MCP surface gets a
+  strict, published contract: per-rule input schemas, typed errors carried as
+  `isError`, matching value fidelity in the Python and C# bindings, and CI that
+  holds all of it. **This breaks callers on purpose** — see the migration notes
+  below. The engine, the language, and the decision payload are unchanged.
 - **1.1.1** — self-contained pip path for MCP: the example rule library ships
   inside the wheel (`ruledsl-mcp --print-example-rules`), the smoke client is
   a module (`python -m ruledsl_mcp.smoke`, no checkout needed), a clear
@@ -78,6 +83,24 @@ configuration:
   clock (ISO-8601 ⇄ epoch-ms echo, Now (UTC) button).
 - **1.0.2** — first public release: binding (`on_trace`, cached buffers) +
   workbench (authoring, replay, JSON inputs).
+
+## Migrating to 1.2.0
+
+Everything below is a deliberate break. The MCP surface is EXPERIMENTAL and had
+no compatibility promise; keeping the old paths alive would have meant shipping
+two contracts, one of which quietly produced wrong answers.
+
+| What changed | What to do |
+|---|---|
+| Rule libraries must declare `manifest_version: 2`, and every rule must carry an `input_schema`. A v1 manifest is refused at startup. | Add `"manifest_version": 2` and an `input_schema` per rule. Call `list_rules` — it returns each rule's schema. |
+| Failed tool calls now return `CallToolResult(isError=true)` with a structured `{error_domain, error_code, error_name, message, field}` object. They used to look like successes. | Branch on `isError` / `error_code` instead of parsing text. |
+| `now_utc_ms` must be a JSON **integer**, at or after the epoch. A numeric string, a fractional value and a negative value are all refused; an integral float normalizes to the same integer. | Send an integer. |
+| Integers outside ±(2^53−1) are refused instead of being silently rounded. This is the one break that reaches non-MCP binding users. | Pass identifiers (account numbers, ledger ids) as **strings**. They were never safe as numbers — a float64 cannot hold them, so the engine was already evaluating a different value than you sent. |
+| Fields the rule's schema does not declare are refused, not ignored. Strings containing NUL, text with no UTF-8 form, and non-scalar values are refused. | Match the declared schema exactly. |
+| The `mcp` SDK 1.x / FastMCP path is gone; the extra requires `mcp>=2.0,<3`. | `pip install -U "ruledsl[mcp]"`. |
+
+If you supply `now_utc_ms` both as an argument and as a `now_utc_ms` field, that
+is now an error rather than the argument silently winning.
 
 ## Version & license
 

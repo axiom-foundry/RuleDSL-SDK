@@ -1,0 +1,71 @@
+name: csharp-verify
+
+# Verifies the C# binding against the SHIPPED engine, using the same pinned
+# release bundle and hash-verification discipline as mcp-verify.
+#
+# The C# binding previously had NO CI coverage at all. Its lifetime and
+# marshalling defects are exactly the class that review does not catch:
+# Dispose() racing an in-flight native call surfaces as a "successful" decision
+# with silently empty output fields, not as a crash. bindings/csharp/tests
+# reproduces that race, so the fix cannot silently regress.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Pinned engine release: bump deliberately when a newer engine is published.
+env:
+  ENGINE_RELEASE: v1.0.2
+  ENGINE_ASSET: RuleDSL-SDK-v1.0.2-linux-x86_64
+
+jobs:
+  csharp:
+    name: verify-csharp-binding
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # Both the claimed floor and the recommended target are installed, so
+          # the suite can be RUN on each rather than merely compiled for them.
+          dotnet-version: |
+            6.0.x
+            8.0.x
+
+      - name: Download pinned engine release bundle + verify SHA256SUMS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$ENGINE_RELEASE" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ENGINE_ASSET.tar.gz" \
+            --pattern "$ENGINE_ASSET.SHA256SUMS.txt" \
+            --dir engine-bundle
+          cd engine-bundle
+          sha256sum --check --ignore-missing "$ENGINE_ASSET.SHA256SUMS.txt"
+          tar -xzf "$ENGINE_ASSET.tar.gz"
+          SO_PATH=$(find . -name 'libruledsl_capi.so' -print -quit)
+          test -n "$SO_PATH"
+          echo "ENGINE_LIB=$(readlink -f "$SO_PATH")" >> "$GITHUB_ENV"
+
+      - name: Build the binding (via the shipped example project)
+        run: dotnet build bindings/csharp/examples/RiskScoring.csproj -warnaserror
+
+      - name: Build and run the C# binding test suite against the shipped engine
+        run: |
+          set -euo pipefail
+          export RULEDSL_DLL="$ENGINE_LIB"
+          export RULEDSL_REPO_ROOT="$GITHUB_WORKSPACE"
+          # Every framework the binding claims to support is RUN, not just
+          # compiled: "requires .NET 6+" is only true if net6.0 actually
+          # passes. Adding a target to the csproj without adding it here would
+          # put the claim back where it was - asserted rather than tested.
+          for tfm in net6.0 net8.0; do
+            echo "--- $tfm ---"
+            dotnet run --project bindings/csharp/tests/RuleDSLTests.csproj               -c Release -f "$tfm"
+          done

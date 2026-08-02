@@ -204,7 +204,10 @@ def parse_now(text):
             f"(e.g. 2023-11-14T22:13:20Z)")
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.timestamp() * 1000.0
+    # Round to whole milliseconds: now_utc_ms IS epoch milliseconds, and a
+    # sub-millisecond ISO timestamp (or float error in the multiply) would
+    # otherwise produce a fractional value that the binding refuses.
+    return float(round(dt.timestamp() * 1000.0))
 
 
 def decision_hash(decision):

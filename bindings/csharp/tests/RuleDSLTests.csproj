@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Both ends of the supported range are BUILT and RUN, so ".NET 6+" is a
+         tested claim rather than an assertion. -->
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <!-- NETSDK1138 says net6.0 is out of upstream support. That is a lifecycle
+         policy warning, not a correctness signal, and under -warnaserror it
+         would stop us from proving the claimed floor still works. Suppressed
+         deliberately; bindings/csharp/README.md states the EOL status so the
+         claim does not mislead. -->
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>RuleDSLTests</RootNamespace>
+    <AssemblyName>RuleDSLTests</AssemblyName>
+    <!-- No test-framework dependency on purpose: the repository's test suites
+         are dependency-free self-running programs (see tests/mcp/*.py), and CI
+         must be able to run this with nothing but the .NET SDK. -->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\RuleDSL.cs" Link="RuleDSL.cs" />
+  </ItemGroup>
+</Project>
