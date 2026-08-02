@@ -42,6 +42,7 @@ build.ninja
 # Python
 __pycache__/
 *.pyc
+.venv/
 
 # .NET
 # The `!bin/` un-ignore above (for intentionally published SDK binaries) also

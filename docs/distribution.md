@@ -83,9 +83,16 @@ Rollback:
 
 ## Distribution channels
 
-- direct vendor delivery,
-- private secure delivery link,
-- no public download channel.
+- **Public evaluation bundles:** versioned assets on
+  [GitHub Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases),
+  distributed under the evaluation license recorded in each bundle's
+  `manifests/LICENSE_STATUS.txt`.
+- **Commercial or customer-specific bundles:** direct vendor delivery or a
+  private secure delivery link under the applicable agreement.
+
+Availability through a public release channel does not grant production-use
+rights; the repository license and the bundle's `LICENSE_STATUS.txt` remain
+authoritative.
 
 ## Not included by default
 
