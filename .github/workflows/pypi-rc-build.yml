@@ -1,0 +1,150 @@
+name: pypi-rc-build
+
+# Build once. This workflow never publishes: it creates the immutable byte set
+# that both TestPyPI and production PyPI must consume.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PACKAGE_VERSION: "1.2.0"
+  ARTIFACT_NAME: ruledsl-1.2.0-rc
+
+jobs:
+  build-rc:
+    name: build-and-verify-rc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a manual dispatch from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Checkout the exact candidate commit
+        uses: actions/checkout@v4
+
+      - name: Record source commit and Git tree
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=$(git rev-parse HEAD)
+          TREE_HASH=$(git rev-parse 'HEAD^{tree}')
+          test "$SOURCE_SHA" = "$GITHUB_SHA"
+          echo "source-sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "tree-hash=$TREE_HASH" >> "$GITHUB_OUTPUT"
+          echo "source SHA: $SOURCE_SHA"
+          echo "Git tree:   $TREE_HASH"
+
+      - name: Setup build Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Test the RC artifact contract
+        run: python Tools/pypi_package/test_rc_artifact.py
+
+      - name: Install isolated build checks
+        run: python -m pip install --upgrade build twine
+
+      - name: Assemble package sources
+        run: python Tools/pypi_package/assemble.py
+
+      - name: Build the wheel and sdist once
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e "$RUNNER_TEMP/ruledsl-dist"
+          python -m build --outdir "$RUNNER_TEMP/ruledsl-dist" Tools/pypi_package
+
+      - name: Check package rendering and distribution metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m twine check "$RUNNER_TEMP/ruledsl-dist"/*
+          python - <<'PY'
+          import os
+          import sys
+
+          sys.path.insert(0, "Tools/pypi_package")
+          import rc_artifact
+
+          metadata = rc_artifact.verify_distribution_metadata(
+              os.path.join(os.environ["RUNNER_TEMP"], "ruledsl-dist")
+          )
+          print("Name:           ", metadata["name"])
+          print("Version:        ", metadata["version"])
+          print("Requires-Python:", metadata["requires_python"])
+          print("Wheel tag:      ", metadata["wheel_tag"])
+          PY
+
+      - name: Smoke-test the built wheel from a clean virtual environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/wheel-smoke"
+          VENV_BIN="$RUNNER_TEMP/wheel-smoke/bin"
+          "$VENV_BIN/python" -m pip install "$RUNNER_TEMP/ruledsl-dist/ruledsl-1.2.0-py3-none-any.whl"
+          "$VENV_BIN/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$VENV_BIN/python" -c "import ruledsl; print('import ok:', ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)"
+          "$VENV_BIN/python" -c "import ruledsl_mcp; assert ruledsl_mcp.__version__ == '0.2.0'; print('mcp import ok:', ruledsl_mcp.__version__)"
+          "$VENV_BIN/ruledsl-workbench" --help
+          "$VENV_BIN/ruledsl-mcp" --help
+
+      - name: Create and re-verify the immutable RC artifact
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source-sha }}
+          TREE_HASH: ${{ steps.source.outputs.tree-hash }}
+        run: |
+          set -euo pipefail
+          python Tools/pypi_package/rc_artifact.py create \
+            --dist-dir "$RUNNER_TEMP/ruledsl-dist" \
+            --output-dir "$RUNNER_TEMP/ruledsl-rc-artifact" \
+            --source-sha "$SOURCE_SHA" \
+            --tree-hash "$TREE_HASH" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT"
+          python Tools/pypi_package/rc_artifact.py verify \
+            --artifact-dir "$RUNNER_TEMP/ruledsl-rc-artifact" \
+            --expected-source-sha "$SOURCE_SHA" \
+            --expected-tree-hash "$TREE_HASH" \
+            --expected-version "$PACKAGE_VERSION" \
+            --expected-run-id "$GITHUB_RUN_ID" \
+            --expected-run-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: Upload the single RC artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ runner.temp }}/ruledsl-rc-artifact/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+
+      - name: Log immutable RC identity
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source-sha }}
+          TREE_HASH: ${{ steps.source.outputs.tree-hash }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+        run: |
+          set -euo pipefail
+          test "$ARTIFACT_ID" -gt 0
+          {
+            echo "## PyPI RC artifact"
+            echo "- workflow run ID: $GITHUB_RUN_ID"
+            echo "- run attempt: $GITHUB_RUN_ATTEMPT"
+            echo "- artifact ID: $ARTIFACT_ID"
+            echo "- artifact name: $ARTIFACT_NAME"
+            echo "- source SHA: $SOURCE_SHA"
+            echo "- Git tree: $TREE_HASH"
+            echo "- version: $PACKAGE_VERSION"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
