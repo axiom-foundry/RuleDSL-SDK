@@ -26,7 +26,8 @@ This template does not cover:
 - Decision record JSON files (`schema_version = replay_proof_v1`).
 - Verifier tool: `Tools/replay_proof/verify_replay_proof.py`.
 - PASS report JSON and FAIL report JSON (FAIL report is optional but recommended).
-- Embedded fingerprints: `engine_version_string`, `abi_level`, `bytecode_hash`.
+- Embedded fingerprints: `engine_version_string`, `abi_level`, `bytecode_hash`,
+  `input_hash`, and `options_hash`.
 
 ## Equality surface
 
@@ -34,7 +35,10 @@ MUST match:
 - `engine_version_string`
 - `abi_level`
 - `bytecode_hash`
-- `input_hash` (when present on both records; required in `--strict`)
+- `input_hash` (required in `--strict`)
+- `options_hash` (required in `--strict`)
+- `validation_outcome` (required in `--strict`)
+- `validation_code` (required in `--strict`)
 - `decision_hash` (or `result_hash` fallback)
 
 Informational only:
@@ -73,9 +77,13 @@ python Tools/replay_proof/verify_replay_proof.py `
 ## FAQ
 
 - Why strict?
-  - `--strict` prevents silent comparison downgrades (for example missing `input_hash`).
+  - `--strict` prevents silent comparison downgrades (for example missing
+    input, options, or validation evidence).
 - What if `input_hash` is missing?
   - In strict mode verification fails; without strict it may be skipped, which weakens proof quality.
+- What if options or validation evidence is missing?
+  - In strict mode verification fails. Non-strict mode preserves compatibility
+    with older records but is not the production/audit policy.
 - What if engine version changes?
   - `engine_version_string` mismatch yields FAIL; evidence is not comparable across different engine versions.
 - Can I compare across machines?

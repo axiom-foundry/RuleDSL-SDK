@@ -18,8 +18,17 @@ Replay evidence is a top-level JSON object. Required fields (per
 - `bytecode_hash` (string): lowercase SHA-256 hex of the evaluated bytecode bytes.
 - `decision_hash` OR `result_hash` (string): lowercase SHA-256 hex of the decision/result payload.
 
-Optional fields: `input_hash` and `input_descriptor`, plus the informational `error_code`,
-`error_message`, `notes`, and `timestamp_utc`.
+Optional equality fields are `input_hash`, `options_hash`, `validation_outcome`,
+and `validation_code`; all four become required under `--strict`. The
+`input_descriptor`, `error_code`, `error_message`, `notes`, and `timestamp_utc`
+fields remain optional. The validation fields describe producer/binding
+validation, not fields emitted by the engine decision.
+
+The shipped producers hash sorted, whitespace-free UTF-8 JSON. With no explicit
+evaluation options they hash the bytes `{}`; the resulting `options_hash` is
+`44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`.
+Successful records use `validation_outcome = "OK"` and `validation_code = 0`
+and are emitted only after validation and evaluation succeed.
 
 ## Equality rules (replay proof)
 
@@ -28,9 +37,10 @@ when all of the following hold:
 
 - `engine_version_string`, `abi_level` (normalized to string), `bytecode_hash`, and the effective
   result hash (`decision_hash` if present, else `result_hash`) MUST match.
-- If both records include `input_hash`, they MUST match; likewise for `error_code`.
-- In `--strict` mode, `input_hash` MUST be present in both records and match, and an `error_code`
-  presence mismatch is treated as failure.
+- If both records include `input_hash`, `options_hash`, `validation_outcome`,
+  or `validation_code`, each included field MUST match; likewise for `error_code`.
+- In `--strict` mode, all four strict equality fields MUST be present in both
+  records and match, and an `error_code` presence mismatch is treated as failure.
 
 `input_descriptor`, `error_message`, `notes`, and `timestamp_utc` are informational and ignored for
 equality. The verifier emits PASS/FAIL with the mismatched fields and a deterministic `proof_hash`
@@ -50,14 +60,17 @@ computed from the canonical equality-field concatenation.
   I/O, or database dependency.
 - Replay-proof verification is performed offline by `verify_replay_proof.py`, which validates each
   JSON record's required fields and SHA-256 hex hashes.
-- For identical bytecode and identical inputs, re-running `ax_eval_bytecode` yields identical
-  decision outputs, which the verifier confirms as matching records.
+- With matching engine/ABI, identical bytecode, canonical inputs and explicit
+  evaluation options, re-running `ax_eval_bytecode` yields identical decision
+  outputs under the documented validation preconditions; strict verification
+  rejects records that do not pin that full comparison surface.
 
 ## Ownership Rules
 
 - The caller owns `AXBytecode` and must release it with `ax_bytecode_free`.
 - The caller owns `AXDecision` and must release SDK-owned strings with `ax_decision_reset`
   (alias `ax_decision_free`) before reuse or discard.
-- The caller owns and retains the bytecode and input fields needed to re-run `ax_eval_bytecode`
-  for replay.
+- The caller owns and retains the bytecode, input fields, explicit evaluation
+  options, and producer validation context needed to re-run `ax_eval_bytecode`
+  and reconstruct strict evidence.
 - Decision records and verifier reports are plain JSON files owned and managed by the caller.

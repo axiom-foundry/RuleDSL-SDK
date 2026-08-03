@@ -14,6 +14,9 @@ The following fields MUST match for a PASS claim:
 - `abi_level`
 - `bytecode_hash`
 - `input_hash`
+- `options_hash`
+- `validation_outcome`
+- `validation_code`
 - `decision_hash` (or `result_hash` when decision hash is not emitted)
 
 Comparison SHALL be executed with `--strict` mode.
@@ -42,6 +45,8 @@ python Tools/replay_proof/verify_replay_proof.py `
 - Engine or ABI mismatch (`engine_version_string`, `abi_level`).
 - Bytecode mismatch (`bytecode_hash`).
 - Canonical input mismatch (`input_hash`).
+- Canonical evaluation-options mismatch (`options_hash`).
+- Producer/binding validation mismatch (`validation_outcome`, `validation_code`).
 - Decision/result mismatch (`decision_hash` or `result_hash`).
 - Missing required fields in strict mode.
 

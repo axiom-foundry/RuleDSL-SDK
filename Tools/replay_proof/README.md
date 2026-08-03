@@ -11,6 +11,13 @@ Strict mode policy:
 - requires `input_hash`, `options_hash`, `validation_outcome`, and `validation_code` in both records;
 - compares those fields and fails on any mismatch.
 
+The shipped producers canonicalize input and option objects as sorted,
+whitespace-free UTF-8 JSON. An evaluation with no explicit options hashes the
+bytes `{}` (`options_hash` =
+`44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a`).
+Their successful records use producer/binding validation outcome `OK`, code
+`0`; these fields are not emitted by the engine decision.
+
 It does NOT prove:
 - rule execution correctness,
 - semantic equivalence beyond the provided hashes,

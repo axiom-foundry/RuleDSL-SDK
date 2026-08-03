@@ -125,10 +125,10 @@ jobs:
           set -euo pipefail
           LIBDIR='${{ steps.bins.outputs.libdir }}'
           cd "$GITHUB_WORKSPACE/sdk"
-          # 1) The offline verifier's own test suite (pure Python).
-          python3 Tools/replay_proof/test_verify_replay_proof.py
-          # 2) End-to-end: produce two replay_proof_v1 records from real evaluations,
-          #    then verify they match — exercises the producer example + the verifier.
+          # Produce two replay_proof_v1 records from real evaluations, run the
+          # production/audit strict comparison, then exercise verifier fixtures
+          # plus generated-record mutation and missing-field guards.
           python3 bindings/python/examples/replay_proof_producer.py "$LIBDIR/libruledsl_capi.so" /tmp/rp
-          python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json
-          echo "OK    replay-proof produce + verify"
+          python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json --strict
+          python3 Tools/replay_proof/test_verify_replay_proof.py --generated-a /tmp/rp/run_a.json --generated-b /tmp/rp/run_b.json
+          echo "OK    replay-proof produce + strict verify"

@@ -163,8 +163,8 @@ jobs:
           python bindings/python/examples/replay_proof_producer.py "$B\bin\ruledsl_capi.dll" rp
           if ($LASTEXITCODE -ne 0) { Write-Host "::error::replay producer failed"; $fail = 1 }
           else {
-            python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json
-            if ($LASTEXITCODE -ne 0) { Write-Host "::error::replay verify failed"; $fail = 1 } else { Write-Host "OK    replay produce->verify" }
+            python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json --strict
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::strict replay verify failed"; $fail = 1 } else { Write-Host "OK    replay produce->strict-verify" }
           }
           Pop-Location
 

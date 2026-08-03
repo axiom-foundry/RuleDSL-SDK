@@ -205,8 +205,8 @@ jobs:
           (
             cd "$B"
             python3 bindings/python/examples/replay_proof_producer.py "$B/bin/libruledsl_capi.so" /tmp/rp
-            python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json
-            echo "OK    replay produce->verify"
+            python3 Tools/replay_proof/verify_replay_proof.py --a /tmp/rp/run_a.json --b /tmp/rp/run_b.json --strict
+            echo "OK    replay produce->strict-verify"
           ) || fail=1
 
           [ "$fail" -eq 0 ] || { echo "::error::shipped bundle clean-room failed (a documented path is not self-sufficient)"; exit 1; }
