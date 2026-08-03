@@ -157,7 +157,7 @@ jobs:
               if (!receiptRun.head_repository || receiptRun.head_repository.full_name !== `${owner}/${repo}`) fail('TestPyPI publish run came from a different repository');
               if (!Number.isSafeInteger(receiptRun.run_attempt) || receiptRun.run_attempt < 1) fail('invalid TestPyPI run attempt');
 
-              const expectedName = `${process.env.RECEIPT_PREFIX}-rc-${rcRunId}-artifact-${rcArtifactId}`;
+              const expectedName = `${process.env.RECEIPT_PREFIX}-rc-${rcRunId}-artifact-${rcArtifactId}-attempt-${receiptRun.run_attempt}`;
               const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
                 owner, repo, run_id: receiptRunId, per_page: 100
               });
@@ -237,7 +237,7 @@ jobs:
         env:
           RECEIPT_ARTIFACT_ID: ${{ needs.validate-rc.outputs.receipt-artifact-id }}
           RECEIPT_RUN_ID: ${{ inputs.testpypi_run_id }}
-          EXPECTED_RECEIPT_NAME: ${{ env.TESTPYPI_RECEIPT_PREFIX }}-rc-${{ inputs.rc_run_id }}-artifact-${{ inputs.rc_artifact_id }}
+          EXPECTED_RECEIPT_NAME: ${{ env.TESTPYPI_RECEIPT_PREFIX }}-rc-${{ inputs.rc_run_id }}-artifact-${{ inputs.rc_artifact_id }}-attempt-${{ needs.validate-rc.outputs.receipt-run-attempt }}
           RECEIPT_ZIP: ${{ runner.temp }}/testpypi-receipt.zip
         with:
           script: |
@@ -255,9 +255,13 @@ jobs:
             });
             fs.writeFileSync(process.env.RECEIPT_ZIP, Buffer.from(download.data));
 
-      - name: Require TestPyPI to have published these exact RC metadata bytes
+      - name: Require the exact post-registry TestPyPI verification receipt
         if: inputs.target == 'pypi'
         shell: bash
+        env:
+          RC_ARTIFACT_ID: ${{ inputs.rc_artifact_id }}
+          RECEIPT_RUN_ID: ${{ inputs.testpypi_run_id }}
+          RECEIPT_RUN_ATTEMPT: ${{ needs.validate-rc.outputs.receipt-run-attempt }}
         run: |
           set -euo pipefail
           python Tools/pypi_package/rc_artifact.py extract-testpypi-receipt \
@@ -265,44 +269,142 @@ jobs:
             --output-dir "$RUNNER_TEMP/testpypi-receipt"
           python Tools/pypi_package/rc_artifact.py verify-testpypi-receipt \
             --receipt-dir "$RUNNER_TEMP/testpypi-receipt" \
-            --artifact-dir "$RUNNER_TEMP/rc-artifact"
+            --artifact-dir "$RUNNER_TEMP/rc-artifact" \
+            --expected-rc-artifact-id "$RC_ARTIFACT_ID" \
+            --expected-publish-run-id "$RECEIPT_RUN_ID" \
+            --expected-publish-run-attempt "$RECEIPT_RUN_ATTEMPT"
 
-      - name: Stage only the verified wheel and sdist
-        run: >-
-          python Tools/pypi_package/rc_artifact.py stage
-          --artifact-dir "${{ runner.temp }}/rc-artifact"
-          --output-dir "${{ runner.temp }}/publish-dist"
-
-      - name: Stage TestPyPI byte receipt
-        if: inputs.target == 'testpypi'
-        id: receipt
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.TESTPYPI_RECEIPT_PREFIX }}-rc-${{ inputs.rc_run_id }}-artifact-${{ inputs.rc_artifact_id }}
-          path: ${{ runner.temp }}/rc-artifact/RC_METADATA.json
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 90
-
-      - name: Log TestPyPI receipt identity
-        if: inputs.target == 'testpypi'
+      - name: Stage exact verified distributions inside the workspace
         shell: bash
-        env:
-          RECEIPT_ARTIFACT_ID: ${{ steps.receipt.outputs.artifact-id }}
         run: |
           set -euo pipefail
-          echo "TestPyPI publish run ID: $GITHUB_RUN_ID" | tee -a "$GITHUB_STEP_SUMMARY"
-          echo "TestPyPI receipt artifact ID: $RECEIPT_ARTIFACT_ID" | tee -a "$GITHUB_STEP_SUMMARY"
+          PUBLISH_DIR="$GITHUB_WORKSPACE/pypi-publish-dist"
+          test ! -e "$PUBLISH_DIR"
+          python Tools/pypi_package/rc_artifact.py stage \
+            --artifact-dir "$RUNNER_TEMP/rc-artifact" \
+            --output-dir "$PUBLISH_DIR"
 
       - name: Publish to TestPyPI
         if: inputs.target == 'testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          packages-dir: ${{ runner.temp }}/publish-dist
+          packages-dir: pypi-publish-dist
 
       - name: Publish the TestPyPI-proven bytes to PyPI
         if: inputs.target == 'pypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: ${{ runner.temp }}/publish-dist
+          packages-dir: pypi-publish-dist
+
+  verify-testpypi:
+    name: verify-testpypi-registry
+    if: inputs.target == 'testpypi'
+    needs:
+      - validate-rc
+      - publish
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: none
+    steps:
+      - name: Checkout verification controls
+        uses: actions/checkout@v4
+
+      - name: Setup verification Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download the exact immutable RC artifact
+        uses: actions/github-script@v7
+        env:
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
+          RC_ARTIFACT_ID: ${{ inputs.rc_artifact_id }}
+          RC_ARTIFACT_NAME: ${{ env.RC_ARTIFACT_NAME }}
+          ARTIFACT_ZIP: ${{ runner.temp }}/ruledsl-1.2.0-rc.zip
+        with:
+          script: |
+            const fs = require('fs');
+            const runId = Number(process.env.RC_RUN_ID);
+            const artifactId = Number(process.env.RC_ARTIFACT_ID);
+            if (!Number.isSafeInteger(runId) || !Number.isSafeInteger(artifactId)) throw new Error('invalid RC identifiers');
+            const {owner, repo} = context.repo;
+            const {data: artifact} = await github.rest.actions.getArtifact({owner, repo, artifact_id: artifactId});
+            if (artifact.name !== process.env.RC_ARTIFACT_NAME || artifact.expired) throw new Error('RC artifact identity changed');
+            if (!artifact.workflow_run || artifact.workflow_run.id !== runId) throw new Error('RC artifact moved to a different run');
+            if (!(artifact.size_in_bytes > 0 && artifact.size_in_bytes <= 200 * 1024 * 1024)) throw new Error('RC artifact size is outside policy');
+            const download = await github.rest.actions.downloadArtifact({
+              owner, repo, artifact_id: artifactId, archive_format: 'zip'
+            });
+            fs.writeFileSync(process.env.ARTIFACT_ZIP, Buffer.from(download.data));
+
+      - name: Safely extract and reverify the exact RC
+        shell: bash
+        env:
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
+          SOURCE_SHA: ${{ needs.validate-rc.outputs.source-sha }}
+          TREE_HASH: ${{ needs.validate-rc.outputs.tree-hash }}
+          RUN_ATTEMPT: ${{ needs.validate-rc.outputs.run-attempt }}
+        run: |
+          set -euo pipefail
+          python Tools/pypi_package/rc_artifact.py extract \
+            --archive "$RUNNER_TEMP/ruledsl-1.2.0-rc.zip" \
+            --output-dir "$RUNNER_TEMP/rc-artifact"
+          python Tools/pypi_package/rc_artifact.py verify \
+            --artifact-dir "$RUNNER_TEMP/rc-artifact" \
+            --expected-source-sha "$SOURCE_SHA" \
+            --expected-tree-hash "$TREE_HASH" \
+            --expected-version "$PACKAGE_VERSION" \
+            --expected-run-id "$RC_RUN_ID" \
+            --expected-run-attempt "$RUN_ATTEMPT"
+
+      - name: Verify TestPyPI JSON and download exact registry bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python Tools/pypi_package/rc_artifact.py verify-testpypi-registry \
+            --artifact-dir "$RUNNER_TEMP/rc-artifact" \
+            --output-dir "$RUNNER_TEMP/testpypi-registry" \
+            --attempts 12 \
+            --delay-seconds 10
+
+      - name: Install the downloaded wheel in a clean venv and smoke it
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/testpypi-smoke"
+          VENV_BIN="$RUNNER_TEMP/testpypi-smoke/bin"
+          "$VENV_BIN/python" -m pip install "$RUNNER_TEMP/testpypi-registry/ruledsl-1.2.0-py3-none-any.whl"
+          "$VENV_BIN/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$VENV_BIN/python" -c "import ruledsl; print('import ok:', ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)"
+          "$VENV_BIN/python" -c "import ruledsl_mcp; assert ruledsl_mcp.__version__ == '0.2.0'; print('mcp import ok:', ruledsl_mcp.__version__)"
+          "$VENV_BIN/ruledsl-workbench" --help
+          "$VENV_BIN/ruledsl-mcp" --help
+
+      - name: Create the post-verification receipt
+        shell: bash
+        env:
+          RC_ARTIFACT_ID: ${{ inputs.rc_artifact_id }}
+        run: |
+          set -euo pipefail
+          RECEIPT_DIR="$GITHUB_WORKSPACE/testpypi-verification"
+          test ! -e "$RECEIPT_DIR"
+          python Tools/pypi_package/rc_artifact.py create-testpypi-receipt \
+            --artifact-dir "$RUNNER_TEMP/rc-artifact" \
+            --registry-dir "$RUNNER_TEMP/testpypi-registry" \
+            --output-dir "$RECEIPT_DIR" \
+            --rc-artifact-id "$RC_ARTIFACT_ID" \
+            --publish-run-id "$GITHUB_RUN_ID" \
+            --publish-run-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: Upload the successful registry verification receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TESTPYPI_RECEIPT_PREFIX }}-rc-${{ inputs.rc_run_id }}-artifact-${{ inputs.rc_artifact_id }}-attempt-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/testpypi-verification/TESTPYPI_VERIFICATION.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90

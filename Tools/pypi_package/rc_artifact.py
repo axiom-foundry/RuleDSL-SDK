@@ -16,6 +16,10 @@ import stat
 import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -28,7 +32,10 @@ WHEEL_FILENAME = "ruledsl-1.2.0-py3-none-any.whl"
 SDIST_FILENAME = "ruledsl-1.2.0.tar.gz"
 METADATA_FILENAME = "RC_METADATA.json"
 CHECKSUM_FILENAME = "SHA256SUMS.txt"
-TESTPYPI_RECEIPT_FILENAME = METADATA_FILENAME
+TESTPYPI_REGISTRY_FILENAME = "TESTPYPI_REGISTRY.json"
+TESTPYPI_RECEIPT_FILENAME = "TESTPYPI_VERIFICATION.json"
+TESTPYPI_JSON_URL = "https://test.pypi.org/pypi/ruledsl/1.2.0/json"
+TESTPYPI_FILE_HOST = "test-files.pythonhosted.org"
 REPOSITORY = "axiom-foundry/RuleDSL-SDK"
 RC_WORKFLOW = ".github/workflows/pypi-rc-build.yml"
 PUBLISH_WORKFLOW = ".github/workflows/pypi-publish.yml"
@@ -37,6 +44,19 @@ SCHEMA_VERSION = 1
 DISTRIBUTION_FILENAMES = (WHEEL_FILENAME, SDIST_FILENAME)
 BUNDLE_FILENAMES = frozenset(
     (WHEEL_FILENAME, SDIST_FILENAME, METADATA_FILENAME, CHECKSUM_FILENAME)
+)
+TESTPYPI_REGISTRY_FILENAMES = frozenset(
+    (WHEEL_FILENAME, SDIST_FILENAME, TESTPYPI_REGISTRY_FILENAME)
+)
+TESTPYPI_RECEIPT_CHECKS = (
+    "registry-json-exact-file-set",
+    "registry-sha256-matches-rc",
+    "download-sha256-matches-rc",
+    "wheel-clean-venv-install",
+    "pip-check",
+    "package-imports",
+    "mcp-version-0.2.0",
+    "console-help",
 )
 MAX_BUNDLE_FILE_BYTES = 100 * 1024 * 1024
 MAX_BUNDLE_BYTES = 200 * 1024 * 1024
@@ -203,13 +223,17 @@ def _json_no_duplicates(pairs):
     return result
 
 
-def _load_metadata(path):
-    _regular_file(path, "RC metadata")
+def _load_json_file(path, context):
+    _regular_file(path, context)
     try:
         with path.open("r", encoding="utf-8") as stream:
             return json.load(stream, object_pairs_hook=_json_no_duplicates)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        _fail("invalid RC_METADATA.json: %s" % exc)
+        _fail("invalid %s: %s" % (context, exc))
+
+
+def _load_metadata(path):
+    return _load_json_file(path, "RC metadata")
 
 
 def _validate_metadata_shape(metadata):
@@ -531,44 +555,12 @@ def extract_bundle_zip(archive_path, output_dir):
     )
 
 
-def extract_testpypi_receipt_zip(archive_path, output_dir):
-    """Safely extract a TestPyPI receipt containing only RC_METADATA.json."""
-    _extract_exact_zip(
-        archive_path,
-        output_dir,
-        (TESTPYPI_RECEIPT_FILENAME,),
-        1024 * 1024,
-        1024 * 1024,
-    )
-
-
-def verify_testpypi_receipt(receipt_dir, artifact_dir):
-    """Prove the prior TestPyPI run recorded this exact RC metadata file."""
-    receipt_dir = Path(receipt_dir)
+def _self_verify_bundle(artifact_dir):
     artifact_dir = Path(artifact_dir)
-    _require_file_set(
-        receipt_dir, (TESTPYPI_RECEIPT_FILENAME,), "TestPyPI receipt directory"
-    )
-    _require_file_set(artifact_dir, BUNDLE_FILENAMES, "RC artifact directory")
-    receipt_path = receipt_dir / TESTPYPI_RECEIPT_FILENAME
-    artifact_path = artifact_dir / METADATA_FILENAME
-    receipt_metadata = _load_metadata(receipt_path)
-    artifact_metadata = _load_metadata(artifact_path)
-    _validate_metadata_shape(receipt_metadata)
-    _validate_metadata_shape(artifact_metadata)
-    if _sha256(receipt_path) != _sha256(artifact_path):
-        _fail("TestPyPI receipt does not match the selected RC metadata bytes")
-    return artifact_metadata
-
-
-def stage_distributions(artifact_dir, output_dir):
-    """Copy only verified distribution files into the publisher input directory."""
-    artifact_dir = Path(artifact_dir)
-    output_dir = Path(output_dir)
     _require_file_set(artifact_dir, BUNDLE_FILENAMES, "RC artifact directory")
     metadata = _load_metadata(artifact_dir / METADATA_FILENAME)
     _validate_metadata_shape(metadata)
-    metadata = verify_bundle(
+    return verify_bundle(
         artifact_dir,
         metadata["source"]["commit_sha"],
         metadata["source"]["tree_hash"],
@@ -578,7 +570,414 @@ def stage_distributions(artifact_dir, output_dir):
         metadata["github_actions"]["repository"],
         metadata["github_actions"]["workflow"],
     )
-    artifacts = {item["filename"]: item for item in metadata["artifacts"]}
+
+
+def _artifact_map(metadata):
+    return {item["filename"]: item for item in metadata["artifacts"]}
+
+
+def _validate_testpypi_file_url(url, filename):
+    url = _require_string(url, "TestPyPI file URL")
+    parsed = urllib.parse.urlsplit(url)
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname != TESTPYPI_FILE_HOST
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.port is not None
+        or parsed.query
+        or parsed.fragment
+        or PurePosixPath(parsed.path).name != filename
+    ):
+        _fail("unsafe or unexpected TestPyPI file URL for %s" % filename)
+    return url
+
+
+def _validate_registry_file_records(files, metadata, context, exact_keys):
+    if not isinstance(files, list) or len(files) != 2:
+        _fail("%s must contain exactly the expected wheel and sdist" % context)
+    expected_artifacts = _artifact_map(metadata)
+    expected_types = {WHEEL_FILENAME: "bdist_wheel", SDIST_FILENAME: "sdist"}
+    found = {}
+    for index, item in enumerate(files):
+        item_context = "%s[%d]" % (context, index)
+        if not isinstance(item, dict):
+            _fail("%s must be an object" % item_context)
+        if exact_keys:
+            _require_exact_keys(
+                item, ("filename", "packagetype", "sha256", "size", "url"), item_context
+            )
+        filename = _require_string(item.get("filename"), item_context + ".filename")
+        if filename not in expected_artifacts or filename in found:
+            _fail("%s has an unexpected or duplicate filename" % context)
+        if item.get("packagetype") != expected_types[filename]:
+            _fail("%s has an unexpected package type" % filename)
+        if exact_keys:
+            digest = _require_sha256(item.get("sha256"), item_context + ".sha256")
+        else:
+            digests = item.get("digests")
+            if not isinstance(digests, dict):
+                _fail("%s.digests must be an object" % item_context)
+            digest = _require_sha256(digests.get("sha256"), item_context + ".digests.sha256")
+            if item.get("yanked") is not False:
+                _fail("%s must not be yanked" % filename)
+        size = item.get("size")
+        if type(size) is not int or size <= 0:
+            _fail("%s.size must be a positive integer" % item_context)
+        artifact = expected_artifacts[filename]
+        if digest != artifact["sha256"] or size != artifact["size"]:
+            _fail("TestPyPI digest or size differs from RC metadata for %s" % filename)
+        url = _validate_testpypi_file_url(item.get("url"), filename)
+        found[filename] = {
+            "filename": filename,
+            "packagetype": expected_types[filename],
+            "sha256": digest,
+            "size": size,
+            "url": url,
+        }
+    if set(found) != set(DISTRIBUTION_FILENAMES):
+        _fail("%s lacks the exact wheel and sdist" % context)
+    return [found[filename] for filename in DISTRIBUTION_FILENAMES]
+
+
+def validate_testpypi_payload(payload, metadata):
+    """Validate one TestPyPI version JSON response against RC metadata."""
+    if not isinstance(payload, dict):
+        _fail("TestPyPI JSON response must be an object")
+    info = payload.get("info")
+    if not isinstance(info, dict):
+        _fail("TestPyPI JSON response lacks package info")
+    if info.get("name") != PACKAGE_NAME or info.get("version") != PACKAGE_VERSION:
+        _fail("TestPyPI package identity is not ruledsl 1.2.0")
+    files = _validate_registry_file_records(
+        payload.get("urls"), metadata, "TestPyPI urls", exact_keys=False
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "registry": "testpypi",
+        "json_url": TESTPYPI_JSON_URL,
+        "package": {"name": PACKAGE_NAME, "version": PACKAGE_VERSION},
+        "files": files,
+    }
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _fail("registry verification refuses HTTP redirects")
+
+
+def _open_without_redirects(request, timeout):
+    opener = urllib.request.build_opener(_NoRedirectHandler())
+    return opener.open(request, timeout=timeout)
+
+
+def _fetch_testpypi_json():
+    request = urllib.request.Request(
+        TESTPYPI_JSON_URL,
+        headers={
+            "Accept": "application/json",
+            "Accept-Encoding": "identity",
+            "User-Agent": "RuleDSL-SDK-release-verifier/1.2.0",
+        },
+    )
+    with _open_without_redirects(request, timeout=20) as response:
+        if response.getcode() != 200 or response.geturl() != TESTPYPI_JSON_URL:
+            _fail("unexpected TestPyPI JSON response identity")
+        content_type = response.headers.get_content_type()
+        if content_type != "application/json":
+            _fail("TestPyPI JSON endpoint returned %s" % content_type)
+        raw = response.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        _fail("TestPyPI JSON response exceeds the size limit")
+    try:
+        return json.loads(raw.decode("utf-8"), object_pairs_hook=_json_no_duplicates)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        _fail("invalid TestPyPI JSON response: %s" % exc)
+
+
+def _retry(operation, attempts, delay_seconds, context):
+    if type(attempts) is not int or not 1 <= attempts <= 20:
+        _fail("retry attempts must be between 1 and 20")
+    if type(delay_seconds) is not int or not 0 <= delay_seconds <= 30:
+        _fail("retry delay must be between 0 and 30 seconds")
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return operation()
+        except (
+            ContractError,
+            OSError,
+            TimeoutError,
+            urllib.error.HTTPError,
+            urllib.error.URLError,
+        ) as exc:
+            last_error = exc
+            if attempt == attempts:
+                break
+            print(
+                "%s attempt %d/%d failed: %s; retrying in %ds"
+                % (context, attempt, attempts, exc, delay_seconds),
+                file=sys.stderr,
+            )
+            time.sleep(delay_seconds)
+    _fail("%s failed after %d attempt(s): %s" % (context, attempts, last_error))
+
+
+def _download_registry_file(entry, destination):
+    request = urllib.request.Request(
+        entry["url"],
+        headers={
+            "Accept": "application/octet-stream",
+            "Accept-Encoding": "identity",
+            "User-Agent": "RuleDSL-SDK-release-verifier/1.2.0",
+        },
+    )
+    digest = hashlib.sha256()
+    size = 0
+    with _open_without_redirects(request, timeout=30) as response:
+        if response.getcode() != 200 or response.geturl() != entry["url"]:
+            _fail("unexpected download response for %s" % entry["filename"])
+        if response.headers.get("Content-Encoding") not in (None, "identity"):
+            _fail("encoded registry downloads are not allowed")
+        declared = response.headers.get("Content-Length")
+        if declared is not None and declared != str(entry["size"]):
+            _fail("registry Content-Length mismatch for %s" % entry["filename"])
+        with destination.open("wb") as stream:
+            while True:
+                chunk = response.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > entry["size"]:
+                    _fail("registry download exceeds expected size for %s" % entry["filename"])
+                digest.update(chunk)
+                stream.write(chunk)
+    if size != entry["size"] or digest.hexdigest() != entry["sha256"]:
+        _fail("downloaded bytes differ from RC metadata for %s" % entry["filename"])
+
+
+def _validate_registry_evidence(evidence, metadata):
+    _require_exact_keys(
+        evidence,
+        ("schema_version", "registry", "json_url", "package", "files"),
+        "TestPyPI registry evidence",
+    )
+    if type(evidence["schema_version"]) is not int or evidence["schema_version"] != SCHEMA_VERSION:
+        _fail("unsupported TestPyPI registry evidence schema")
+    if evidence["registry"] != "testpypi" or evidence["json_url"] != TESTPYPI_JSON_URL:
+        _fail("unexpected registry evidence identity")
+    if evidence["package"] != {"name": PACKAGE_NAME, "version": PACKAGE_VERSION}:
+        _fail("unexpected registry evidence package")
+    files = _validate_registry_file_records(
+        evidence["files"], metadata, "registry evidence files", exact_keys=True
+    )
+    expected = dict(evidence)
+    expected["files"] = files
+    if evidence != expected:
+        _fail("registry evidence is not canonical")
+    return expected
+
+
+def _validate_registry_directory(registry_dir, metadata):
+    registry_dir = Path(registry_dir)
+    _require_file_set(
+        registry_dir, TESTPYPI_REGISTRY_FILENAMES, "TestPyPI registry directory"
+    )
+    evidence = _load_json_file(
+        registry_dir / TESTPYPI_REGISTRY_FILENAME, "TestPyPI registry evidence"
+    )
+    evidence = _validate_registry_evidence(evidence, metadata)
+    for entry in evidence["files"]:
+        path = registry_dir / entry["filename"]
+        if path.stat().st_size != entry["size"] or _sha256(path) != entry["sha256"]:
+            _fail("local registry download mismatch for %s" % entry["filename"])
+    return evidence
+
+
+def verify_testpypi_registry(artifact_dir, output_dir, attempts, delay_seconds):
+    """Query TestPyPI, verify its file records, and download the exact bytes."""
+    artifact_dir = Path(artifact_dir)
+    output_dir = Path(output_dir)
+    metadata = _self_verify_bundle(artifact_dir)
+    if output_dir.exists():
+        _fail("registry output directory already exists: %s" % output_dir)
+    evidence = _retry(
+        lambda: validate_testpypi_payload(_fetch_testpypi_json(), metadata),
+        attempts,
+        delay_seconds,
+        "TestPyPI JSON verification",
+    )
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=output_dir.name + ".", dir=str(output_dir.parent)))
+    try:
+        for entry in evidence["files"]:
+            destination = staging / entry["filename"]
+            _retry(
+                lambda entry=entry, destination=destination: _download_registry_file(
+                    entry, destination
+                ),
+                min(attempts, 3),
+                delay_seconds,
+                "TestPyPI download %s" % entry["filename"],
+            )
+        with (staging / TESTPYPI_REGISTRY_FILENAME).open(
+            "w", encoding="utf-8", newline="\n"
+        ) as stream:
+            json.dump(evidence, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+        _validate_registry_directory(staging, metadata)
+        staging.replace(output_dir)
+    except Exception:
+        shutil.rmtree(str(staging), ignore_errors=True)
+        raise
+    return evidence
+
+
+def extract_testpypi_receipt_zip(archive_path, output_dir):
+    """Safely extract one post-registry-verification TestPyPI receipt."""
+    _extract_exact_zip(
+        archive_path,
+        output_dir,
+        (TESTPYPI_RECEIPT_FILENAME,),
+        1024 * 1024,
+        1024 * 1024,
+    )
+
+
+def _receipt_object(
+    metadata,
+    registry_files,
+    rc_artifact_id,
+    publish_run_id,
+    publish_run_attempt,
+):
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "receipt_type": "testpypi-registry-verification",
+        "package": dict(metadata["package"]),
+        "rc": {
+            "repository": metadata["github_actions"]["repository"],
+            "workflow": metadata["github_actions"]["workflow"],
+            "run_id": str(metadata["github_actions"]["run_id"]),
+            "run_attempt": str(metadata["github_actions"]["run_attempt"]),
+            "artifact_id": _require_positive_id(rc_artifact_id, "RC artifact ID"),
+            "source_sha": metadata["source"]["commit_sha"],
+            "tree_hash": metadata["source"]["tree_hash"],
+            "artifacts": list(metadata["artifacts"]),
+        },
+        "testpypi": {
+            "json_url": TESTPYPI_JSON_URL,
+            "publish_workflow": PUBLISH_WORKFLOW,
+            "publish_run_id": _require_positive_id(
+                publish_run_id, "TestPyPI publish run ID"
+            ),
+            "publish_run_attempt": _require_positive_id(
+                publish_run_attempt, "TestPyPI publish run attempt"
+            ),
+            "files": registry_files,
+        },
+        "checks": list(TESTPYPI_RECEIPT_CHECKS),
+    }
+
+
+def create_testpypi_receipt(
+    artifact_dir,
+    registry_dir,
+    output_dir,
+    rc_artifact_id,
+    publish_run_id,
+    publish_run_attempt,
+):
+    """Create a receipt only after the workflow's registry and smoke gates pass."""
+    artifact_dir = Path(artifact_dir)
+    registry_dir = Path(registry_dir)
+    output_dir = Path(output_dir)
+    metadata = _self_verify_bundle(artifact_dir)
+    evidence = _validate_registry_directory(registry_dir, metadata)
+    receipt = _receipt_object(
+        metadata,
+        evidence["files"],
+        rc_artifact_id,
+        publish_run_id,
+        publish_run_attempt,
+    )
+    if output_dir.exists():
+        _fail("receipt output directory already exists: %s" % output_dir)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=output_dir.name + ".", dir=str(output_dir.parent)))
+    try:
+        with (staging / TESTPYPI_RECEIPT_FILENAME).open(
+            "w", encoding="utf-8", newline="\n"
+        ) as stream:
+            json.dump(receipt, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+        _require_file_set(
+            staging, (TESTPYPI_RECEIPT_FILENAME,), "TestPyPI receipt directory"
+        )
+        staging.replace(output_dir)
+    except Exception:
+        shutil.rmtree(str(staging), ignore_errors=True)
+        raise
+    return receipt
+
+
+def verify_testpypi_receipt(
+    receipt_dir,
+    artifact_dir,
+    expected_rc_artifact_id,
+    expected_publish_run_id,
+    expected_publish_run_attempt,
+):
+    """Require a post-upload registry verification receipt for this exact RC."""
+    receipt_dir = Path(receipt_dir)
+    artifact_dir = Path(artifact_dir)
+    _require_file_set(
+        receipt_dir, (TESTPYPI_RECEIPT_FILENAME,), "TestPyPI receipt directory"
+    )
+    metadata = _self_verify_bundle(artifact_dir)
+    receipt = _load_json_file(
+        receipt_dir / TESTPYPI_RECEIPT_FILENAME, "TestPyPI verification receipt"
+    )
+    _require_exact_keys(
+        receipt,
+        ("schema_version", "receipt_type", "package", "rc", "testpypi", "checks"),
+        "TestPyPI verification receipt",
+    )
+    if type(receipt["schema_version"]) is not int or receipt["schema_version"] != SCHEMA_VERSION:
+        _fail("unsupported TestPyPI receipt schema")
+    if receipt["receipt_type"] != "testpypi-registry-verification":
+        _fail("receipt is not a registry verification receipt")
+    if not isinstance(receipt.get("testpypi"), dict):
+        _fail("receipt testpypi field must be an object")
+    _require_exact_keys(
+        receipt["testpypi"],
+        ("json_url", "publish_workflow", "publish_run_id", "publish_run_attempt", "files"),
+        "receipt testpypi",
+    )
+    registry_files = _validate_registry_file_records(
+        receipt["testpypi"]["files"],
+        metadata,
+        "receipt TestPyPI files",
+        exact_keys=True,
+    )
+    expected = _receipt_object(
+        metadata,
+        registry_files,
+        expected_rc_artifact_id,
+        expected_publish_run_id,
+        expected_publish_run_attempt,
+    )
+    if receipt != expected:
+        _fail("TestPyPI verification receipt does not match the selected RC and run")
+    return {"metadata": metadata, "receipt": receipt}
+
+
+def stage_distributions(artifact_dir, output_dir):
+    """Copy only verified distribution files into the publisher input directory."""
+    artifact_dir = Path(artifact_dir)
+    output_dir = Path(output_dir)
+    metadata = _self_verify_bundle(artifact_dir)
+    artifacts = _artifact_map(metadata)
     if output_dir.exists():
         _fail("publish directory already exists: %s" % output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -588,7 +987,15 @@ def stage_distributions(artifact_dir, output_dir):
             shutil.copyfile(str(artifact_dir / filename), str(staging / filename))
             if _sha256(staging / filename) != artifacts[filename]["sha256"]:
                 _fail("staged distribution hash mismatch: %s" % filename)
+            if staging.joinpath(filename).stat().st_size != artifacts[filename]["size"]:
+                _fail("staged distribution size mismatch: %s" % filename)
+        _require_file_set(staging, DISTRIBUTION_FILENAMES, "publish staging directory")
+        verify_distribution_metadata(staging)
         staging.replace(output_dir)
+        _require_file_set(output_dir, DISTRIBUTION_FILENAMES, "publish staging directory")
+        for filename in DISTRIBUTION_FILENAMES:
+            if _sha256(output_dir / filename) != artifacts[filename]["sha256"]:
+                _fail("final staged distribution hash mismatch: %s" % filename)
     except Exception:
         shutil.rmtree(str(staging), ignore_errors=True)
         raise
@@ -667,6 +1074,29 @@ def _parser():
     )
     receipt_verify.add_argument("--receipt-dir", required=True)
     receipt_verify.add_argument("--artifact-dir", required=True)
+    receipt_verify.add_argument("--expected-rc-artifact-id", required=True)
+    receipt_verify.add_argument("--expected-publish-run-id", required=True)
+    receipt_verify.add_argument("--expected-publish-run-attempt", required=True)
+
+    registry_verify = subparsers.add_parser(
+        "verify-testpypi-registry",
+        help="query TestPyPI and download its exact verified distributions",
+    )
+    registry_verify.add_argument("--artifact-dir", required=True)
+    registry_verify.add_argument("--output-dir", required=True)
+    registry_verify.add_argument("--attempts", type=int, default=12)
+    registry_verify.add_argument("--delay-seconds", type=int, default=10)
+
+    receipt_create = subparsers.add_parser(
+        "create-testpypi-receipt",
+        help="create the receipt after registry verification and wheel smoke",
+    )
+    receipt_create.add_argument("--artifact-dir", required=True)
+    receipt_create.add_argument("--registry-dir", required=True)
+    receipt_create.add_argument("--output-dir", required=True)
+    receipt_create.add_argument("--rc-artifact-id", required=True)
+    receipt_create.add_argument("--publish-run-id", required=True)
+    receipt_create.add_argument("--publish-run-attempt", required=True)
 
     stage = subparsers.add_parser("stage", help="stage only wheel and sdist for upload")
     stage.add_argument("--artifact-dir", required=True)
@@ -728,12 +1158,47 @@ def main(argv=None):
             extract_testpypi_receipt_zip(args.archive, args.output_dir)
             print("safely extracted TestPyPI receipt to %s" % args.output_dir)
         elif args.command == "verify-testpypi-receipt":
-            metadata = verify_testpypi_receipt(args.receipt_dir, args.artifact_dir)
+            result = verify_testpypi_receipt(
+                args.receipt_dir,
+                args.artifact_dir,
+                args.expected_rc_artifact_id,
+                args.expected_publish_run_id,
+                args.expected_publish_run_attempt,
+            )
+            metadata = result["metadata"]
             print(
-                "TestPyPI receipt matches RC run=%s source=%s"
+                "TestPyPI registry receipt matches RC run=%s source=%s publish_run=%s attempt=%s"
                 % (
                     metadata["github_actions"]["run_id"],
                     metadata["source"]["commit_sha"],
+                    result["receipt"]["testpypi"]["publish_run_id"],
+                    result["receipt"]["testpypi"]["publish_run_attempt"],
+                )
+            )
+        elif args.command == "verify-testpypi-registry":
+            evidence = verify_testpypi_registry(
+                args.artifact_dir,
+                args.output_dir,
+                args.attempts,
+                args.delay_seconds,
+            )
+            print("verified TestPyPI JSON and downloaded exact files:")
+            for item in evidence["files"]:
+                print("sha256=%s  %s" % (item["sha256"], item["filename"]))
+        elif args.command == "create-testpypi-receipt":
+            receipt = create_testpypi_receipt(
+                args.artifact_dir,
+                args.registry_dir,
+                args.output_dir,
+                args.rc_artifact_id,
+                args.publish_run_id,
+                args.publish_run_attempt,
+            )
+            print(
+                "created post-smoke TestPyPI registry receipt for run=%s attempt=%s"
+                % (
+                    receipt["testpypi"]["publish_run_id"],
+                    receipt["testpypi"]["publish_run_attempt"],
                 )
             )
         elif args.command == "stage":
