@@ -399,16 +399,27 @@ Supported keywords — a deliberately small JSON Schema subset:
   compatibility promise, and may change or be withdrawn without a major
   version bump of the engine.
 
-### 7.1 Pre-release gates (not satisfied by CI today)
+### 7.1 Pre-release gates
 
-Two claims this repository makes are **not** currently verified by any
-automated run. They do not affect correctness of what is here, and they do
-not block merging — but publishing without settling them would ship an
-untested promise, so they are written down rather than remembered.
+One claim this repository makes is **not** currently verified by any automated
+run. It does not affect correctness of what is here, and it does not block
+merging — but publishing without settling it would ship an untested promise, so
+it is written down rather than remembered.
+
+The **Python 3.7 runtime** gate is closed. `python37-verify.yml` runs on a real
+CPython 3.7.17 interpreter (Linux x86_64, `ubuntu-22.04` — the newest Linux
+runner for which `actions/setup-python` provides 3.7.17): the wheel and the
+sdist both install, `pip check` is clean, every shipped module byte-compiles,
+the installed package is proven byte-identical to the tested sources, and the
+binding suites (`test_validate.py`, `test_binding_lifecycle.py`) plus the
+workbench run against it — the workbench through its real Tk GUI path under
+Xvfb, calling `Workbench.run_many()` and asserting 100/100 identical decision
+hashes. The MCP server is **excluded by design**: the `mcp` SDK's own floor is
+3.10+, so only the downlevel refusal (`exit 2`, typed message, no traceback) is
+asserted on 3.7. No non-Linux and no non-x86_64 platform is covered.
 
 | Gate | Why it is open | What settles it |
 |---|---|---|
-| **Python 3.7 runtime** | `pyproject.toml` declares `requires-python = ">=3.7"`, but every CI job runs 3.11. The 3.7 floor is maintained by syntax discipline alone: no walrus, no `dict[str, X]`, no `X \| Y`. Discipline is not evidence. | Run the core suites (binding + workbench, MCP excluded — it needs 3.10) on a real 3.7 interpreter, or lower the declared floor to what is tested. |
 | **PyPI publish path** | `pypi-publish.yml` is `workflow_dispatch` only: nothing about publishing runs on push or pull request, and it is never triggered automatically. Its wheel smoke test (`import ruledsl`, `import ruledsl_mcp`, `--help` on both console scripts) therefore has not run against this tree. It also does **not** check that the wheel version matches a tag, that `README-pypi.md` renders on PyPI, or that the version has not already been uploaded. Separately, `release-guard.yml` runs only on a GitHub `release` event (`published`/`edited`), so it cannot be exercised locally either — `GITHUB_EVENT_PATH` is unset. | Dispatch `pypi-publish.yml` with `target: testpypi` and install the result from TestPyPI before any `pypi` run; confirm the rendered README and the version on the TestPyPI project page. |
 
 ---
