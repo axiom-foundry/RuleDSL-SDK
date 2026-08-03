@@ -65,8 +65,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Build-only interpreter, matching the one pypi-publish.yml builds with,
-      # so this job tests the same artifacts the publish path produces.
+      # Build-only interpreter, matching pypi-rc-build.yml, so this job tests
+      # the same package construction used for the immutable RC artifact.
       # Declared first so the 3.7 setup below wins PATH and a bare `python` in
       # every later step is unambiguously 3.7.
       - name: Setup Python 3.11 (artifact build only)
@@ -94,6 +94,9 @@ jobs:
           assert platform.python_implementation() == "CPython", platform.python_implementation()
           print("CONFIRMED CPython %d.%d.%d" % sys.version_info[:3])
           PY
+
+      - name: Test the fail-closed PyPI RC artifact contract
+        run: python Tools/pypi_package/test_rc_artifact.py
 
       # The workbench imports tkinter at module scope, and the GUI step below
       # drives real widgets, so both the Tk runtime and a virtual display are
