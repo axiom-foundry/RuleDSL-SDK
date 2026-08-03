@@ -3,7 +3,11 @@
 RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
 Same input, same bytecode, same decision — guaranteed across supported platforms.
 
-**Linux & Windows x86_64 · release v1.0.2 · language version v0.9 (v1.0 = target spec) · Python package: `pip install ruledsl` gives **1.1.1**; this tree is source candidate **1.2.0**, not yet published.**
+**Linux & Windows x86_64 · engine/binary bundle v1.0.2 · language implementation v0.9 (v1.0 = target spec) · Python package 1.2.0 · MCP package surface 0.2.0.**
+
+The PyPI 1.2.0 artifacts were built from source commit
+`837ae3062d666c5e3ef0711966eb8f95605412e5`. This documentation records that
+published state; the engine binary remains the separate v1.0.2 bundle.
 
 **Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation, **and a deterministic decision layer for AI agents (via MCP)**.
 
@@ -15,7 +19,7 @@ Same input, same bytecode, same decision — guaranteed across supported platfor
 
 > **Get started:** Download the latest bundle from [Releases](https://github.com/axiom-foundry/RuleDSL-SDK/releases). The bundle includes the engine library, compiler, headers, language bindings, and documentation — everything you need to integrate.
 >
-> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the bundle. **MCP early access:** this source tree includes the new [MCP server](docs/mcp_quickstart.md). Until `1.2.0` is published, run it from a checkout as the quickstart describes; `pip install "ruledsl[mcp]"` still installs `1.1.1` and its previous MCP contract.
+> **See it before you integrate:** the [demos](https://axiom-foundry.github.io/RuleDSL-SDK/demos/) show the engine running live, and `pip install ruledsl` adds the desktop **workbench** (`ruledsl-workbench`) — author rules interactively, read the engine's decision trace, and replay production `.axbc` bytecode on your desk. Pure Python; the engine itself still comes from the v1.0.2 bundle. **MCP early access:** `pip install "ruledsl[mcp]"` installs the current 1.2.0 Python package and MCP 0.2.0 surface. The [MCP quickstart](docs/mcp_quickstart.md) also keeps a checkout/PYTHONPATH route for development and source inspection.
 
 ## Quickstart
 
@@ -114,7 +118,7 @@ AI agents are getting real work in regulated flows. The question is never whethe
 
 - **Three tools, closed surface:** `list_rules` · `evaluate_case` · `engine_info`. There is deliberately no `decide`, no `write_rule`, no free-text compile — an agent can invoke decision logic, never alter it.
 - **Every evaluation leaves evidence:** a canonical, hash-pinned decision record that matches the published replay convention — same bytes, replayable later.
-- **Install today:** run the source candidate from a checkout with `PYTHONPATH=bindings/python` and `python -m ruledsl_mcp.server`. Setup, including Claude Desktop config: [docs/mcp_quickstart.md](docs/mcp_quickstart.md). The `pip install "ruledsl[mcp]"` route becomes current only after `1.2.0` is published; today it installs the previous `1.1.1` contract.
+- **Install today:** `pip install "ruledsl[mcp]"` installs Python package 1.2.0 and the MCP 0.2.0 surface. Setup, including Claude Desktop config and the developer/source checkout alternative: [docs/mcp_quickstart.md](docs/mcp_quickstart.md). The engine library still comes from the v1.0.2 release bundle.
 
 Early access: the tool surface may still evolve before it joins the frozen compatibility contract.
 
@@ -148,7 +152,7 @@ Not a C developer? Use the ready-made wrappers:
 | Language | Location | Dependencies |
 |----------|----------|-------------|
 | Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | None (pure ctypes) |
-| Python 3.10+ | [MCP server from this checkout](docs/mcp_quickstart.md); the published `1.1.1` package has the previous contract | the official `mcp` SDK; the range is `>=2.0,<3`, and CI verifies every version it claims (today: `2.0.0`, the only 2.x release, with its transitive closure pinned). 3.10 is that SDK's floor, not ours |
+| Python 3.10+ | [`pip install "ruledsl[mcp]"`](docs/mcp_quickstart.md) for the published 1.2.0 package; checkout/PYTHONPATH remains a developer/source alternative | the official `mcp` SDK; the range is `>=2.0,<3`, and CI verifies every version it claims (today: `2.0.0`, the only 2.x release, with its transitive closure pinned). 3.10 is that SDK's floor, not ours |
 | C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke). CI builds **and runs** the suite on `net6.0` and `net8.0` |
 
 The [`ruledsl`](https://pypi.org/project/ruledsl/) package on PyPI carries the
