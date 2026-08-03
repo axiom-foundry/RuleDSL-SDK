@@ -1,7 +1,7 @@
 # RuleDSL SDK (C API)
 
-RuleDSL is a **deterministic rule-evaluation engine** embedded via a stable C ABI.
-Same input, same bytecode, same decision — guaranteed across supported platforms.
+RuleDSL is a **deterministic rule-evaluation engine** embedded through a stable public C ABI design.
+Published v1.0.2 evidence verifies byte-identical decisions on Windows x86_64 and Linux x86_64 when the engine/ABI, bytecode, canonical input, and evaluation options match.
 
 **Linux & Windows x86_64 · engine/binary bundle v1.0.2 · language implementation v0.9 (v1.0 = target spec) · Python package 1.2.0 · MCP package surface 0.2.0.**
 
@@ -9,9 +9,9 @@ The PyPI 1.2.0 artifacts were built from source commit
 `837ae3062d666c5e3ef0711966eb8f95605412e5`. This documentation records that
 published state; the engine binary remains the separate v1.0.2 bundle.
 
-**Use cases**: transaction risk scoring, spending-limit enforcement, compliance gating, offer eligibility, real-time policy evaluation, **and a deterministic decision layer for AI agents (via MCP)**.
+**Use cases**: transaction risk scoring, host-enforced spending-limit evaluation, compliance gating, offer eligibility, real-time policy evaluation, **and a deterministic decision layer for AI agents (via MCP)**.
 
-**What it is**: an in-process library (`.dll` / `.so`). No daemon, no network hop, no database dependency.
+**What it is**: a core in-process engine library (`.dll` / `.so`) with no daemon, network service, database, or sidecar. The Python binding loads that separate engine library, the Workbench uses Tk, and the MCP extra requires Python 3.10+ plus the MCP SDK.
 
 **What it is not**: not a SaaS, not an open-source engine, not a 24/7 managed service.
 
@@ -74,61 +74,64 @@ ax_compiler_destroy(c);
 
 ## Language version & conformance
 
-The Quickstart compiles with `--lang 0.9`. The shipped engine implements **language version v0.9** — the honest, deterministic subset of the **v1.0** target specification. The v1.0 spec is the normative target; every place the engine differs from it is documented explicitly, so there are no hidden surprises:
+The Quickstart compiles with `--lang 0.9`. The shipped engine implements **language version v0.9** — the honest, deterministic subset of the **v1.0** target specification. The v1.0 spec is the normative target; known divergences in the shipped v0.9 behavior are documented here:
 
 - **Shipped behavior, and where it diverges from the v1.0 target** — [`docs/language/conformance_status_v0_9.md`](docs/language/conformance_status_v0_9.md)
 - **The v1.0 target specification** — [`docs/language/spec_v1_0.md`](docs/language/spec_v1_0.md)
 
 ## Engine Robustness
 
-The RuleDSL engine is built to fail safe: malformed inputs are rejected gracefully with structured
-error codes, never with a crash.
+The RuleDSL parser and verified bytecode-loading paths return structured errors for supported,
+detected failures. Detection coverage is not a blanket safety guarantee: passing malformed or
+truncated bytecode directly to evaluation, invalid pointers/sizes/ownership/lifetimes, or violating
+threading rules can be undefined behavior. See the [undefined-behavior boundaries](docs/contracts/undefined_behavior_v1_0.md)
+and [thread-safety model](docs/thread_safety_model.md).
 
-**Continuous fuzzing.** The parser and bytecode loader are exercised on every change by CI-gated,
+**Internal release qualification.** Private engine CI exercises the parser and bytecode loader with
 coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer), seeded with an
-adversarial corpus (maintained in the engine repository; malformed rule sources and
-tampered/truncated/oversized bytecode). This continuous fuzzing has caught — and let us fix — bugs
-before release.
+adversarial corpus maintained in the engine repository. This public SDK repository does not publish
+the engine source or every internal run, so this is vendor-reported release qualification rather than
+independently reproducible public evidence.
 
-**Tested against** adversarial and edge-case scenarios on every release:
+**Qualification scenarios include:**
 
-- Malformed rule sources and tampered bytecode (flipped bits, truncated files, wrong magic, oversized payloads) — rejected, never crash.
-- Hostile input strings (injection-style payloads — SQL, markup, CRLF — null bytes, very long identifiers) — rejected.
-- Rule-complexity limits and C-API misuse (NULL pointers, double-free, bad struct sizes, NaN/Infinity) — return proper error codes.
-- Locale independence — evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002); cross-locale equivalence is exercised in CI.
-- Concurrency — the engine uses a per-thread compiler model; concurrent and long-running (soak) execution is exercised on every release in CI under AddressSanitizer/UndefinedBehaviorSanitizer. A compiler shared across threads is rejected at runtime with `AX_ERR_CONCURRENT_COMPILER_USE` rather than corrupting state.
+- Malformed rule sources and supported tampered-bytecode detection paths (flipped bits, truncated files, wrong magic, oversized payloads) are exercised by the adversarial corpus. Verify integrity and compatibility before evaluation; direct evaluation of malformed bytecode is outside the contract.
+- SQL, markup, and CRLF content is ordinary string data when it satisfies the documented encoding, schema, type, and size contract. Rejection claims apply to violations such as invalid encoding, NUL, schema/type mismatch, and configured limits — not to those strings merely because of their content.
+- Rule-complexity limits, NULLs, documented size checks, and NaN/Infinity exercise supported error paths. Invalid pointers, ownership/lifetime violations, and double-free are not promised detection paths.
+- Locale independence — evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002); cross-locale checks are part of internal engine qualification. Public determinism evidence is limited to the committed DET corpus below.
+- Concurrency — two live calls on the same compiler can be detected and return `AX_ERR_CONCURRENT_COMPILER_USE`; destroying a compiler while a call is running is undefined behavior in the raw C API. The shipped Python and C# wrappers serialize native calls and protect `close()`/`Dispose()`. Concurrent and long-running soak checks under AddressSanitizer/UndefinedBehaviorSanitizer are internal engine release qualification, not independently visible runs in this public repository.
 
 **Performance shape.** Evaluation is in-process — no network hop, no serialization — and bytecode
 evaluation avoids parsing on the hot path. Throughput scales with per-thread compilers; measure on
 your target hardware and workload.
 
-## Proven determinism
+## Published determinism evidence
 
-"Same input, same decision" is a published, recomputable proof — not a slogan. On every release the same bytecode is evaluated on **real Linux and real Windows** (x86_64), the decision output is serialized and hashed, and the two platforms' hashes are byte-identical. The evidence lives in this repository, so you can verify it yourself:
+For the published DET corpus and scenarios, the shipped v1.0.2 Windows x86_64 and Linux x86_64 binaries produced bit-identical decision output under the same engine/ABI, bytecode, canonical input, and equivalent options. The committed artifacts make those observations recomputable. They are not a formal proof over every possible rule and input.
 
 - Cross-platform comparison reports (Windows-x64 vs Linux-x64) — [`reports/determinism_compare_v1/2026-07-11/`](reports/determinism_compare_v1/2026-07-11/) — each `status: pass`, every hash byte-identical (e.g. [the DET-001 comparison](reports/determinism_compare_v1/2026-07-11/DET-001/windows-x64__linux-x64/comparison.json)). This set was produced by the **v1.0.2 engine** — the same binaries you can download and run — and its hashes are identical to the earlier published sets (`2026-06-21`, `2026-06-23`), which remain committed as history.
 - Each bundle ships the raw `output.bin`, inputs, options, and a `SHA256SUMS.txt` — recompute the hashes and compare the two platforms yourself.
 - Cross-machine (same-platform) reproduction — a fresh Windows-x64 desktop, running the shipped v1.0.2 binaries, reproduced the published DET-001/DET-003 golden hashes byte-for-byte: [`reports/cross_machine_replay_v1/2026-07-14/`](reports/cross_machine_replay_v1/2026-07-14/). One operator, two machines; broader multi-host and independent third-party reproduction remain open.
 
-Determinism is enforced at build time (fast-math is rejected) and gated in CI: the cross-platform comparison fails the release if any hash diverges.
+The build contract rejects fast-math. The committed comparison reports and raw bundle files let readers recompute the published corpus results and inspect any hash divergence directly.
 
 ## AI agents (MCP) — early access
 
-AI agents are getting real work in regulated flows. The question is never whether the model is smart — it's whether the decision can be **replayed**. RuleDSL's answer ships as an MCP server: **the agent invokes; the engine decides.**
+AI agents are getting real work in regulated flows. The question is never whether the model is smart — it's whether the decision can be **replayed**. RuleDSL's answer ships as the MCP 0.2.0 early-access server: **the agent invokes; the engine decides.** The agent still chooses a declared rule and extracts the fields; a wrong rule or wrong field extraction is outside the engine's determinism guarantee.
 
 - **Three tools, closed surface:** `list_rules` · `evaluate_case` · `engine_info`. There is deliberately no `decide`, no `write_rule`, no free-text compile — an agent can invoke decision logic, never alter it.
-- **Every evaluation leaves evidence:** a canonical, hash-pinned decision record that matches the published replay convention — same bytes, replayable later.
+- **Successful evaluations can leave replay evidence:** with `--decision-log` enabled, each successful `evaluate_case` writes a canonical decision record containing `rule_sha256`, `bytecode_sha256`, and `decision_hash`. The `decision_hash` covers only the canonical decision payload; there is no whole-record hash or hash chain. Failed calls return typed errors and write no decision record. This file is evidence for recomputation, not an audit ledger or system of record.
 - **Install today:** `pip install "ruledsl[mcp]"` installs Python package 1.2.0 and the MCP 0.2.0 surface. Setup, including Claude Desktop config and the developer/source checkout alternative: [docs/mcp_quickstart.md](docs/mcp_quickstart.md). The engine library still comes from the v1.0.2 release bundle.
 
 Early access: the tool surface may still evolve before it joins the frozen compatibility contract.
 
 ## Why RuleDSL (vs other rule engines)
 
-Most rule engines evaluate rules; RuleDSL is built so you can **prove and audit** the result.
+Most rule engines evaluate rules; RuleDSL is built to provide **recomputable decision evidence for technical review**.
 
-- **Deterministic — and proven.** Same input → byte-identical decision on Linux and Windows, with the cross-platform hashes committed in this repo (see [Proven determinism](#proven-determinism)). Many engines are deterministic in practice; few publish the proof.
-- **In-process, no runtime baggage.** A C ABI library (`.so` / `.dll`) — no JVM, no daemon, no network hop, no policy sidecar. Embeds directly in C, C++, Python, or C# (Drools requires a JVM; OPA/Rego typically runs as a separate service).
-- **Auditable and honest.** Compact, integrity-checked bytecode, a published error contract, and a conformance status documenting exactly what the engine does versus the spec (see [Language version & conformance](#language-version--conformance)) — instead of claiming more than it ships.
+- **Published determinism evidence.** Matching engine/ABI, bytecode, canonical input, and options produced byte-identical decisions for the committed DET corpus on the shipped Linux and Windows x86_64 binaries (see [Published determinism evidence](#published-determinism-evidence)).
+- **In-process core engine.** The C ABI library (`.so` / `.dll`) needs no JVM, daemon, network hop, database, or policy sidecar. Bindings and tools retain their documented runtime requirements.
+- **Reviewable and honest.** Compact, integrity-checked bytecode, a published error contract, recomputable decision evidence, and a conformance status document exactly what the engine does versus the spec (see [Language version & conformance](#language-version--conformance)).
 
 Performance is deliberately not the headline: evaluation is in-process and parse-free on the hot path, but measure throughput on your own hardware — we don't publish cherry-picked numbers.
 
@@ -151,9 +154,9 @@ Not a C developer? Use the ready-made wrappers:
 
 | Language | Location | Dependencies |
 |----------|----------|-------------|
-| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | None (pure ctypes) |
-| Python 3.10+ | [`pip install "ruledsl[mcp]"`](docs/mcp_quickstart.md) for the published 1.2.0 package; checkout/PYTHONPATH remains a developer/source alternative | the official `mcp` SDK; the range is `>=2.0,<3`, and CI verifies every version it claims (today: `2.0.0`, the only 2.x release, with its transitive closure pinned). 3.10 is that SDK's floor, not ours |
-| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | None (P/Invoke). CI builds **and runs** the suite on `net6.0` and `net8.0` |
+| Python 3.7+ | [`bindings/python/`](bindings/python/README.md) or `pip install ruledsl` | separate engine `.dll`/`.so`; the binding uses stdlib `ctypes`; the Workbench also requires Tk |
+| Python 3.10+ | [`pip install "ruledsl[mcp]"`](docs/mcp_quickstart.md) for the published 1.2.0 package; checkout/PYTHONPATH remains a developer/source alternative | separate engine `.dll`/`.so` plus the official `mcp` SDK; the range is `>=2.0,<3`, and CI verifies every version it claims (today: `2.0.0`, the only 2.x release, with its transitive closure pinned). 3.10 is that SDK's floor, not ours |
+| C# (.NET 6+) | [`bindings/csharp/`](bindings/csharp/README.md) | separate engine `.dll`/`.so`; the wrapper uses P/Invoke. CI builds **and runs** the suite on `net6.0` and `net8.0` |
 
 The [`ruledsl`](https://pypi.org/project/ruledsl/) package on PyPI carries the
 Python binding plus the desktop **workbench** (authoring & replay companion) as
