@@ -1,0 +1,275 @@
+name: python37-verify
+
+# Proves the packaging claim `requires-python = ">=3.7"` (Tools/pypi_package/
+# pyproject.toml) on a REAL CPython 3.7 interpreter, against the SHIPPED engine.
+# Until this job existed the claim was reviewed but never executed: every other
+# gate runs on 3.11, so 3.7 was an assertion in metadata, not a tested floor.
+#
+# WHAT THIS COVERS ON 3.7
+#   - the built wheel installs, and every shipped module byte-compiles (a
+#     compileall gate, so 3.8+ syntax cannot slip in as a soft install warning)
+#   - `import ruledsl`, `import ruledsl_mcp`, and both console scripts, run from
+#     a neutral cwd with no repo checkout and no PYTHONPATH
+#   - the Python binding: the engine-free validation / typed-error suite
+#     (tests/mcp/test_validate.py, which also pins the validate <-> _build_fields
+#     parity) and the lifetime + value-fidelity suite against the hash-verified
+#     v1.0.2 engine (tests/mcp/test_binding_lifecycle.py)
+#   - the workbench: import, --help, its pure helpers, and a real
+#     compile -> evaluate -> canonical decision hash round trip including the
+#     "Run 100x" determinism contract the tool advertises
+#   - the ruledsl-mcp downlevel gate: on 3.7 it must exit with a clear typed
+#     message, never an import-time stack trace
+#
+# WHAT THIS DELIBERATELY DOES NOT COVER
+#   - the MCP server itself. The `mcp` SDK's own floor is Python 3.10+, so the
+#     [mcp] extra is NOT installed here and no MCP handler/transport/wire test
+#     runs on 3.7. That coverage stays in mcp-verify.yml on 3.11. The only MCP
+#     thing asserted here is the downlevel refusal message.
+#   - BUILDING the package on 3.7. The declared backend is setuptools>=68, which
+#     dropped 3.7, so the wheel is BUILT on 3.11 and INSTALLED on 3.7 - which is
+#     exactly what a 3.7 user does: the wheel is py3-none-any and pip selects it
+#     via Requires-Python.
+#   - non-x86_64 Linux, macOS and Windows on 3.7. See the runner pin below.
+#
+# RUNNER PIN - ubuntu-22.04 is load-bearing, not cosmetic:
+#   - actions/setup-python publishes CPython 3.7.17 for linux-22.04 as its
+#     NEWEST 3.7 build; no 24.04+ build exists, so ubuntu-latest cannot run 3.7.
+#   - the shipped engine needs GLIBC_2.32 and GLIBCXX_3.4.29. ubuntu-22.04
+#     (glibc 2.35, GCC 12) satisfies both. Debian bullseye - the newest base the
+#     python:3.7 images have - ships glibc 2.31 and cannot load it, so a
+#     container would lose ALL real-engine coverage on 3.7.
+# When this runner image is retired, this job cannot be kept as-is: either the
+# engine-backed steps drop to a python:3.7 container (packaging coverage only)
+# or the supported floor is revisited. Do not silently delete the job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Same pinned engine release as mcp-verify.yml; bump both together.
+env:
+  ENGINE_RELEASE: v1.0.2
+  ENGINE_ASSET: RuleDSL-SDK-v1.0.2-linux-x86_64
+
+jobs:
+  py37:
+    name: verify-python-3.7 (binding + workbench)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Build-only interpreter. Declared first so that the 3.7 setup below wins
+      # PATH and a bare `python` in every later step is unambiguously 3.7.
+      - name: Setup Python 3.11 (wheel build only)
+        id: build_py
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Python 3.7 (the interpreter under test)
+        id: py37
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.7"
+
+      # Requirement: the log must PROVE this is 3.7, not merely request it.
+      - name: Prove the interpreter really is CPython 3.7
+        run: |
+          set -euo pipefail
+          python --version
+          python -c "import platform, sys; print(platform.python_implementation(), sys.version)"
+          python -m pip --version
+          python - <<'PY'
+          import platform, sys
+          assert sys.version_info[:2] == (3, 7), sys.version_info
+          assert platform.python_implementation() == "CPython", platform.python_implementation()
+          print("CONFIRMED CPython %d.%d.%d" % sys.version_info[:3])
+          PY
+
+      # The workbench imports tkinter at module scope, so `--help` needs the Tk
+      # runtime libraries present (a display is NOT needed - only Tk() opens one).
+      - name: Install Tk runtime (workbench imports tkinter at module scope)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tk
+          python -c "import tkinter; print('tkinter OK, Tk', tkinter.TkVersion)"
+
+      - name: Build the wheel on 3.11 (setuptools>=68 has no 3.7 support)
+        run: |
+          set -euo pipefail
+          BUILD_PY='${{ steps.build_py.outputs.python-path }}'
+          "$BUILD_PY" --version
+          "$BUILD_PY" Tools/pypi_package/assemble.py
+          "$BUILD_PY" -m pip install --upgrade build
+          "$BUILD_PY" -m build Tools/pypi_package
+          ls -l Tools/pypi_package/dist
+
+      - name: Download pinned engine release bundle + verify SHA256SUMS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$ENGINE_RELEASE" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ENGINE_ASSET.tar.gz" \
+            --pattern "$ENGINE_ASSET.SHA256SUMS.txt" \
+            --dir engine-bundle
+          cd engine-bundle
+          sha256sum --check --ignore-missing "$ENGINE_ASSET.SHA256SUMS.txt"
+          tar -xzf "$ENGINE_ASSET.tar.gz"
+          SO_PATH=$(find . -name 'libruledsl_capi.so' -print -quit)
+          test -n "$SO_PATH"
+          echo "ENGINE_LIB=$(readlink -f "$SO_PATH")" >> "$GITHUB_ENV"
+
+      - name: Install the wheel on 3.7 (base package, no [mcp] extra)
+        run: |
+          set -euo pipefail
+          WHEEL=$(ls Tools/pypi_package/dist/*.whl)
+          echo "installing $WHEEL"
+          python -m pip install "$WHEEL"
+          python -m pip show ruledsl
+
+      # A SyntaxError from 3.8+ syntax is only a WARNING during pip's install-time
+      # byte-compilation, so the install alone proves nothing. compileall exits
+      # non-zero, which turns it into a gate.
+      - name: Byte-compile every shipped module under 3.7
+        run: |
+          set -euo pipefail
+          RULEDSL_PKG=$(python -c "import os, ruledsl; print(os.path.dirname(ruledsl.__file__))")
+          MCP_PKG=$(python -c "import os, ruledsl_mcp; print(os.path.dirname(ruledsl_mcp.__file__))")
+          echo "ruledsl:     $RULEDSL_PKG"
+          echo "ruledsl_mcp: $MCP_PKG"
+          python -m compileall -f -q "$RULEDSL_PKG" "$MCP_PKG"
+          echo "all shipped modules byte-compile on 3.7"
+
+      # From $RUNNER_TEMP: no checkout on sys.path, no PYTHONPATH. This is the
+      # pip-only path a 3.7 user actually gets.
+      - name: Import + console scripts from a neutral cwd (no checkout)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          test -z "${PYTHONPATH:-}"
+          python -c "import ruledsl; print('ruledsl ok:', ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)"
+          python -c "import ruledsl.workbench as w; print('workbench ok:', len(w.SCENARIOS), 'scenarios')"
+          python -c "import ruledsl_mcp; print('ruledsl_mcp ok:', ruledsl_mcp.__version__)"
+          python -c "import ruledsl, os; print('loaded from:', os.path.dirname(ruledsl.__file__))"
+          ruledsl-workbench --help
+          ruledsl-mcp --help
+          # The packaged example library must resolve to the WHEEL's copy, not
+          # to a checkout - the self-contained pip path, exercised on 3.7.
+          EX_DIR=$(ruledsl-mcp --print-example-rules)
+          echo "packaged examples: $EX_DIR"
+          case "$EX_DIR" in "$GITHUB_WORKSPACE"/*)
+            echo "::error::resolved to the checkout, not the wheel"; exit 1;; esac
+          test -f "$EX_DIR/manifest.json"
+
+      # The [mcp] extra cannot be installed on 3.7, so the package promises a
+      # clear refusal instead. That promise is only worth anything if a 3.7
+      # interpreter actually executes it.
+      - name: ruledsl-mcp refuses on 3.7 with a typed message, not a traceback
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          set +e
+          OUT=$(ruledsl-mcp --rules /nonexistent --decision-log /tmp/d.jsonl \
+                            --engine-lib /nonexistent 2>&1)
+          RC=$?
+          set -e
+          echo "exit=$RC"
+          echo "$OUT"
+          test "$RC" -eq 2
+          case "$OUT" in
+            *Traceback*) echo "::error::downlevel gate produced a traceback"; exit 1;; esac
+          echo "$OUT" | grep -q "requires Python 3.10+"
+          echo "$OUT" | grep -q "3.7"
+
+      - name: Binding - engine-free validation and typed-error suite
+        run: |
+          set -euo pipefail
+          export RULEDSL_WRAPPER="$GITHUB_WORKSPACE/bindings/python"
+          python tests/mcp/test_validate.py
+
+      - name: Binding - lifetime + value fidelity against the shipped engine
+        run: |
+          set -euo pipefail
+          export RULEDSL_DLL="$ENGINE_LIB"
+          export RULEDSL_WRAPPER="$GITHUB_WORKSPACE/bindings/python"
+          python tests/mcp/test_binding_lifecycle.py
+
+      # The workbench has no unit tests; its only coverage anywhere was
+      # `--help`. This exercises the parts that carry behaviour: the input/clock
+      # parsers, and the compile -> evaluate -> canonical hash path behind
+      # "Run 100x", which is the determinism contract the tool advertises.
+      - name: Workbench - pure helpers and a real determinism round trip
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          RULEDSL_DLL="$ENGINE_LIB" python - <<'PY'
+          import os
+          import ruledsl.workbench as wb
+          from ruledsl import RuleDSL
+
+          # -- pure helpers (no engine, no display) ---------------------------
+          fields = wb.parse_inputs(
+              '# comment\n'
+              'amount = 1200\n'
+              'is_verified = true\n'
+              'is_new = false\n'
+              'reason = "disposable_email"\n'
+              'absent = null\n'
+              '\n'
+          )
+          assert fields == {"amount": 1200.0, "is_verified": True, "is_new": False,
+                            "reason": "disposable_email", "absent": None}, fields
+
+          assert wb.parse_now("") is None
+          assert wb.parse_now("1700000000000") == 1700000000000.0
+          assert wb.parse_now("2023-11-14T22:13:20Z") == 1700000000000.0
+          for bad in ("not-a-time", "2023-13-45T99:99:99Z"):
+              try:
+                  wb.parse_now(bad)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError("parse_now accepted %r" % bad)
+          try:
+              wb.parse_inputs("no equals sign\n")
+          except ValueError:
+              pass
+          else:
+              raise AssertionError("parse_inputs accepted a line with no '='")
+          print("workbench helpers OK")
+
+          # -- real engine round trip: the "Run 100x" determinism contract ----
+          lib = wb.resolve_library(None)
+          assert lib == os.environ["RULEDSL_DLL"], lib
+          engine = RuleDSL(lib)
+          try:
+              print("engine version:", engine.version())
+              name = list(wb.SCENARIOS)[0]
+              scenario = wb.SCENARIOS[name]
+              bc = engine.compile(scenario["rules"])
+              inputs = wb.parse_inputs(scenario["inputs"])
+              first = engine.evaluate(bc, inputs)
+              assert first.matched, "scenario did not match"
+              assert first.action == "DECLINE", first.action
+              baseline = wb.decision_hash(first)
+              for _ in range(100):
+                  again = engine.evaluate(bc, inputs)
+                  if wb.decision_hash(again) != baseline:
+                      raise AssertionError("determinism contract broken")
+              print("scenario:", name)
+              print("decision:", first)
+              print("decision_hash=%s (stable over 101 evaluations)" % baseline)
+          finally:
+              engine.close()
+          print("workbench round trip OK on Python 3.7")
+          PY
+
+      - name: Summary
+        run: |
+          echo "Python under test: $(python --version 2>&1)"
+          echo "Engine library:    $ENGINE_LIB"
+          echo "requires-python >=3.7 exercised on a real CPython 3.7 interpreter."
