@@ -62,6 +62,55 @@ ruledslc verify rules.axbc
 - `manifests/MANIFEST.json` and `manifests/HASHES.txt` MUST be generated and included.
 - The release-candidate packet (RC bundle + hashes) MUST be archived before announcement.
 - Publish/announce only after all gate items above pass.
+
+## PyPI 1.2.0 operator flow
+
+The release rule is **build once, publish the same bytes**. Never rebuild after
+TestPyPI: the wheel and sdist uploaded to production PyPI must come from the
+same immutable GitHub Actions artifact.
+
+1. On `main`, manually run `pypi-rc-build.yml`. It performs the only release
+   build, verifies package metadata and smoke checks, and logs the RC workflow
+   run ID plus artifact ID. Preserve both IDs.
+2. Run `pypi-publish.yml` with `target=testpypi` and those RC IDs. The fixed
+   GitHub environment is `testpypi`. After upload, the separate
+   `verify-testpypi-registry` job (which has no OIDC token permission) queries
+   the TestPyPI 1.2.0 JSON endpoint with bounded retries. It requires exactly
+   the expected wheel and sdist, compares TestPyPI's SHA-256 values with
+   `RC_METADATA.json`, downloads and fully hashes both files, and installs the
+   downloaded wheel in a clean virtual environment for `pip check`, imports,
+   MCP 0.2.0, and console `--help` smoke checks. Only then does the job upload
+   `TESTPYPI_VERIFICATION.json`. Preserve this successful workflow run ID.
+   If registry propagation is delayed, rerun only the failed verification job;
+   the already-successful TestPyPI upload job does not need to run again.
+3. Run `pypi-publish.yml` with `target=pypi`, the **same** RC IDs, the successful
+   TestPyPI publish run ID, and confirmation `publish-ruledsl-1.2.0`. The fixed
+   GitHub environment is `pypi` and must require an authorized reviewer before
+   its OIDC publish job may start.
+
+Both publish paths download by exact artifact ID and reject a failed/wrong
+workflow run, non-`main` source, repository mismatch, expired artifact, wrong
+source commit or Git tree, version/metadata drift, extra files, unsafe ZIP
+paths, and any wheel/sdist SHA-256 mismatch. The publisher receives only the
+workspace-relative `pypi-publish-dist` directory, which must not preexist and
+is populated with exactly the rehashed wheel and sdist. Production also
+requires the exact run-attempt-bound post-registry receipt and rejects an
+upload-time copy of `RC_METADATA.json` as insufficient evidence.
+
+Trusted Publishing configuration lives outside this repository and cannot be
+verified by these files. The expected TestPyPI pending-publisher identity is:
+
+- owner: `axiom-foundry`
+- repository: `RuleDSL-SDK`
+- workflow: `pypi-publish.yml`
+- environment: `testpypi`
+
+Before using the production path, repository administrators must separately
+confirm that the `pypi` environment is protected (required reviewers and only
+the intended `main` deployment branch) and that the existing production PyPI
+Trusted Publisher names `pypi-publish.yml` with environment `pypi`. This change
+does not create or alter either environment or any PyPI/TestPyPI publisher.
+
 ## References
 
 - `docs/distribution/bundle_standard.md`
