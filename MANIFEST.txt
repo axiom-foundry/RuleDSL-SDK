@@ -74,6 +74,7 @@ docs/evaluation_playbook.md
 docs/evidence/README.md
 docs/evidence/governance_snapshot_post.json
 docs/evidence/governance_snapshot_raw.json
+docs/evidence/pypi_1.2.0_production_acceptance_2026-08-03.md
 docs/evidence/release_audit_v1.0.0-rc.1.md
 docs/github_metadata.md
 docs/governance/audit_answer_template_replay_proof_v1.md
