@@ -62,6 +62,44 @@ ruledslc verify rules.axbc
 - `manifests/MANIFEST.json` and `manifests/HASHES.txt` MUST be generated and included.
 - The release-candidate packet (RC bundle + hashes) MUST be archived before announcement.
 - Publish/announce only after all gate items above pass.
+
+## PyPI 1.2.0 operator flow
+
+The release rule is **build once, publish the same bytes**. Never rebuild after
+TestPyPI: the wheel and sdist uploaded to production PyPI must come from the
+same immutable GitHub Actions artifact.
+
+1. On `main`, manually run `pypi-rc-build.yml`. It performs the only release
+   build, verifies package metadata and smoke checks, and logs the RC workflow
+   run ID plus artifact ID. Preserve both IDs.
+2. Run `pypi-publish.yml` with `target=testpypi` and those RC IDs. The fixed
+   GitHub environment is `testpypi`. A successful run records a byte receipt;
+   preserve this TestPyPI publish run ID after checking the uploaded project.
+3. Run `pypi-publish.yml` with `target=pypi`, the **same** RC IDs, the successful
+   TestPyPI publish run ID, and confirmation `publish-ruledsl-1.2.0`. The fixed
+   GitHub environment is `pypi` and must require an authorized reviewer before
+   its OIDC publish job may start.
+
+Both publish paths download by exact artifact ID and reject a failed/wrong
+workflow run, non-`main` source, repository mismatch, expired artifact, wrong
+source commit or Git tree, version/metadata drift, extra files, unsafe ZIP
+paths, and any wheel/sdist SHA-256 mismatch. Production also rejects a
+TestPyPI receipt whose `RC_METADATA.json` bytes differ from the selected RC.
+
+Trusted Publishing configuration lives outside this repository and cannot be
+verified by these files. The expected TestPyPI pending-publisher identity is:
+
+- owner: `axiom-foundry`
+- repository: `RuleDSL-SDK`
+- workflow: `pypi-publish.yml`
+- environment: `testpypi`
+
+Before using the production path, repository administrators must separately
+confirm that the `pypi` environment is protected (required reviewers and only
+the intended `main` deployment branch) and that the existing production PyPI
+Trusted Publisher names `pypi-publish.yml` with environment `pypi`. This change
+does not create or alter either environment or any PyPI/TestPyPI publisher.
+
 ## References
 
 - `docs/distribution/bundle_standard.md`
