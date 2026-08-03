@@ -1,0 +1,416 @@
+name: python37-verify
+
+# Proves the packaging claim `requires-python = ">=3.7"` (Tools/pypi_package/
+# pyproject.toml) on a REAL CPython 3.7 interpreter, against the SHIPPED engine.
+# Until this job existed the claim was reviewed but never executed: every other
+# gate runs on 3.11, so 3.7 was an assertion in metadata, not a tested floor.
+#
+# WHAT THIS COVERS ON 3.7 (CPython 3.7.17, Linux x86_64)
+#   - wheel artifact identity, asserted against the wheel's own METADATA/WHEEL:
+#     Name, Version, Requires-Python, and the py3-none-any tag
+#   - the wheel installs, `pip check` is clean, and every shipped module
+#     byte-compiles (a compileall gate, so 3.8+ syntax cannot slip in as a soft
+#     install warning)
+#   - the SDIST installs into a separate, clean 3.7 venv via a real
+#     `pip install`, which builds it from source under 3.7
+#   - the installed code is byte-identical to the checkout sources the test
+#     suites exercise, and `ruledsl.__file__` resolves OUTSIDE the workspace
+#   - the Python binding: the engine-free validation / typed-error suite
+#     (tests/mcp/test_validate.py, which also pins the validate <-> _build_fields
+#     parity) and the lifetime + value-fidelity suite
+#     (tests/mcp/test_binding_lifecycle.py) against the hash-verified v1.0.2
+#     engine, both resolving `ruledsl` from the INSTALLED package
+#   - the workbench through its REAL GUI path under Xvfb: Tk/widget
+#     initialization, the default scenario, an actual Workbench.run_many() call
+#     reporting 100/100 identical decision hashes, and a clean window + engine
+#     shutdown
+#   - the ruledsl-mcp downlevel gate: on 3.7 it must exit 2 with a clear typed
+#     message, never an import-time stack trace
+#
+# WHAT THIS DELIBERATELY DOES NOT COVER
+#   - the MCP server itself. The `mcp` SDK's own floor is Python 3.10+, so the
+#     [mcp] extra is NOT installed here and no MCP handler/transport/wire test
+#     runs on 3.7. That coverage stays in mcp-verify.yml on 3.11. The only MCP
+#     thing asserted here is the downlevel refusal message.
+#   - non-x86_64 Linux, macOS and Windows on 3.7.
+#
+# RUNNER PIN - ubuntu-22.04 is load-bearing, not cosmetic:
+#   - ubuntu-22.04 is the newest Linux runner for which actions/setup-python
+#     provides CPython 3.7.17; setup-python does not provide that version on
+#     ubuntu-24.04 / ubuntu-latest.
+#   - the shipped engine needs GLIBC_2.32 and GLIBCXX_3.4.29. ubuntu-22.04
+#     (glibc 2.35, GCC 12) satisfies both. Debian bullseye - the newest base the
+#     python:3.7 images have - ships glibc 2.31 and cannot load it, so a
+#     container would lose ALL real-engine coverage on 3.7.
+# When this runner image is retired, this job cannot be kept as-is: either the
+# engine-backed steps drop to a python:3.7 container (packaging coverage only)
+# or the supported floor is revisited. Do not silently delete the job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Same pinned engine release as mcp-verify.yml; bump both together.
+env:
+  ENGINE_RELEASE: v1.0.2
+  ENGINE_ASSET: RuleDSL-SDK-v1.0.2-linux-x86_64
+
+jobs:
+  py37:
+    name: verify-python-3.7 (binding + workbench)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Build-only interpreter, matching the one pypi-publish.yml builds with,
+      # so this job tests the same artifacts the publish path produces.
+      # Declared first so the 3.7 setup below wins PATH and a bare `python` in
+      # every later step is unambiguously 3.7.
+      - name: Setup Python 3.11 (artifact build only)
+        id: build_py
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Python 3.7 (the interpreter under test)
+        id: py37
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.7"
+
+      # Requirement: the log must PROVE this is 3.7, not merely request it.
+      - name: Prove the interpreter really is CPython 3.7
+        run: |
+          set -euo pipefail
+          python --version
+          python -c "import platform, sys; print(platform.python_implementation(), sys.version)"
+          python -m pip --version
+          python - <<'PY'
+          import platform, sys
+          assert sys.version_info[:2] == (3, 7), sys.version_info
+          assert platform.python_implementation() == "CPython", platform.python_implementation()
+          print("CONFIRMED CPython %d.%d.%d" % sys.version_info[:3])
+          PY
+
+      # The workbench imports tkinter at module scope, and the GUI step below
+      # drives real widgets, so both the Tk runtime and a virtual display are
+      # needed. Xvfb supplies the display; no physical screen is involved.
+      - name: Install Tk runtime and Xvfb (real GUI path)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tk xvfb
+          python -c "import tkinter; print('tkinter OK, Tk', tkinter.TkVersion)"
+          command -v xvfb-run
+
+      - name: Build sdist + wheel on 3.11
+        run: |
+          set -euo pipefail
+          BUILD_PY='${{ steps.build_py.outputs.python-path }}'
+          "$BUILD_PY" --version
+          "$BUILD_PY" Tools/pypi_package/assemble.py
+          "$BUILD_PY" -m pip install --upgrade build
+          "$BUILD_PY" -m build Tools/pypi_package
+          ls -l Tools/pypi_package/dist
+          {
+            echo "WHEEL=$(ls Tools/pypi_package/dist/*.whl)"
+            echo "SDIST=$(ls Tools/pypi_package/dist/*.tar.gz)"
+          } >> "$GITHUB_ENV"
+
+      # Artifact identity is asserted from the wheel itself, not from what the
+      # build was asked to produce.
+      - name: Assert wheel artifact metadata
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import email, hashlib, os, zipfile
+
+          whl, sdist = os.environ["WHEEL"], os.environ["SDIST"]
+          for path in (whl, sdist):
+              digest = hashlib.sha256(open(path, "rb").read()).hexdigest()
+              print("%-44s sha256=%s" % (os.path.basename(path), digest))
+
+          assert os.path.basename(whl) == "ruledsl-1.2.0-py3-none-any.whl", whl
+          assert os.path.basename(sdist) == "ruledsl-1.2.0.tar.gz", sdist
+
+          zf = zipfile.ZipFile(whl)
+          names = zf.namelist()
+
+          md_names = [n for n in names if n.endswith(".dist-info/METADATA")]
+          assert len(md_names) == 1, md_names
+          md = email.message_from_bytes(zf.read(md_names[0]))
+          assert md["Name"] == "ruledsl", md["Name"]
+          assert md["Version"] == "1.2.0", md["Version"]
+          assert md["Requires-Python"] == ">=3.7", md["Requires-Python"]
+
+          wh_names = [n for n in names if n.endswith(".dist-info/WHEEL")]
+          assert len(wh_names) == 1, wh_names
+          tags = email.message_from_bytes(zf.read(wh_names[0])).get_all("Tag")
+          assert tags == ["py3-none-any"], tags
+
+          print("Name:            %s" % md["Name"])
+          print("Version:         %s" % md["Version"])
+          print("Requires-Python: %s" % md["Requires-Python"])
+          print("Tag:             %s" % tags[0])
+          PY
+
+      - name: Download pinned engine release bundle + verify SHA256SUMS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$ENGINE_RELEASE" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ENGINE_ASSET.tar.gz" \
+            --pattern "$ENGINE_ASSET.SHA256SUMS.txt" \
+            --dir engine-bundle
+          cd engine-bundle
+          sha256sum --check --ignore-missing "$ENGINE_ASSET.SHA256SUMS.txt"
+          tar -xzf "$ENGINE_ASSET.tar.gz"
+          SO_PATH=$(find . -name 'libruledsl_capi.so' -print -quit)
+          test -n "$SO_PATH"
+          echo "ENGINE_LIB=$(readlink -f "$SO_PATH")" >> "$GITHUB_ENV"
+
+      - name: Install the wheel on 3.7 (base package, no [mcp] extra)
+        run: |
+          set -euo pipefail
+          echo "installing $WHEEL"
+          python -m pip install "$WHEEL"
+          python -m pip check
+          SITE=$(python -c "import os, ruledsl; print(os.path.dirname(os.path.dirname(ruledsl.__file__)))")
+          echo "SITE=$SITE" >> "$GITHUB_ENV"
+          echo "site-packages: $SITE"
+
+      # A SyntaxError from 3.8+ syntax is only a WARNING during pip's install-time
+      # byte-compilation, so the install alone proves nothing. compileall exits
+      # non-zero, which turns it into a gate.
+      - name: Byte-compile every shipped module under 3.7
+        run: |
+          set -euo pipefail
+          python -m compileall -f -q "$SITE/ruledsl" "$SITE/ruledsl_mcp"
+          echo "all shipped modules byte-compile on 3.7"
+
+      # The suites below import `ruledsl` from the installed package, but they
+      # read their own test logic from the checkout. This proves the two are the
+      # same bytes, so a suite result is evidence about the shipped artifact.
+      - name: Installed package is byte-identical to the tested sources
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, os
+
+          ws, site = os.environ["GITHUB_WORKSPACE"], os.environ["SITE"]
+          src_root = os.path.join(ws, "bindings", "python")
+
+          pairs = [
+              (os.path.join(src_root, "ruledsl.py"),   os.path.join(site, "ruledsl", "__init__.py")),
+              (os.path.join(src_root, "workbench.py"), os.path.join(site, "ruledsl", "workbench.py")),
+          ]
+          mcp_src = os.path.join(src_root, "ruledsl_mcp")
+          for name in sorted(os.listdir(mcp_src)):
+              if name.endswith(".py"):
+                  pairs.append((os.path.join(mcp_src, name),
+                                os.path.join(site, "ruledsl_mcp", name)))
+
+          def sha(path):
+              return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+          bad = []
+          for src, dst in pairs:
+              a, b = sha(src), sha(dst)
+              print("%-4s %-40s %s" % ("OK" if a == b else "DIFF",
+                                       os.path.relpath(src, ws), a[:16]))
+              if a != b:
+                  bad.append(os.path.relpath(src, ws))
+          assert not bad, "installed copy differs from tested source: %s" % bad
+          print("\n%d file(s) byte-identical between checkout and site-packages" % len(pairs))
+          PY
+
+      # From $RUNNER_TEMP: no checkout on sys.path, no PYTHONPATH. This is the
+      # pip-only path a 3.7 user actually gets.
+      - name: Import + console scripts from a neutral cwd (no checkout)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          test -z "${PYTHONPATH:-}"
+          python - <<'PY'
+          import os
+          import ruledsl
+          import ruledsl.workbench as workbench
+          import ruledsl_mcp
+
+          loaded = os.path.abspath(ruledsl.__file__)
+          print("ruledsl.__file__ =", loaded)
+          assert not loaded.startswith(os.environ["GITHUB_WORKSPACE"]), \
+              "resolved to the checkout, not the installed package: %s" % loaded
+          print("ruledsl ok:    ", ruledsl.RuleDSL.__name__, ruledsl.Bytecode.__name__)
+          print("workbench ok:  ", len(workbench.SCENARIOS), "scenarios")
+          print("ruledsl_mcp ok:", ruledsl_mcp.__version__)
+          PY
+          ruledsl-workbench --help
+          ruledsl-mcp --help
+          # The packaged example library must resolve to the WHEEL's copy, not
+          # to a checkout - the self-contained pip path, exercised on 3.7.
+          EX_DIR=$(ruledsl-mcp --print-example-rules)
+          echo "packaged examples: $EX_DIR"
+          case "$EX_DIR" in "$GITHUB_WORKSPACE"/*)
+            echo "::error::resolved to the checkout, not the wheel"; exit 1;; esac
+          test -f "$EX_DIR/manifest.json"
+
+      # A real `pip install <sdist>` in a separate, clean venv: pip builds the
+      # package from source under 3.7 rather than consuming the prebuilt wheel.
+      - name: Install the SDIST into a clean 3.7 venv and smoke it
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/sdist-env"
+          VENV_PY="$RUNNER_TEMP/sdist-env/bin/python"
+          "$VENV_PY" -m pip install --upgrade pip
+          "$VENV_PY" --version
+          echo "installing sdist: $SDIST"
+          "$VENV_PY" -m pip install "$SDIST"
+          "$VENV_PY" -m pip check
+          "$VENV_PY" -m pip show ruledsl | grep -E '^(Name|Version|Location):'
+          cd "$RUNNER_TEMP"
+          RULEDSL_DLL="$ENGINE_LIB" "$VENV_PY" - <<'PY'
+          import os
+          import ruledsl
+          from ruledsl import RuleDSL
+
+          loaded = os.path.abspath(ruledsl.__file__)
+          print("ruledsl.__file__ =", loaded)
+          assert not loaded.startswith(os.environ["GITHUB_WORKSPACE"]), loaded
+          assert "sdist-env" in loaded, loaded
+
+          engine = RuleDSL(os.environ["RULEDSL_DLL"])
+          try:
+              print("engine version:", engine.version())
+              bc = engine.compile("rule r1 { when amount > 100; then decline; }")
+              decision = engine.evaluate(bc, {"amount": 1200.0})
+              assert decision.matched, decision
+              assert decision.action == "DECLINE", decision.action
+              print("sdist decision:", decision)
+          finally:
+              engine.close()
+          print("sdist install + real engine smoke OK on Python 3.7")
+          PY
+
+      # RULEDSL_WRAPPER points the suites at site-packages, so `ruledsl`
+      # resolves to the INSTALLED package rather than the checkout copy.
+      - name: Prove the suites resolve ruledsl from the installed package
+        run: |
+          set -euo pipefail
+          RULEDSL_WRAPPER="$SITE" python - <<'PY'
+          import os, sys
+          sys.path.insert(0, os.environ["RULEDSL_WRAPPER"])   # what the suites do
+          import ruledsl
+          loaded = os.path.abspath(ruledsl.__file__)
+          print("suite import resolution -> ruledsl.__file__ =", loaded)
+          assert not loaded.startswith(os.environ["GITHUB_WORKSPACE"]), loaded
+          assert loaded.startswith(os.environ["SITE"]), loaded
+          PY
+
+      - name: Binding - engine-free validation and typed-error suite
+        run: |
+          set -euo pipefail
+          export RULEDSL_WRAPPER="$SITE"
+          python tests/mcp/test_validate.py
+
+      - name: Binding - lifetime + value fidelity against the shipped engine
+        run: |
+          set -euo pipefail
+          export RULEDSL_DLL="$ENGINE_LIB"
+          export RULEDSL_WRAPPER="$SITE"
+          python tests/mcp/test_binding_lifecycle.py
+
+      # The real GUI path, not a re-implementation of it: this constructs the
+      # actual Workbench window from the installed wheel under a virtual
+      # display and calls Workbench.run_many(), which is the "Run 100x" button.
+      - name: Workbench - real GUI path under Xvfb (Workbench.run_many)
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/workbench_gui.py" <<'PY'
+          import os
+
+          import ruledsl.workbench as wb
+          from ruledsl import RuleDSL
+
+
+          def ascii_safe(text):
+              return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
+          loaded = os.path.abspath(wb.__file__)
+          print("workbench module:", loaded)
+          assert not loaded.startswith(os.environ["GITHUB_WORKSPACE"]), loaded
+
+          lib = os.environ["RULEDSL_DLL"]
+          engine = RuleDSL(lib)
+          app = None
+          try:
+              # Real Tk toplevel: menus, frames, text panes, combobox.
+              app = wb.Workbench(engine, lib)
+              app.update()
+              print("window title:", ascii_safe(app.title()))
+              assert app.winfo_exists(), "Tk window was not created"
+
+              scenario = app.scenario_var.get()
+              print("default scenario:", ascii_safe(scenario))
+              assert scenario == next(iter(wb.SCENARIOS)), scenario
+              assert app.rules_text.get("1.0", "end").strip(), "rules pane is empty"
+
+              assert wb.Workbench.RUNS == 100, wb.Workbench.RUNS
+              app.run_many()          # the actual "Run 100x" handler
+              app.update()
+
+              stability = app.stability_var.get()
+              print("stability:", ascii_safe(stability))
+              assert "NON-DETERMINISTIC" not in stability, stability
+              assert "100/100" in stability, stability
+              assert "identical decision hash" in stability, stability
+
+              result = app.result_text.get("1.0", "end")
+              assert "decision hash: " in result, result
+              assert "DECLINE" in result, result
+              print("result pane:")
+              for line in result.strip().splitlines():
+                  print("   ", ascii_safe(line))
+          finally:
+              if app is not None:
+                  app.destroy()
+
+          # Clean shutdown: the window is gone and the engine releases the
+          # compiler without raising. close() is contractually idempotent.
+          engine.close()
+          engine.close()
+          print("window destroyed and engine closed cleanly")
+          print("workbench GUI path OK on Python 3.7 under Xvfb")
+          PY
+          cd "$RUNNER_TEMP"
+          RULEDSL_DLL="$ENGINE_LIB" xvfb-run -a python "$RUNNER_TEMP/workbench_gui.py"
+
+      - name: ruledsl-mcp refuses on 3.7 with a typed message, not a traceback
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          set +e
+          OUT=$(ruledsl-mcp --rules /nonexistent --decision-log /tmp/d.jsonl \
+                            --engine-lib /nonexistent 2>&1)
+          RC=$?
+          set -e
+          echo "exit=$RC"
+          echo "$OUT"
+          test "$RC" -eq 2
+          case "$OUT" in
+            *Traceback*) echo "::error::downlevel gate produced a traceback"; exit 1;; esac
+          echo "$OUT" | grep -q "requires Python 3.10+"
+          echo "$OUT" | grep -q "3.7"
+
+      - name: Summary
+        run: |
+          echo "Python under test: $(python --version 2>&1)"
+          echo "Engine library:    $ENGINE_LIB"
+          echo "Wheel:             $(basename "$WHEEL")"
+          echo "Sdist:             $(basename "$SDIST")"
+          echo "requires-python >=3.7 exercised on a real CPython 3.7 interpreter."

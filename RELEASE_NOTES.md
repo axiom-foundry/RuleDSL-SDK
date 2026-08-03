@@ -134,12 +134,16 @@ whole-record hash or chain, entries for failed calls, PII redaction, or
 rotation. Those remain open and are separate work — see
 `docs/design/mcp_server_v0.md` §4.1.
 
-Two further claims are **not verified by CI** and must be settled before this
+The **Python 3.7 floor is now verified by CI** (`python37-verify.yml`), on a
+real CPython 3.7.17 interpreter on Linux x86_64: wheel and sdist install, every
+shipped module byte-compiles, and the binding and workbench suites run there —
+the workbench through its actual GUI path. The MCP server is excluded: the
+`mcp` SDK requires Python 3.10+, so only its downlevel refusal is checked on
+3.7. Nothing outside Linux x86_64 is covered.
+
+One claim remains **not verified by CI** and must be settled before this
 version is published, not after (`docs/design/mcp_server_v0.md` §7.1):
 
-- **Python 3.7.** The package declares `requires-python = ">=3.7"`, but every
-  CI job runs 3.11; the floor is held by syntax discipline alone. Either run
-  the core suites on a real 3.7 interpreter or lower the declared floor.
 - **The PyPI publish path.** `pypi-publish.yml` is `workflow_dispatch` only —
   it never runs on push or pull request, so its wheel smoke test has not run
   against this tree. It also does not verify that the wheel version matches a
