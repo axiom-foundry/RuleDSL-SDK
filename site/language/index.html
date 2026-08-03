@@ -260,7 +260,7 @@
 <header class="hero">
     <div class="container">
         <h1>Language Reference</h1>
-        <p>Everything you need to write deterministic business rules. No prior DSL experience required.</p>
+        <p>Language implementation v0.9, documented against the v1.0 target specification. No prior DSL experience required.</p>
     </div>
 </header>
 
@@ -278,7 +278,7 @@
             <li><a href="#lists">Lists & Pattern Matching</a></li>
             <li><a href="#time">Time & Velocity Limits</a></li>
             <li><a href="#missing">Missing Values</a></li>
-            <li><a href="#determinism">Determinism Guarantees</a></li>
+            <li><a href="#determinism">Determinism Contract</a></li>
             <li><a href="#examples">Complete Examples</a></li>
             <li><a href="#reference">Quick Reference</a></li>
         </ol>
@@ -287,7 +287,7 @@
 <!-- 1. Overview -->
 <section id="overview">
     <h2><a href="#overview">Overview</a></h2>
-    <p>RuleDSL is a purpose-built language for writing business decision rules. It compiles to bytecode that evaluates deterministically: same input, same bytecode, same decision &mdash; every time, on every platform.</p>
+    <p>RuleDSL is a purpose-built language for writing business decision rules. For the published DET corpus, v1.0.2 produced byte-identical decisions on Windows x86_64 and Linux x86_64 when the engine/ABI, bytecode, canonical input, and evaluation options matched. This does not formally prove every possible rule and input.</p>
     <p>A rule file contains one or more named rules. Each rule has a condition (<code>when</code>) and an action (<code>then</code>). Rules are evaluated in priority order. The first rule whose condition matches produces the decision.</p>
     <div class="note">
         <strong>Design philosophy:</strong> The engine decides. The host application computes.
@@ -311,9 +311,13 @@
         <tr><td><code>rule</code></td><td>Yes</td><td>Keyword. Starts a rule block.</td></tr>
         <tr><td><code>rule_name</code></td><td>Yes</td><td>Identifier. Appears in decision results.</td></tr>
         <tr><td><code>priority N</code></td><td>No</td><td>Higher number = evaluated first. Default is 0.</td></tr>
-        <tr><td><code>when</code></td><td>Yes</td><td>Condition expression. Must resolve to true/false.</td></tr>
+        <tr><td><code>when</code></td><td>Yes</td><td>Condition expression. Shipped v0.9 applies dynamic truthiness.</td></tr>
         <tr><td><code>then</code></td><td>Yes</td><td>One or more actions, separated by commas.</td></tr>
     </table>
+
+    <div class="note">
+        <strong>v0.9 condition typing:</strong> conditions are not restricted to Boolean values. Number is false when within the relative epsilon of zero; String/Ident is false when empty; Missing is false. Shipped v0.9 has no separate non-Boolean condition-type error. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/conformance_status_v0_9.md">v0.9 conformance status</a>.
+    </div>
 
     <h3>Evaluation Order</h3>
     <p>Rules are evaluated by priority (highest first). Among rules with equal priority, source order applies. The <strong>first match wins</strong> &mdash; no further rules are evaluated after a decision is reached.</p>
@@ -334,6 +338,10 @@
         <tr><td><code>&gt;=</code></td><td>Greater than or equal</td><td><code>risk_score &gt;= 80</code></td></tr>
     </table>
 
+    <div class="note">
+        <strong>v0.9 cross-type comparisons:</strong> comparing different value types does not raise a type error. <code>==</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, and <code>&gt;=</code> return false; <code>!=</code> returns true. Validate types in the host or an input schema before evaluation. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/conformance_status_v0_9.md">v0.9 conformance status</a>.
+    </div>
+
     <h3>Logical Operators</h3>
     <table>
         <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
@@ -342,6 +350,9 @@
         <tr><td><code>not</code></td><td>Negation</td><td><code>not is_verified</code></td></tr>
     </table>
     <p>Use parentheses to control evaluation order: <code>(a or b) and c</code></p>
+    <div class="note">
+        <strong>No short-circuit in v0.9:</strong> <code>and</code> and <code>or</code> evaluate both operands. <code>divisor != 0 and amount / divisor &gt; 1</code> is therefore not a safe division guard. Validate the divisor in the host or use separate rules. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/conformance_status_v0_9.md">v0.9 conformance status</a>.
+    </div>
 
     <h3>Arithmetic Operators</h3>
     <table>
@@ -384,7 +395,7 @@
         </div>
         <div class="card">
             <h4 style="color: var(--accent);">limit</h4>
-            <p>Apply a velocity cap. E.g., max 200 USD per day.</p>
+            <p>Return a velocity-cap decision for the host to enforce. E.g., max 200 USD per day.</p>
         </div>
     </div>
 <pre><span class="cmt"># Simple decisions</span>
@@ -405,7 +416,7 @@
         <tr><td>String</td><td><code>"USD"</code>, <code>"hello"</code></td><td>Double-quoted. Used in comparisons and MATCH.</td></tr>
         <tr><td>Boolean</td><td><code>true</code>, <code>false</code></td><td>Used in conditions directly.</td></tr>
         <tr><td>Identifier</td><td><code>amount</code>, <code>customer.level</code></td><td>References input fields. Dotted paths supported.</td></tr>
-        <tr><td>Missing</td><td>&mdash;</td><td>Field not provided. Operations on missing safely fail.</td></tr>
+        <tr><td>Missing</td><td>&mdash;</td><td>Field not provided. Operations can emit runtime diagnostics and <code>AX_ERR_RUNTIME</code>; see Missing Values.</td></tr>
     </table>
 
     <h3>Numeric Literals</h3>
@@ -414,11 +425,14 @@
 <span class="kw">when</span> rate &gt; <span class="num">0.05</span>;           <span class="cmt"># decimal</span>
 <span class="kw">when</span> amount &gt; <span class="num">1e6</span>;          <span class="cmt"># scientific notation (1,000,000)</span>
 <span class="kw">when</span> rate &gt; <span class="num">2.5e-3</span>;         <span class="cmt"># decimal + exponent (0.0025)</span></pre>
+    <div class="note">
+        <strong>v0.9 numeric comparisons use a relative epsilon:</strong> <code>1e-9 &times; max(1, |a|, |b|)</code>. Do not treat a threshold as exact IEEE equality at that boundary. Represent financial amounts in integer minor units where practical and add boundary acceptance tests. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/conformance_status_v0_9.md">v0.9 conformance status</a>.
+    </div>
 
     <h3>Currency-Tagged Numbers</h3>
-    <p>Append a 3-letter currency code to a numeric literal for currency-aware comparisons:</p>
-<pre><span class="kw">when</span> amount &gt;= <span class="num">1e4</span> USD;     <span class="cmt"># 10,000 USD</span>
-<span class="kw">when</span> amount &gt;= <span class="num">8000</span> EUR;    <span class="cmt"># 8,000 EUR</span></pre>
+    <p>A 3-letter currency tag on a numeric literal is metadata in shipped v0.9. The engine compares the numeric value and does not automatically filter by currency, so add an explicit host-supplied currency condition:</p>
+<pre><span class="kw">when</span> amount &gt;= <span class="num">10000</span> USD <span class="kw">and</span> currency == <span class="str">"USD"</span>;
+<span class="kw">when</span> amount &gt;= <span class="num">8000</span> EUR <span class="kw">and</span> currency == <span class="str">"EUR"</span>;</pre>
 
     <h3>Dotted Paths</h3>
     <p>Access nested fields with dot notation:</p>
@@ -455,14 +469,14 @@
 <pre><span class="kw">when</span> email <span class="kw">match</span> <span class="str">"@example.com"</span>;
 <span class="kw">when</span> card_bin <span class="kw">match</span> <span class="str">"41111"</span>;</pre>
     <div class="note">
-        <strong>Safety:</strong> Applying MATCH to a non-text field (e.g., a number) raises a runtime error (<code>MATCH_EXPECTS_TEXT</code>). Always ensure the matched field is a string.
+        <strong>Safety:</strong> Applying MATCH to a non-text field (e.g., a number) raises a runtime error (<code>MATCH_EXPECTS_TEXT</code>). Ensure the matched field is a string.
     </div>
 </section>
 
 <!-- 8. Time & Velocity -->
 <section id="time">
     <h2><a href="#time">Time & Velocity Limits</a></h2>
-    <p>The <code>limit</code> decision <strong>expresses</strong> a velocity cap (an amount and a <code>per</code> window). The engine is stateless and does not track cumulative spend &mdash; your system enforces the cap. <code>now_utc_ms</code> is validated as present but is not used computationally in v0.9:</p>
+    <p>The <code>limit</code> decision <strong>expresses</strong> a velocity cap (an amount and a <code>per</code> window). The engine is stateless: the host computes counters, aggregates, and time-window fields, supplies any values the rule evaluates, and enforces the returned cap. <code>now_utc_ms</code> is validated as present but is not used computationally in v0.9:</p>
 <pre><span class="kw">then</span> <span class="kw">limit</span> <span class="num">500</span> USD <span class="kw">per</span> <span class="num">1</span> D;    <span class="cmt"># max 500 USD per day</span>
 <span class="kw">then</span> <span class="kw">limit</span> <span class="num">3</span> TRY <span class="kw">per</span> <span class="num">1</span> H;      <span class="cmt"># max 3 transactions per hour</span></pre>
 
@@ -476,21 +490,22 @@
     </table>
 
     <div class="note">
-        <strong>Determinism:</strong> The engine never reads the system clock. Time must be provided explicitly as <code>now_utc_ms</code> in the input context — in every binding (Python, C#, and the C API). Omitting it for a time-based rule raises <code>MISSING_NOW_UTC_MS</code>.
+        <strong>Explicit clock:</strong> The engine never reads the system clock. In the C API, supply <code>now_utc_ms</code> as an explicit field. The shipped <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/bindings/python/README.md#time">Python</a> and <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/bindings/csharp/README.md#time">C#</a> wrappers accept either their explicit clock argument or the documented explicit field, but not both. Omitting both for a time-based rule raises <code>MISSING_NOW_UTC_MS</code>.
     </div>
 </section>
 
 <!-- 9. Missing Values -->
 <section id="missing">
     <h2><a href="#missing">Missing Values</a></h2>
-    <p>If a referenced field is not provided in the input, it resolves to <code>missing</code>.</p>
+    <p>If a referenced field is not provided in the input, it resolves to <code>missing</code>. This is not a normal "safe skip" contract:</p>
     <ul>
         <li><code>missing</code> is a distinct value &mdash; not null, not zero, not empty string.</li>
-        <li>Comparisons involving <code>missing</code> produce a runtime diagnostic and the condition evaluates to <code>false</code>.</li>
-        <li>The rule simply does not match. No crash. No undefined behavior.</li>
+        <li>A comparison involving <code>missing</code> can evaluate to false while emitting a runtime diagnostic; arithmetic can emit <code>TYPE_MISMATCH</code> and produce another missing value.</li>
+        <li><code>UNKNOWN_PATH</code>, <code>TYPE_MISMATCH</code>, and <code>ASSIGN_VALUE_MISSING</code> map to <code>AX_ERR_RUNTIME=11</code>. The decision struct can still be populated and evaluation can continue.</li>
+        <li>The host must check <code>code != AX_ERR_OK</code> and handle the call fail-closed, regardless of a populated decision.</li>
     </ul>
-    <p>This means you do not need defensive null checks. If a field might not exist, the rule safely skips:</p>
-<pre><span class="cmt"># If customer.loyalty_tier is not in the input, this rule is skipped</span>
+    <p>Validate required fields before evaluation; do not rely on missing-value behavior as control flow. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/language/conformance_status_v0_9.md">v0.9 conformance status</a>.</p>
+<pre><span class="cmt"># Host must require customer.loyalty_tier before evaluating this rule</span>
 <span class="kw">rule</span> vip_bypass {
   <span class="kw">when</span> customer.loyalty_tier == <span class="str">"platinum"</span>;
   <span class="kw">then</span> <span class="kw">allow</span>;
@@ -499,8 +514,8 @@
 
 <!-- 10. Determinism -->
 <section id="determinism">
-    <h2><a href="#determinism">Determinism Guarantees</a></h2>
-    <p>RuleDSL is deterministic by contract. These are not aspirational goals &mdash; they are enforced by the engine architecture:</p>
+    <h2><a href="#determinism">Determinism Contract</a></h2>
+    <p>The v0.9 language implementation controls implicit time, evaluation order, numeric mode, and locale inputs. For the published DET corpus, the shipped v1.0.2 Windows and Linux x86_64 binaries produced matching decisions under the same engine/ABI, bytecode, canonical input, and equivalent-option conditions. This is scenario evidence, not a formal proof over all rules and inputs:</p>
     <div class="card-grid">
         <div class="card">
             <h4>No implicit time</h4>
@@ -512,14 +527,14 @@
         </div>
         <div class="card">
             <h4>IEEE 754 numeric behavior</h4>
-            <p>All arithmetic uses binary64. No fast-math. No platform-dependent rounding. NaN and Inf are rejected.</p>
+            <p>Arithmetic uses binary64 and comparisons use v0.9's documented relative epsilon. Fast-math is rejected at build time; NaN and Inf follow the documented rejection paths.</p>
         </div>
         <div class="card">
             <h4>No locale dependency</h4>
             <p>Identifiers use raw UTF-8 octet matching. No Unicode normalization. No collation surprises.</p>
         </div>
     </div>
-    <p style="margin-top: 16px;">The result: same bytecode + same input + same engine version = same decision. Always. On every platform.</p>
+    <p style="margin-top: 16px;">Verified scope: same shipped v1.0.2 engine/ABI + same bytecode + canonical input + equivalent options produced byte-identical decisions on Windows x86_64 and Linux x86_64.</p>
 </section>
 
 <!-- 11. Examples -->
@@ -547,7 +562,8 @@
   <span class="kw">then</span> risk_score = <span class="num">10</span>, reason = <span class="str">"baseline"</span>, <span class="kw">allow</span>;
 }</pre>
 
-    <h3>Spending Limits with Device Trust</h3>
+    <h3>Host-Supplied Spending Inputs and Limit Decisions</h3>
+    <p>The host supplies transaction, device, aggregate, and time-window values; these rules evaluate those inputs but do not maintain a counter, window, or database.</p>
 <pre><span class="kw">rule</span> block_new_device_high <span class="kw">priority</span> <span class="num">100</span> {
   <span class="kw">when</span> is_new_device <span class="kw">and</span> amount &gt; <span class="num">2000</span>;
   <span class="kw">then</span> reason = <span class="str">"new_device_risk"</span>, <span class="kw">decline</span>;
@@ -570,7 +586,8 @@
 
     <h3>Email & Channel Controls</h3>
 <pre><span class="kw">rule</span> flag_internal_email <span class="kw">priority</span> <span class="num">100</span> {
-  <span class="kw">when</span> email <span class="kw">match</span> <span class="str">"@internal\\.corp$"</span>;
+  <span class="cmt"># Host supplies a normalized domain for exact matching</span>
+  <span class="kw">when</span> email_domain == <span class="str">"internal.corp"</span>;
   <span class="kw">then</span> reason = <span class="str">"internal_email"</span>, <span class="kw">review</span>;
 }
 
@@ -625,7 +642,7 @@
 
 <footer>
     <div class="container">
-        <p>&copy; 2026 Axiom Foundry. RuleDSL Language v1.0</p>
+        <p>&copy; 2026 Axiom Foundry. Language implementation v0.9 &middot; v1.0 target specification</p>
         <p style="margin-top: 8px;">
             <a href="../">Home</a> &middot;
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a> &middot;

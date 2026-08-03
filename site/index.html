@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RuleDSL — Deterministic Rule Engine SDK</title>
-    <meta name="description" content="Embedded, deterministic business rule engine with a stable C ABI. Same input, same decision — guaranteed. For risk scoring, compliance, and policy enforcement.">
+    <meta name="description" content="Embedded business rule engine with a stable public C ABI design and published v1.0.2 Windows/Linux x86_64 DET-corpus evidence.">
     <meta property="og:title" content="RuleDSL — Deterministic Rule Engine SDK">
-    <meta property="og:description" content="Embedded business rule engine with a stable C ABI. Write rules, compile to bytecode, evaluate deterministically.">
+    <meta property="og:description" content="Stable public C ABI design with published v1.0.2 Windows/Linux x86_64 DET-corpus evidence.">
     <meta property="og:image" content="https://axiom-foundry.github.io/RuleDSL-SDK/assets/og-banner.png">
     <meta property="og:url" content="https://axiom-foundry.github.io/RuleDSL-SDK/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="RuleDSL — Deterministic Rule Engine SDK">
-    <meta name="twitter:description" content="Embedded business rule engine with a stable C ABI. Write rules, compile to bytecode, evaluate deterministically.">
+    <meta name="twitter:description" content="Stable public C ABI design with published v1.0.2 Windows/Linux x86_64 DET-corpus evidence.">
     <meta name="twitter:image" content="https://axiom-foundry.github.io/RuleDSL-SDK/assets/og-banner.png">
     <style>
         :root {
@@ -224,6 +224,7 @@
         <div>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
+            <a href="#mcp">MCP</a>
             <a href="#robustness">Robustness</a>
             <a href="language/">Language</a>
             <a href="demos/">Demos</a>
@@ -236,7 +237,7 @@
 <header class="hero">
     <div class="container">
         <h1>Deterministic rules.<br><em>Embedded in your app.</em></h1>
-        <p>A business rule engine with a stable C ABI. Same input, same bytecode, same decision — guaranteed across platforms. No SaaS, no network hop, no surprises.</p>
+        <p>An embedded business rule engine with a stable C ABI design. For the published DET corpus, shipped v1.0.2 binaries produced byte-identical decision output on Windows x86_64 and Linux x86_64 under the documented determinism conditions. No SaaS or network hop.</p>
         <div class="hero-buttons">
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK" class="hero-cta">Get Started</a>
             <a href="#how-it-works" class="hero-cta secondary">How It Works</a>
@@ -249,27 +250,27 @@
         <div class="features">
             <div class="feature">
                 <h3>Deterministic by Contract</h3>
-                <p>Same engine + same bytecode + same inputs = same output. Always. No hidden time sources, no locale drift, no randomness. Auditable and reproducible.</p>
+                <p>For the published DET corpus on the shipped v1.0.2 Windows and Linux x86_64 binaries, matching engine/ABI, bytecode, canonical input, and equivalent options produced byte-identical decision output. This is scenario evidence, not a formal proof over all rules and inputs.</p>
             </div>
             <div class="feature">
-                <h3>Zero Dependencies</h3>
-                <p>In-process library. No database, no message broker, no sidecar. Link .dll or .so into your app and call the C API. Sub-millisecond evaluation.</p>
+                <h3>Embedded Core</h3>
+                <p>The core engine runs in process with no daemon, database, network service, or sidecar. Evaluation is parse-free on the hot path; measure latency and throughput on your own hardware and workload. The Python binding still loads the separate engine .dll/.so, the Workbench uses Tk, and MCP requires Python 3.10+ plus the MCP SDK.</p>
             </div>
             <div class="feature">
-                <h3>Stable ABI</h3>
-                <p>Forward-compatible struct design with struct_size + reserved fields. Upgrade the engine without recompiling your application. Error codes are frozen.</p>
+                <h3>Stable C ABI Design</h3>
+                <p>Public structs use <code>struct_size</code> and reserved fields, with documented error codes. Shipped engine/SDK pairings are checked against the compatibility matrix; verify the intended pairing before an upgrade.</p>
             </div>
             <div class="feature">
                 <h3>Language Bindings</h3>
-                <p>C API at the core, with ready-made Python and C# wrappers. No C expertise required. More languages coming based on demand.</p>
+                <p>C API at the core, with the Python 1.2.0 package, shipped C# wrapper, and desktop Workbench. The engine library remains the separate v1.0.2 binary bundle.</p>
             </div>
             <div class="feature">
                 <h3>Self-Service Errors</h3>
-                <p>12 stable error codes with actionable diagnostic messages. Troubleshooting guide covers every scenario. Designed for minimal vendor support.</p>
+                <p>Documented error codes provide actionable diagnostics on supported detection paths. The troubleshooting guide covers the public error contract and common integration failures.</p>
             </div>
             <div class="feature">
-                <h3>Update Rules Without Redeploying</h3>
-                <p>Write rules in RuleDSL, compile to bytecode, load at runtime. Change business logic without touching application code or restarting services.</p>
+                <h3>Load Rules Without Recompiling the Host</h3>
+                <p>The host can load newly verified bytecode without recompiling its application binary. Distribution, reload, and any atomic transition are host responsibilities. Changing the MCP 0.2 rule library requires restarting the MCP server.</p>
             </div>
         </div>
     </div>
@@ -287,7 +288,7 @@
             <div class="step">
                 <div class="step-num">2</div>
                 <h4>Compile</h4>
-                <p>Compile to bytecode with the CLI compiler. Deterministic output, every time.</p>
+                <p>Compile source into versioned bytecode, then verify its integrity and engine compatibility before evaluation.</p>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
@@ -340,11 +341,11 @@ decision = engine.evaluate(bc, {
             </div>
             <div class="use-case">
                 <strong>Spending Limits</strong>
-                <span>Enforce velocity limits: "max 3 transactions per hour" or "max $5000 per day per customer."</span>
+                <span>Evaluate host-computed counters, aggregates, and time-window fields against rules such as "max 3 transactions per hour"; the host maintains and enforces that state.</span>
             </div>
             <div class="use-case">
                 <strong>Compliance Gates</strong>
-                <span>Deterministic compliance checks for regulated industries. Audit-ready with replay proof.</span>
+                <span>Deterministic compliance checks with recomputable decision evidence for technical review.</span>
             </div>
             <div class="use-case">
                 <strong>Offer Eligibility</strong>
@@ -354,32 +355,55 @@ decision = engine.evaluate(bc, {
     </div>
 </section>
 
+<section id="mcp" style="border-top: 1px solid var(--border);">
+    <div class="container">
+        <h2>MCP 0.2.0 &mdash; Experimental Early Access</h2>
+        <p style="text-align: center; color: var(--muted); max-width: 720px; margin: 0 auto 24px;">
+            The agent selects a declared rule and supplies fields; the deterministic engine evaluates that invocation. An agent choosing the wrong rule or extracting the wrong fields is outside the engine's determinism guarantee.
+        </p>
+        <div class="features" style="padding-bottom: 20px;">
+            <div class="feature">
+                <h3>Closed Three-Tool Surface</h3>
+                <p><code>list_rules</code>, <code>evaluate_case</code>, and <code>engine_info</code>. There is no <code>write_rule</code>, free-text compile, or tool that changes rules.</p>
+            </div>
+            <div class="feature">
+                <h3>The Agent Invokes; the Engine Decides</h3>
+                <p>Typed, fail-closed validation checks the declared MCP input before the selected rule reaches the engine. The resulting engine decision is based on the supplied invocation, not generated by the agent.</p>
+            </div>
+            <div class="feature">
+                <h3>Explicit Runtime Boundary</h3>
+                <p>The MCP extra requires Python 3.10+, the MCP SDK, and a separate v1.0.2 engine library. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/mcp_quickstart.md">MCP quickstart</a> for the supported setup and experimental contract.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="robustness" style="border-top: 1px solid var(--border);">
     <div class="container">
         <h2>Engine Robustness</h2>
         <p style="text-align: center; color: var(--muted); max-width: 640px; margin: 0 auto 32px;">
-            Built to fail safe: malformed inputs are rejected gracefully with structured error codes,
-            never with a crash. The parser and bytecode loader are exercised on every change by CI-gated,
-            coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer),
-            seeded with an adversarial corpus (maintained in the engine repository) &mdash; which has
-            caught and fixed bugs before release.
+            Private engine CI exercises supported parser and bytecode-loader detection paths with
+            coverage-guided fuzzing (libFuzzer under AddressSanitizer + UndefinedBehaviorSanitizer) and an
+            adversarial corpus. The public SDK repository does not expose the engine source or every internal
+            run, so this is vendor-reported release qualification, not independently reproducible public
+            evidence. Detection coverage is not a blanket safety guarantee.
         </p>
         <div class="features" style="margin-top: 32px; grid-template-columns: repeat(2, 1fr);">
             <div class="feature">
-                <h3>Continuous Fuzzing in CI</h3>
-                <p>Parser and bytecode loader fuzzed on every change under ASan/UBSan, seeded with an adversarial corpus (maintained in the engine repository). This has caught and fixed bugs before release.</p>
+                <h3>Internal Fuzz Qualification</h3>
+                <p>Private engine CI uses coverage-guided fuzzing under ASan/UBSan with an adversarial corpus maintained in the engine repository. Individual internal runs and the engine source are not published here.</p>
             </div>
             <div class="feature">
-                <h3>Thread-Safe by Design</h3>
-                <p>Per-thread compiler pattern for full parallelism; concurrent and long-running (soak) execution is exercised on every release in CI under ASan/UBSan. Shared-compiler misuse is detected at runtime with <code>AX_ERR_CONCURRENT_COMPILER_USE</code> &mdash; no crash, no corruption.</p>
+                <h3>Defined Concurrency Boundary</h3>
+                <p>Concurrent live calls on one compiler can be detected and return <code>AX_ERR_CONCURRENT_COMPILER_USE</code>. Destroying a compiler while a call is in flight is undefined behavior in the raw C API. The shipped Python and C# wrappers serialize native calls and protect close/Dispose. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/thread_safety_model.md">thread-safety model</a>.</p>
             </div>
             <div class="feature">
                 <h3>Locale Independence</h3>
-                <p>Evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002); cross-locale equivalence is exercised in CI. No decimal-separator drift, no collation variance.</p>
+                <p>Evaluation does not use locale, timezone, or wall-clock as inputs (determinism contract, DET-002). Cross-locale checks are part of internal engine release qualification; published claims remain limited to the committed DET corpus.</p>
             </div>
             <div class="feature">
-                <h3>Malformed &amp; Tampered Input Rejected</h3>
-                <p>Malformed rule sources, injection-style strings, and tampered bytecode (flipped bits, truncation, wrong magic, oversized payloads) are detected and rejected with structured error codes. C-API misuse (NULL, NaN/Infinity, bad struct sizes) returns proper error codes.</p>
+                <h3>Tested Detection Paths</h3>
+                <p>The adversarial corpus exercises malformed sources and supported tampered-bytecode rejection paths. SQL, markup, and CRLF are ordinary string data when encoding, schema, type, and size are valid; rejection claims apply to violations such as invalid encoding, NUL, schema/type mismatch, and limits. Malformed bytecode passed to evaluation and invalid pointer, ownership, or lifetime use may be undefined behavior. See the <a href="https://github.com/axiom-foundry/RuleDSL-SDK/blob/main/docs/contracts/undefined_behavior_v1_0.md">UB boundaries</a>.</p>
             </div>
         </div>
     </div>
@@ -400,7 +424,7 @@ decision = engine.evaluate(bc, {
 
 <footer>
     <div class="container">
-        <p>&copy; 2026 Axiom Foundry. RuleDSL SDK v1.0.0</p>
+        <p>&copy; 2026 Axiom Foundry. Engine bundle v1.0.2 &middot; Python 1.2.0 &middot; MCP 0.2.0 experimental &middot; language v0.9 (v1.0 target specification)</p>
         <p style="margin-top: 8px;">
             <a href="https://github.com/axiom-foundry/RuleDSL-SDK">GitHub</a> &middot;
             <a href="language/">Language Reference</a> &middot;
