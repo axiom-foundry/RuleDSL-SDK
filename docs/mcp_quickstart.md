@@ -4,20 +4,15 @@ Status: **EXPERIMENTAL** — not part of the release contract surface; no
 ABI or compatibility promise; may change or be withdrawn without a major
 engine version bump. Design contract: `docs/design/mcp_server_v0.md`.
 
-Version pairing: **engine bundle v1.0.2**. The Python package is pure Python;
-the engine binary is never inside it.
+Version pairing: **engine bundle v1.0.2**, **Python package 1.2.0**, and
+**MCP package surface 0.2.0**. The Python package is pure Python; the engine
+binary is never inside it.
 
-> ⚠️ **This document describes the `1.2.0` contract, which is a source
-> candidate — it is not on PyPI yet.** `pip install "ruledsl[mcp]"` today
-> installs **1.1.1**, which implements the *previous* contract: rule libraries
-> use `manifest_version: 1` and declare no `input_schema`, failures come back
-> as ordinary successful results instead of `isError`, and `now_utc_ms` is
-> coerced rather than checked. Following the instructions below against 1.1.1
-> will not work — a v2 manifest is not something 1.1.1 understands.
->
-> Until `1.2.0` is published, run this server from a checkout of the repository
-> at the matching commit. The version split is deliberate and is stated the
-> same way in the repository README.
+> `pip install "ruledsl[mcp]"` installs the published 1.2.0 contract described
+> here. Version 1.1.1 was the previous contract: it used
+> `manifest_version: 1`, declared no `input_schema`, returned failures as
+> ordinary successful results instead of `isError`, and coerced
+> `now_utc_ms`. Upgrade to 1.2.0 before following this quickstart.
 
 > **"The agent invokes; the engine decides."** The MCP server is a thin,
 > deterministic invocation boundary — the AI client picks which declared
@@ -48,47 +43,52 @@ the engine binary is never inside it.
   transitive dependencies (`Tools/ci/constraints-mcp-<version>.txt`). Today
   that is `mcp==2.0.0`, which happens to be the entire 2.x line so far.
 
-  **Install from a checkout — the route that works today.** The version on
-  PyPI is `1.1.1`, which implements the previous contract, so `pip install
-  "ruledsl[mcp]"` does not give you the server this document describes.
-  Everything lives in this one repository: put `bindings/python` on
-  `PYTHONPATH` (it provides both `ruledsl` and `ruledsl_mcp`) and install
-  only the MCP SDK.
+  **Install from PyPI — the primary user route.** The `[mcp]` extra installs
+  the RuleDSL binding and workbench, the `ruledsl_mcp` server, the official
+  `mcp` SDK, and the `ruledsl-mcp` console command. The wheel also carries
+  an example rule library, so no checkout is required.
 
   ```bash
   # Linux/macOS
-  git clone https://github.com/axiom-foundry/RuleDSL-SDK.git
-  cd RuleDSL-SDK
   python3 -m venv .venv
   . .venv/bin/activate
-  pip install "mcp>=2.0,<3"
-  export PYTHONPATH="$PWD/bindings/python"
+  python -m pip install "ruledsl[mcp]"
+  ruledsl-mcp --print-example-rules
   ```
 
   ```powershell
   # Windows (PowerShell)
+  py -3.11 -m venv .venv
+  .\.venv\Scripts\Activate.ps1
+  python -m pip install "ruledsl[mcp]"
+  ruledsl-mcp --print-example-rules
+  ```
+
+  **Install from a checkout — the developer/source alternative.** Use this
+  route when changing or inspecting the Python sources. Put
+  `bindings/python` on `PYTHONPATH` (it provides both `ruledsl` and
+  `ruledsl_mcp`) and install the MCP SDK directly.
+
+  ```bash
+  git clone https://github.com/axiom-foundry/RuleDSL-SDK.git
+  cd RuleDSL-SDK
+  python3 -m venv .venv
+  . .venv/bin/activate
+  python -m pip install "mcp>=2.0,<3"
+  export PYTHONPATH="$PWD/bindings/python"
+  ```
+
+  ```powershell
   git clone https://github.com/axiom-foundry/RuleDSL-SDK.git
   cd RuleDSL-SDK
   py -3.11 -m venv .venv
   .\.venv\Scripts\Activate.ps1
-  pip install "mcp>=2.0,<3"
+  python -m pip install "mcp>=2.0,<3"
   $env:PYTHONPATH = "$PWD\bindings\python"
   ```
 
-  The rule library is then `rules/` in the checkout, and the server is
+  The source rule library is `rules/`, and the source server entry point is
   `python -m ruledsl_mcp.server`.
-
-  **Install from PyPI — after `1.2.0` is published.** The `[mcp]` extra
-  installs the `ruledsl` package (engine wrapper + workbench) together with
-  the `ruledsl_mcp` server, its only third-party dependency (the official
-  `mcp` SDK), and the `ruledsl-mcp` console command; an example rule library
-  ships inside the wheel, so no checkout is needed. Do **not** use this route
-  yet — it currently installs `1.1.1`:
-
-  ```bash
-  # Only once 1.2.0 is on PyPI. Check first: pip index versions ruledsl
-  pip install "ruledsl[mcp]"
-  ```
 
 - **The engine library** (`ruledsl_capi.dll` on Windows,
   `libruledsl_capi.so` on Linux) from a **release bundle**: download
@@ -109,10 +109,10 @@ the engine binary is never inside it.
   Then use the library from the bundle's `bin/`.
 
 - **A rule library**: a directory holding `manifest.json` plus the rule
-  files it declares. On a checkout it is `rules/`. (Once `1.2.0` is
-  published, the same example also ships inside the wheel; print its
-  location with `ruledsl-mcp --print-example-rules`, an information-only
-  helper — `--rules` itself always stays explicit.)
+  files it declares. The published wheel includes an example; print its
+  location with `ruledsl-mcp --print-example-rules`. In a source checkout
+  the canonical library is `rules/`. The discovery helper is information
+  only — `--rules` itself always stays explicit.
 
 ---
 
@@ -123,25 +123,32 @@ a rules directory, log file, or engine library on its own (explicit-input
 policy; the same reason `now_utc_ms` is a mandatory parameter):
 
 ```bash
-# Linux/macOS - from the checkout, with PYTHONPATH set as in section 1
-python -m ruledsl_mcp.server \
-    --rules ./rules \
+# Linux/macOS - installed from PyPI
+RULES_DIR="$(ruledsl-mcp --print-example-rules)"
+ruledsl-mcp \
+    --rules "$RULES_DIR" \
     --decision-log /path/to/decisions.jsonl \
     --engine-lib /path/to/bundle/bin/libruledsl_capi.so
 ```
 
 ```powershell
-# Windows (PowerShell) - from the checkout, inside the activated venv
-python -m ruledsl_mcp.server `
-    --rules .\rules `
+# Windows (PowerShell) - installed from PyPI
+$RulesDir = ruledsl-mcp --print-example-rules
+ruledsl-mcp `
+    --rules $RulesDir `
     --decision-log C:\path\to\decisions.jsonl `
     --engine-lib C:\path\to\bundle\bin\ruledsl_capi.dll
 ```
 
-Once `1.2.0` is on PyPI the same invocation is available as the
-`ruledsl-mcp` console command, with
-`--rules "$(ruledsl-mcp --print-example-rules)"` in place of `./rules`.
-Until then that command belongs to `1.1.1` and speaks the old contract.
+For the developer/source alternative, run the module from the checkout with
+`PYTHONPATH` set as in §1 and use `--rules ./rules`:
+
+```bash
+python -m ruledsl_mcp.server \
+    --rules ./rules \
+    --decision-log /path/to/decisions.jsonl \
+    --engine-lib /path/to/bundle/bin/libruledsl_capi.so
+```
 
 **What success looks like:** the server prints *nothing* — it speaks MCP
 over **stdio** and waits for a client (Claude Desktop, an agent runtime,
@@ -158,33 +165,32 @@ Note the module form: the package uses relative imports, so invoking
 
 Add to `claude_desktop_config.json` (Settings → Developer → Edit Config):
 
-From a checkout — the route that works today:
+For the primary PyPI installation, first run
+`ruledsl-mcp --print-example-rules`, then place the printed absolute path in
+`--rules`:
 
 ```json
 {
   "mcpServers": {
     "ruledsl": {
-      "command": "/path/to/.venv/bin/python",
+      "command": "/path/to/.venv/bin/ruledsl-mcp",
       "args": [
-        "-m", "ruledsl_mcp.server",
-        "--rules", "/path/to/RuleDSL-SDK/rules",
+        "--rules", "/path/printed/by/ruledsl-mcp",
         "--decision-log", "/path/to/decisions.jsonl",
         "--engine-lib", "/path/to/libruledsl_capi.so"
-      ],
-      "env": { "PYTHONPATH": "/path/to/RuleDSL-SDK/bindings/python" }
+      ]
     }
   }
 }
 ```
 
-On Windows, `command` is `...\\.venv\\Scripts\\python.exe` and the paths use
+On Windows, `command` is `...\\.venv\\Scripts\\ruledsl-mcp.exe` and the paths use
 backslashes (escaped in JSON).
 
-Once `1.2.0` is on PyPI, the console command replaces all of that: set
-`command` to `/path/to/.venv/bin/ruledsl-mcp`
-(`...\\.venv\\Scripts\\ruledsl-mcp.exe` on Windows), drop the `-m` argument
-and the `env` block, and paste the output of
-`ruledsl-mcp --print-example-rules` as `--rules`.
+For the developer/source alternative, use `command:
+"/path/to/.venv/bin/python"`, prefix the arguments with
+`"-m", "ruledsl_mcp.server"`, point `--rules` at the checkout's
+`rules/`, and set `PYTHONPATH` to the checkout's `bindings/python`.
 
 ---
 
@@ -230,16 +236,24 @@ closed 3-tool list, byte-identical decision records for identical calls,
 and the reserved-field rejection. Exit code 0 = PASS.
 
 ```bash
-# From the checkout, with PYTHONPATH set as in section 1
+# Installed from PyPI; the packaged rules and installed wrapper are discovered
+python -m ruledsl_mcp.smoke \
+    --engine-lib /path/to/libruledsl_capi.so
+```
+
+For the developer/source alternative, keep `PYTHONPATH` set as in §1 and
+pass the checkout rule library explicitly:
+
+```bash
 python -m ruledsl_mcp.smoke \
     --engine-lib /path/to/libruledsl_capi.so \
     --rules ./rules
 ```
 
 `Tools/mcp_demo/smoke_client.py` is the historical entry point and still
-works from a checkout; it simply delegates here. Once `1.2.0` is on PyPI,
+works from a checkout; it simply delegates here. With the 1.2.0 package,
 `--rules` and `--wrapper` can both be omitted: the packaged example library
-and the installed `ruledsl` wrapper are then found automatically. CI runs both routes on every PR
+and the installed `ruledsl` wrapper are found automatically. CI runs both routes on every PR
 (`verify-mcp-python` job) against the shipped release engine — downloaded
 from Releases and hash-verified first — so the transport path is covered
 end to end against the same binaries users run, not just at handler
@@ -271,10 +285,10 @@ repository's canonical `rules/` so the two can never drift.
 | server exits at startup: rule entry must declare … `input_schema` | manifest v2 requires an input contract per rule | see §7 |
 | server exits at startup: unsupported keyword in `input_schema` | an unknown keyword is fatal, never ignored — otherwise a constraint would look enforced when it is not | use only the keywords in §7 |
 | server exits: "requires Python 3.10+" | the MCP server needs 3.10+ (the `mcp` SDK's floor); the base binding works on 3.7+ | create the venv with a newer interpreter |
-| `ModuleNotFoundError: ruledsl` or `ruledsl_mcp` | `PYTHONPATH` does not point at the checkout's `bindings/python` | `export PYTHONPATH=<RuleDSL-SDK>/bindings/python` (after `1.2.0` is published, `pip install "ruledsl[mcp]"` instead) |
+| `ModuleNotFoundError: ruledsl` or `ruledsl_mcp` | the 1.2.0 package is not installed, or the source checkout is not on `PYTHONPATH` | install with `python -m pip install "ruledsl[mcp]"`; for the developer/source route, set `PYTHONPATH=<RuleDSL-SDK>/bindings/python` |
 | `ModuleNotFoundError: mcp` | the MCP SDK is not in this venv | `pip install "mcp>=2.0,<3"` |
 | `attempted relative import` | server started as a bare script | use `python -m ruledsl_mcp.server` |
-| `manifest_version` refused, or `isError` never appears | you are running the published `1.1.1`, which speaks the previous contract | run from a checkout until `1.2.0` is published (see §1) |
+| `manifest_version` refused, or `isError` never appears | you may be running 1.1.1, which speaks the previous contract | run `python -m pip install --upgrade "ruledsl[mcp]"` and verify `python -c "import importlib.metadata as m; print(m.version('ruledsl'))"` reports 1.2.0 |
 
 ---
 

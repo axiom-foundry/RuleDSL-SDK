@@ -111,6 +111,26 @@ the intended `main` deployment branch) and that the existing production PyPI
 Trusted Publisher names `pypi-publish.yml` with environment `pypi`. This change
 does not create or alter either environment or any PyPI/TestPyPI publisher.
 
+### Completed 1.2.0 evidence (2026-08-03)
+
+The operator flow above remains the reusable procedure. Its completed 1.2.0
+execution is recorded by these immutable identities:
+
+- source `837ae3062d666c5e3ef0711966eb8f95605412e5`, tree
+  `dced7670cd80107cf320a5aa5734106f41960f99`;
+- RC run/artifact `30834024674` / `8864078716`;
+- TestPyPI run/receipt artifact `30838714829` / `8866047202`, receipt JSON
+  SHA-256 `215faaa10b1c0e54042e4612dde17a1d7e3453f3287e2ef6a87768e46758fd71`;
+- production run `30841726760` and
+  <https://pypi.org/project/ruledsl/1.2.0/>.
+
+Production contains exactly the RC/TestPyPI wheel and sdist: wheel SHA-256
+`458bc6250fc973369ce68a3b2e90305bf34c88f2e9763001668f5d8eedbc8393`
+and sdist SHA-256
+`6af3c15896a7dd2789b4df162ed4ac222aa90d5aa0d4bdd16bafc46acde91730`.
+The rendered README and clean-venv smoke checks passed. No tag or GitHub
+Release was created; the engine/binary bundle remains v1.0.2.
+
 ## References
 
 - `docs/distribution/bundle_standard.md`

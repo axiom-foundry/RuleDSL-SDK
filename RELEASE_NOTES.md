@@ -2,7 +2,11 @@
 
 ## Python package 1.2.0 — MCP contract stabilization
 
-*(Draft. Not published; the release itself is a separate decision.)*
+*Published to PyPI on 2026-08-03 from source commit
+`837ae3062d666c5e3ef0711966eb8f95605412e5`. No tag or GitHub Release was
+created for this Python-package publication.*
+
+This is Python package 1.2.0 with MCP package surface 0.2.0.
 
 One piece of work, not a run of small fixes: the MCP surface and the language
 bindings now refuse the inputs they used to accept quietly, and CI holds them
@@ -141,20 +145,33 @@ the workbench through its actual GUI path. The MCP server is excluded: the
 `mcp` SDK requires Python 3.10+, so only its downlevel refusal is checked on
 3.7. Nothing outside Linux x86_64 is covered.
 
-One claim remains **not verified by CI** and must be settled before this
-version is published, not after (`docs/design/mcp_server_v0.md` §7.1):
+### Publication evidence
 
-- **The PyPI publish path.** `pypi-publish.yml` is `workflow_dispatch` only —
-  it never runs on push or pull request, so its wheel smoke test has not run
-  against this tree. It also does not verify that the wheel version matches a
-  tag, that `README-pypi.md` renders on PyPI, or that the version is not
-  already uploaded. `release-guard.yml` runs only on a GitHub `release` event
-  and so cannot be exercised locally either. Publish to TestPyPI and install
-  from it first.
+The external PyPI publish gate closed on 2026-08-03 with one immutable artifact
+chain:
 
-Until then, the published package remains `1.1.1`; `1.2.0` exists only in
-source. The repository README says so explicitly rather than showing a version
-nobody can install.
+- RC workflow run `30834024674`, artifact `8864078716`, source
+  `837ae3062d666c5e3ef0711966eb8f95605412e5`, tree
+  `dced7670cd80107cf320a5aa5734106f41960f99`;
+- TestPyPI workflow run `30838714829`, post-registry receipt artifact
+  `8866047202`, receipt JSON SHA-256
+  `215faaa10b1c0e54042e4612dde17a1d7e3453f3287e2ef6a87768e46758fd71`;
+- production workflow run `30841726760`, published at
+  <https://pypi.org/project/ruledsl/1.2.0/>.
+
+Production contains exactly one wheel and one sdist. Their registry and
+downloaded SHA-256 values match the RC and TestPyPI bytes:
+
+- `ruledsl-1.2.0-py3-none-any.whl`:
+  `458bc6250fc973369ce68a3b2e90305bf34c88f2e9763001668f5d8eedbc8393`;
+- `ruledsl-1.2.0.tar.gz`:
+  `6af3c15896a7dd2789b4df162ed4ac222aa90d5aa0d4bdd16bafc46acde91730`.
+
+The production README render and clean-venv install/smoke checks passed. The
+upload used Trusted Publishing behind the required-reviewer environment gate.
+This publication did not create a tag or GitHub Release, and it did not change
+the engine: the binary bundle remains v1.0.2 and the language implementation
+remains v0.9.
 
 ---
 

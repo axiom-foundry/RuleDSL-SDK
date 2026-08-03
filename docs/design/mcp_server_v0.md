@@ -399,12 +399,11 @@ Supported keywords — a deliberately small JSON Schema subset:
   compatibility promise, and may change or be withdrawn without a major
   version bump of the engine.
 
-### 7.1 Pre-release gates
+### 7.1 Release gate status
 
-One claim this repository makes is **not** currently verified by any automated
-run. It does not affect correctness of what is here, and it does not block
-merging — but publishing without settling it would ship an untested promise, so
-it is written down rather than remembered.
+The Python runtime and external PyPI publication gates are closed. The separate
+GitHub Release event guard remains unexercised because this Python-package
+publication intentionally created neither a tag nor a GitHub Release.
 
 The **Python 3.7 runtime** gate is closed. `python37-verify.yml` runs on a real
 CPython 3.7.17 interpreter (Linux x86_64, `ubuntu-22.04` — the newest Linux
@@ -418,9 +417,30 @@ hashes. The MCP server is **excluded by design**: the `mcp` SDK's own floor is
 3.10+, so only the downlevel refusal (`exit 2`, typed message, no traceback) is
 asserted on 3.7. No non-Linux and no non-x86_64 platform is covered.
 
-| Gate | Why it is open | What settles it |
-|---|---|---|
-| **External PyPI publish result** | The repository gates are closed over the artifact bytes: `pypi-rc-build.yml` builds once, checks metadata/rendering/smoke behavior, and emits an immutable hash-manifested RC; `pypi-publish.yml` only republishes those verified bytes. After TestPyPI upload, a separate OIDC-free job verifies the registry JSON, hashes both registry downloads, smokes the downloaded wheel, and only then emits the receipt required by production. An actual registry upload, Trusted Publisher configuration, rendered project page, and version availability are external state and have not been exercised by this tree. Separately, `release-guard.yml` runs only on a GitHub `release` event (`published`/`edited`), so it cannot be exercised locally either — `GITHUB_EVENT_PATH` is unset. | Follow `docs/distribution/runbook.md`: configure the documented TestPyPI identity and protected `pypi` environment, dispatch TestPyPI with the RC IDs, require its registry-verification job and receipt to pass, then dispatch production with the same RC IDs and TestPyPI run ID. |
+- **External PyPI publish result — closed on 2026-08-03.** The immutable
+  RC was uploaded to TestPyPI, independently re-downloaded and verified by an
+  OIDC-free job, then the receipt-bound exact bytes were uploaded to production
+  through Trusted Publishing and the required-reviewer `pypi` environment.
+  Production contains exactly one wheel and one sdist; registry hashes,
+  downloaded hashes, RC metadata, and TestPyPI bytes are identical. The
+  production README render and clean-venv smoke checks passed.
+  - RC run/artifact: `30834024674` / `8864078716`; source
+    `837ae3062d666c5e3ef0711966eb8f95605412e5`; tree
+    `dced7670cd80107cf320a5aa5734106f41960f99`.
+  - TestPyPI run/receipt: `30838714829` / `8866047202`; receipt JSON
+    SHA-256
+    `215faaa10b1c0e54042e4612dde17a1d7e3453f3287e2ef6a87768e46758fd71`.
+  - Production run: `30841726760`.
+  - Wheel SHA-256:
+    `458bc6250fc973369ce68a3b2e90305bf34c88f2e9763001668f5d8eedbc8393`;
+    sdist SHA-256:
+    `6af3c15896a7dd2789b4df162ed4ac222aa90d5aa0d4bdd16bafc46acde91730`.
+- **GitHub Release event guard — not exercised.** `release-guard.yml` runs
+  only on a GitHub `release` event (`published`/`edited`), and no tag or
+  GitHub Release was created for Python package 1.2.0. This is separate from
+  the closed PyPI gate and should be evaluated only as part of a separately
+  authorized GitHub Release. The engine/binary bundle remains v1.0.2; this
+  document does not claim an engine 1.2.0 release.
 
 ---
 
