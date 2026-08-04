@@ -3,6 +3,8 @@
   "created_by": "Tools/release_bundle/build_bundle.ps1",
   "ruledslc_version": "RuleDSL/1.0.0 (lang=0.9; axbc=3; abi=1)",
   "engine_version": "1.0.0",
+  "engine_source_sha": "0e52050c64620619d6f52317fb281a2b9e6534d3",
+  "sdk_source_sha": "d79c02118efde0203c623aacc88461bc3b0a40cd",
   "lang_version": "0.9",
   "axbc_version": "3",
   "abi_level": "1",

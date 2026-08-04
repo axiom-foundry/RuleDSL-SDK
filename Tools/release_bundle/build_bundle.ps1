@@ -3,6 +3,10 @@ param(
     [string]$EngineBin,
     [Parameter(Mandatory = $true)]
     [string]$CompilerBin,
+    [Parameter(Mandatory = $true)]
+    [string]$EngineSourceSha,
+    [Parameter(Mandatory = $true)]
+    [string]$SdkSourceSha,
     [string]$EngineImportLib = "",
     [string]$Out = "",
     [ValidateSet("Evaluation", "Commercial")]
@@ -69,6 +73,21 @@ function Get-SortedOrdinal {
     }
     $list.Sort([System.StringComparer]::Ordinal)
     return @($list)
+}
+
+function Assert-FullLowerCommitSha {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+
+    if (-not [System.Text.RegularExpressions.Regex]::IsMatch(
+        $Value,
+        '^[0-9a-f]{40}$',
+        [System.Text.RegularExpressions.RegexOptions]::CultureInvariant
+    )) {
+        throw "$Name must be an exact lowercase 40-hex Git commit SHA"
+    }
 }
 
 function Get-VersionDefineValue {
@@ -153,6 +172,9 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 if (-not $Out) {
     $Out = Join-Path $repoRoot "bundle"
 }
+
+Assert-FullLowerCommitSha -Name "EngineSourceSha" -Value $EngineSourceSha
+Assert-FullLowerCommitSha -Name "SdkSourceSha" -Value $SdkSourceSha
 
 $EngineBin = (Resolve-Path $EngineBin).Path
 $CompilerBin = (Resolve-Path $CompilerBin).Path
@@ -352,6 +374,8 @@ if ($EmitManifests) {
     $toolchainLines = @(
         "RULEDSLC_VERSION=$($ruledslcInfo.primary_line)",
         "ENGINE_VERSION=$engineVersion",
+        "ENGINE_SOURCE_SHA=$EngineSourceSha",
+        "SDK_SOURCE_SHA=$SdkSourceSha",
         "BUNDLE_SCRIPT_VERSION=$bundleScriptVersion"
     )
     $toolchainPath = Join-Path $manifestsOut "TOOLCHAIN.txt"
@@ -384,12 +408,14 @@ if ($EmitManifests) {
     $manifestObject = [ordered]@{
         bundle_type      = $BundleType
         created_by       = "Tools/release_bundle/build_bundle.ps1"
-        ruledslc_version = $ruledslcInfo.primary_line
-        engine_version   = $engineVersion
-        lang_version     = $ruledslcInfo.lang_version
-        axbc_version     = $ruledslcInfo.axbc_version
-        abi_level        = $ruledslcInfo.abi_level
-        file_list        = $manifestList
+        ruledslc_version  = $ruledslcInfo.primary_line
+        engine_version    = $engineVersion
+        engine_source_sha = $EngineSourceSha
+        sdk_source_sha    = $SdkSourceSha
+        lang_version      = $ruledslcInfo.lang_version
+        axbc_version      = $ruledslcInfo.axbc_version
+        abi_level         = $ruledslcInfo.abi_level
+        file_list         = $manifestList
     }
     $manifestPath = Join-Path $manifestsOut "MANIFEST.json"
     $manifestJson = $manifestObject | ConvertTo-Json -Depth 8

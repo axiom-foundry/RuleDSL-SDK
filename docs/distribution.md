@@ -42,6 +42,8 @@ Fields (deterministic key order, written by `Tools/release_bundle/build_bundle.p
 - `created_by`
 - `ruledslc_version`
 - `engine_version`
+- `engine_source_sha` (exact lowercase 40-hex private-engine commit)
+- `sdk_source_sha` (exact lowercase 40-hex SDK commit)
 - `lang_version`
 - `axbc_version`
 - `abi_level`
@@ -61,7 +63,10 @@ Requirements (enforced by `Tools/release_bundle/audit_bundle_layout.ps1`):
 
 - covers every bundle file except `manifests/HASHES.txt` itself,
 - entries sorted by `<relative_path>`,
-- paths relative and forward-slash normalized,
+- paths are strict relative forward-slash paths with no `.`/`..`, empty,
+  repeated, backslash, absolute, or alias segments,
+- exact parity with actual bundle files; only `manifests/HASHES.txt` excludes
+  itself,
 - generated at bundle-assembly time and verified before rollout.
 
 A separate `SHA256SUMS.txt` over the outer `.tar.gz`/`.zip` release archives is produced by the Linux release workflow (`.github/workflows/bundle-linux.yml`).

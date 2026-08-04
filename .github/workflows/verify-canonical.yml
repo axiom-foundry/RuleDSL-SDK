@@ -14,21 +14,48 @@ jobs:
       - name: Checkout SDK repo
         uses: actions/checkout@v4
 
-      - name: Audit public bundle fixture layout
+      - name: Test public bundle audit contract
+        shell: pwsh
+        run: ./Tools/release_bundle/test_audit_bundle_layout.ps1
+
+      - name: Read reviewed engine source pin
+        id: engine-pin
         shell: pwsh
         run: |
-          ./Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir ./Tools/release_bundle/fixtures/min_bundle
+          $pinPath = "docs/distribution/engine_source_sha.txt"
+          $pinRaw = [System.IO.File]::ReadAllText($pinPath)
+          if ($pinRaw -cnotmatch '^[0-9a-f]{40}(?:\r?\n)?\z') {
+            Write-Error "$pinPath must contain exactly one lowercase 40-hex Git commit SHA"
+            exit 1
+          }
+          $engineSha = $pinRaw.TrimEnd("`r", "`n")
+          "sha=$engineSha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "reviewed engine source: $engineSha"
 
       - name: Checkout engine repo at canonical ref
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          # Canonical pin: every engine->SDK mirrored artifact (MIRROR_ITEMS) must match
-          # the engine at THIS ref. Bump it whenever a mirrored source changes and is
-          # re-mirrored into the SDK (re-mirror + re-pin go together).
-          ref: 0e52050c64620619d6f52317fb281a2b9e6534d3
+          # Canonical pin: every engine->SDK mirrored artifact (MIRROR_ITEMS) and
+          # future bundle build consumes the same repository-reviewed source SHA.
+          ref: ${{ steps.engine-pin.outputs.sha }}
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
+
+      - name: Verify canonical engine checkout identity
+        shell: pwsh
+        run: |
+          $expected = '${{ steps.engine-pin.outputs.sha }}'
+          $actual = (& git -C engine rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $actual -cnotmatch '^[0-9a-f]{40}$') {
+            Write-Error "engine checkout did not resolve to an exact lowercase 40-hex commit"
+            exit 1
+          }
+          if ($actual -cne $expected) {
+            Write-Error "engine checkout mismatch: expected $expected, got $actual"
+            exit 1
+          }
+          Write-Host "verified canonical engine checkout: $actual"
 
       - name: Dual checkout confirmation
         run: echo "Dual checkout OK"
@@ -83,7 +110,7 @@ jobs:
               for f in fails:
                   print(f"  - {f}")
               print("\nFix: re-mirror the changed source(s) into the SDK and bump the")
-              print("canonical `ref:` above to the engine commit you mirrored from.")
+              print("docs/distribution/engine_source_sha.txt in the same reviewed change.")
               sys.exit(1)
           print("All mirrored artifacts match the engine canonical ref (normalized).")
           PY

@@ -2,25 +2,32 @@
 
 ## Vendor flow (bundle build)
 
-1. Build release binaries for engine and `ruledslc`.
-2. Run bundle assembly:
+1. Review `docs/distribution/engine_source_sha.txt`, check out that exact private
+   engine commit, verify `git rev-parse HEAD` matches it, and record the exact SDK
+   `HEAD`. Do not use a branch, tag, or free-form ref as a substitute.
+2. Build release binaries for engine and `ruledslc` from that checkout.
+3. Run bundle assembly:
 
 ```powershell
 pwsh Tools/release_bundle/build_bundle.ps1 `
   -EngineBin <engine-binary> `
   -CompilerBin <ruledslc-binary> `
+  -EngineSourceSha <exact-lowercase-40-hex-engine-commit> `
+  -SdkSourceSha <exact-lowercase-40-hex-sdk-commit> `
   -EngineImportLib <optional-import-lib> `
   -BundleType <Evaluation|Commercial> `
   -Out <bundle-dir>
 ```
 
-3. Audit the assembled bundle:
+4. Audit the assembled bundle:
 
 ```powershell
 pwsh Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir <bundle-dir>
 ```
 
-4. Publish the bundle with `manifests/HASHES.txt` as the authoritative hash record.
+5. Confirm `MANIFEST.json` and `TOOLCHAIN.txt` record the same full engine/SDK
+   source SHAs, then publish the bundle with `manifests/HASHES.txt` as the
+   authoritative hash record.
 
 ## Customer flow (verify then integrate)
 
