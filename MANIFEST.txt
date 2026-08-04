@@ -150,6 +150,11 @@ examples/c/malformed_bytecode.c
 examples/c/minimal_eval.c
 examples/c/output_fields.c
 examples/c/unknown_error_code.c
+examples/mcp_pilot/README.md
+examples/mcp_pilot/acceptance_cases.json
+examples/mcp_pilot/rules/manifest.json
+examples/mcp_pilot/rules/purchase_approval.ruledsl.txt
+examples/mcp_pilot/verify_pilot.py
 include/axiom/export.h
 include/axiom/ruledsl_c.h
 include/axiom/version.h
@@ -171,5 +176,6 @@ tests/mcp/test_binding_lifecycle.py
 tests/mcp/test_cli.py
 tests/mcp/test_handlers.py
 tests/mcp/test_library.py
+tests/mcp/test_pilot_pack.py
 tests/mcp/test_validate.py
 tests/mcp/test_wire_parity.py

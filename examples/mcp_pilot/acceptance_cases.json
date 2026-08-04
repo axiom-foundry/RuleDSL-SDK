@@ -1,0 +1,317 @@
+{
+  "format_version": 1,
+  "rule_id": "purchase_approval",
+  "now_utc_ms": 1700000000000,
+  "manifest_sha256": "b1a73dda6d3378811ab37a6cafe8c15c6349707c9ef8d99c983e0be33b7a7119",
+  "rule_sha256": "c88b2af68ec55b8bbc745b735d51c50e6625e1cbe307f57f18e46eb7c3e2217d",
+  "positive_cases": [
+    {
+      "id": "blocked_supplier_precedence",
+      "fields": {
+        "amount_minor": 900000,
+        "currency": "USD",
+        "supplier_status": "blocked",
+        "budget_available": false,
+        "manual_review_required": true
+      },
+      "expected": {
+        "action": "DECLINE",
+        "action_type": 1,
+        "rule_name": "decline_blocked_supplier",
+        "reason": "supplier_blocked",
+        "route": "procurement_reject",
+        "decision_hash": "71df7efbef42894086465a55fd3872bb1fe68a2668838a98f6ae080f10d21568"
+      }
+    },
+    {
+      "id": "usd_requires_review",
+      "fields": {
+        "amount_minor": 10000,
+        "currency": "USD",
+        "supplier_status": "approved",
+        "budget_available": true,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_unsupported_currency",
+        "reason": "unsupported_currency",
+        "route": "human_review",
+        "decision_hash": "21f368cba9a30018e08932a0ea5c1e401da5415e985c127c8682f8d7bef7505b"
+      }
+    },
+    {
+      "id": "eur_requires_review",
+      "fields": {
+        "amount_minor": 10000,
+        "currency": "EUR",
+        "supplier_status": "approved",
+        "budget_available": true,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_unsupported_currency",
+        "reason": "unsupported_currency",
+        "route": "human_review",
+        "decision_hash": "21f368cba9a30018e08932a0ea5c1e401da5415e985c127c8682f8d7bef7505b"
+      }
+    },
+    {
+      "id": "above_pilot_limit",
+      "fields": {
+        "amount_minor": 500001,
+        "currency": "TRY",
+        "supplier_status": "approved",
+        "budget_available": true,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_above_pilot_limit",
+        "reason": "amount_above_pilot_limit",
+        "route": "human_review",
+        "decision_hash": "a7b8103614547a3bb73caacd7feb5f0a6d5197b65b3c3f557ddc00787f0006f1"
+      }
+    },
+    {
+      "id": "budget_unavailable",
+      "fields": {
+        "amount_minor": 10000,
+        "currency": "TRY",
+        "supplier_status": "approved",
+        "budget_available": false,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_no_budget",
+        "reason": "budget_unavailable",
+        "route": "human_review",
+        "decision_hash": "3cd19af7126eb97b91db4e11e257903b467c8c888e0c1e459e65ae9ae3e4e739"
+      }
+    },
+    {
+      "id": "new_supplier",
+      "fields": {
+        "amount_minor": 10000,
+        "currency": "TRY",
+        "supplier_status": "new",
+        "budget_available": true,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_new_supplier",
+        "reason": "supplier_new",
+        "route": "human_review",
+        "decision_hash": "fdafe5c8726ee69a30f4218a764e70c6fc46a877969a082f6a993c41c2c87ca3"
+      }
+    },
+    {
+      "id": "manual_review_flag",
+      "fields": {
+        "amount_minor": 10000,
+        "currency": "TRY",
+        "supplier_status": "approved",
+        "budget_available": true,
+        "manual_review_required": true
+      },
+      "expected": {
+        "action": "REVIEW",
+        "action_type": 2,
+        "rule_name": "review_manual_flag",
+        "reason": "manual_review_requested",
+        "route": "human_review",
+        "decision_hash": "62297a6ccc6302432410807e49fd99495fdc14bafa6699b00b303a557bba2d68"
+      }
+    },
+    {
+      "id": "exact_threshold_allow",
+      "fields": {
+        "amount_minor": 500000,
+        "currency": "TRY",
+        "supplier_status": "approved",
+        "budget_available": true,
+        "manual_review_required": false
+      },
+      "expected": {
+        "action": "ALLOW",
+        "action_type": 0,
+        "rule_name": "allow_pilot_purchase",
+        "reason": "pilot_conditions_met",
+        "route": "straight_through",
+        "decision_hash": "102c01e64b6b520ae47f2c068ca897b53feca1506c694e84c76f659a9ac93f0b"
+      }
+    }
+  ],
+  "repeat_case": "exact_threshold_allow",
+  "negative_cases": [
+    {
+      "id": "missing_required_field",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 6,
+        "error_name": "SRV_SCHEMA_VIOLATION",
+        "field": "fields.amount_minor"
+      }
+    },
+    {
+      "id": "extra_field",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": 10000,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false,
+          "extra": "not-declared"
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 6,
+        "error_name": "SRV_SCHEMA_VIOLATION",
+        "field": "fields.extra"
+      }
+    },
+    {
+      "id": "numeric_string_amount",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": "10000",
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 6,
+        "error_name": "SRV_SCHEMA_VIOLATION",
+        "field": "fields.amount_minor"
+      }
+    },
+    {
+      "id": "negative_amount",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": -1,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 6,
+        "error_name": "SRV_SCHEMA_VIOLATION",
+        "field": "fields.amount_minor"
+      }
+    },
+    {
+      "id": "unsafe_integer_amount",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": 9007199254740992,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 4,
+        "error_name": "SRV_UNSAFE_FIELD_VALUE",
+        "field": "fields.amount_minor"
+      }
+    },
+    {
+      "id": "reserved_clock_field",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": 10000,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false,
+          "now_utc_ms": 1700000000000
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 2,
+        "error_name": "SRV_RESERVED_FIELD",
+        "field": "fields.now_utc_ms"
+      }
+    },
+    {
+      "id": "numeric_string_top_level_clock",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": 10000,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": "1700000000000"
+      },
+      "expected_error": {
+        "error_domain": "engine",
+        "error_code": 5,
+        "error_name": "AX_ERR_NOW_UTC_MS_NOT_NUMBER",
+        "field": "now_utc_ms"
+      }
+    },
+    {
+      "id": "zero_amount",
+      "arguments": {
+        "rule_id": "purchase_approval",
+        "fields": {
+          "amount_minor": 0,
+          "currency": "TRY",
+          "supplier_status": "approved",
+          "budget_available": true,
+          "manual_review_required": false
+        },
+        "now_utc_ms": 1700000000000
+      },
+      "expected_error": {
+        "error_domain": "server",
+        "error_code": 6,
+        "error_name": "SRV_SCHEMA_VIOLATION",
+        "field": "fields.amount_minor"
+      }
+    }
+  ]
+}

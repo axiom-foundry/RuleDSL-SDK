@@ -177,6 +177,7 @@ ruledsl-workbench --dll path/to/bundle/bin/ruledsl_capi.dll
 | Troubleshooting | [`docs/troubleshooting.md`](docs/troubleshooting.md) |
 | Integration snippets | [`docs/integration_snippets.md`](docs/integration_snippets.md) |
 | MCP server quickstart (early access) | [`docs/mcp_quickstart.md`](docs/mcp_quickstart.md) |
+| Purchase-approval MCP shadow pilot | [`examples/mcp_pilot/`](examples/mcp_pilot/) |
 | MCP design contract | [`docs/design/mcp_server_v0.md`](docs/design/mcp_server_v0.md) |
 
 Full documentation index: [`docs/README.md`](docs/README.md)

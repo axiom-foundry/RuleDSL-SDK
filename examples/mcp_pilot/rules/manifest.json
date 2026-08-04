@@ -1,0 +1,44 @@
+{
+  "manifest_version": 2,
+  "rules": {
+    "purchase_approval": {
+      "file": "purchase_approval.ruledsl.txt",
+      "sha256": "c88b2af68ec55b8bbc745b735d51c50e6625e1cbe307f57f18e46eb7c3e2217d",
+      "version": "1.0.0-pilot",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amount_minor",
+          "currency",
+          "supplier_status",
+          "budget_available",
+          "manual_review_required"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Purchase amount in integer minor units; never a floating-point currency amount."
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["TRY", "USD", "EUR"],
+            "description": "ISO currency code. The pilot policy supports TRY and explicitly routes other declared currencies to review."
+          },
+          "supplier_status": {
+            "type": "string",
+            "enum": ["approved", "new", "blocked"]
+          },
+          "budget_available": {
+            "type": "boolean"
+          },
+          "manual_review_required": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

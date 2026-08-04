@@ -1,0 +1,43 @@
+# Purchase approval shadow pilot — deterministic, prioritized, fail closed.
+# All fields are required by the manifest schema. RuleDSL v0.9 evaluates both
+# operands of and/or, so no rule relies on short-circuit behavior.
+
+rule decline_blocked_supplier priority 700 {
+  when supplier_status == "blocked";
+  then reason = "supplier_blocked", route = "procurement_reject", decline;
+}
+
+rule review_unsupported_currency priority 600 {
+  when currency != "TRY";
+  then reason = "unsupported_currency", route = "human_review", review;
+}
+
+rule review_above_pilot_limit priority 500 {
+  when amount_minor > 500000;
+  then reason = "amount_above_pilot_limit", route = "human_review", review;
+}
+
+rule review_no_budget priority 400 {
+  when not budget_available;
+  then reason = "budget_unavailable", route = "human_review", review;
+}
+
+rule review_new_supplier priority 300 {
+  when supplier_status == "new";
+  then reason = "supplier_new", route = "human_review", review;
+}
+
+rule review_manual_flag priority 200 {
+  when manual_review_required;
+  then reason = "manual_review_requested", route = "human_review", review;
+}
+
+rule allow_pilot_purchase priority 100 {
+  when supplier_status == "approved" and budget_available and currency == "TRY" and amount_minor <= 500000 and not manual_review_required;
+  then reason = "pilot_conditions_met", route = "straight_through", allow;
+}
+
+rule review_fail_closed {
+  when true;
+  then reason = "fail_closed_fallback", route = "human_review", review;
+}

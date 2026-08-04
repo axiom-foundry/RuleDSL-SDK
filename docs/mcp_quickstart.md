@@ -8,6 +8,11 @@ Version pairing: **engine bundle v1.0.2**, **Python package 1.2.0**, and
 **MCP package surface 0.2.0**. The Python package is pure Python; the engine
 binary is never inside it.
 
+For a runnable, fail-closed proof-of-value with one allowlisted rule id, strict
+purchase fields, golden stdio acceptance cases, and a 2–4 week shadow-mode
+operations checklist, use the
+[`purchase_approval` MCP pilot pack](../examples/mcp_pilot/README.md).
+
 > `pip install "ruledsl[mcp]"` installs the published 1.2.0 contract described
 > here. Version 1.1.1 was the previous contract: it used
 > `manifest_version: 1`, declared no `input_schema`, returned failures as

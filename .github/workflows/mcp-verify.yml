@@ -44,8 +44,10 @@ jobs:
 
       # Engine-free, so it runs BEFORE the engine download: the cheapest
       # failures surface first. Needs neither the DLL nor the mcp package.
-      - name: Run engine-free input-validation tests
-        run: python tests/mcp/test_validate.py
+      - name: Run engine-free input-validation and pilot contract tests
+        run: |
+          python tests/mcp/test_validate.py
+          python tests/mcp/test_pilot_pack.py
 
       - name: Download pinned engine release bundle + verify SHA256SUMS
         env:
@@ -106,6 +108,18 @@ jobs:
           # explicit schemas). If it ever moves, the decision path itself
           # changed - investigate, do not regenerate the pin.
           grep -q "decision_hash=e1e99393ea54ee315439861eacb0de7cbfb9410bfb99627f03f7121fb3f921cd" smoke.out
+
+      - name: Run purchase-approval MCP pilot verifier (real stdio)
+        env:
+          PYTHONPATH: ${{ github.workspace }}/bindings/python
+        run: |
+          set -euo pipefail
+          python examples/mcp_pilot/verify_pilot.py \
+            --engine-lib "$ENGINE_LIB" \
+            --wrapper "$GITHUB_WORKSPACE/bindings/python" \
+            --receipt "$RUNNER_TEMP/purchase-approval-pilot-receipt.json" | tee pilot.out
+          grep -q "PASS  positive=8 negative=8 repeated=1" pilot.out
+          test -s "$RUNNER_TEMP/purchase-approval-pilot-receipt.json"
 
       - name: Assemble pip package + verify the self-contained pip path
         run: |
