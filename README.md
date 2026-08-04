@@ -1,6 +1,6 @@
 # RuleDSL SDK (C API)
 
-RuleDSL is a **deterministic rule-evaluation engine** embedded through a stable public C ABI design.
+RuleDSL is infrastructure for **executable business policies**: a deterministic rule-evaluation engine embedded through a stable public C ABI design. See the [product overview and live demos](https://axiom-foundry.github.io/RuleDSL-SDK/).
 Published v1.0.2 evidence verifies byte-identical decisions on Windows x86_64 and Linux x86_64 when the engine/ABI, bytecode, canonical input, and evaluation options match.
 
 **Linux & Windows x86_64 · engine/binary bundle v1.0.2 · language implementation v0.9 (v1.0 = target spec) · Python package 1.2.0 · MCP package surface 0.2.0.**
