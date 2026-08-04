@@ -11,6 +11,10 @@
 *.ps1 text eol=crlf
 *.bat text eol=crlf
 
+# Extensionless release-fixture text must hash identically on every checkout.
+Tools/release_bundle/fixtures/min_bundle/LICENSE text eol=lf
+Tools/release_bundle/fixtures/min_bundle/NOTICE text eol=lf
+
 # --- Presentation governance (GitHub Linguist) ---
 *.ps1 linguist-detectable=false
 *.sh  linguist-detectable=false

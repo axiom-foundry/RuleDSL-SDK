@@ -65,6 +65,7 @@ docs/distribution.md
 docs/distribution/bundle_standard.md
 docs/distribution/changelog_snippet.md
 docs/distribution/customer_verification.md
+docs/distribution/engine_source_sha.txt
 docs/distribution/release_notes_template.md
 docs/distribution/runbook.md
 docs/error_code_registry.md

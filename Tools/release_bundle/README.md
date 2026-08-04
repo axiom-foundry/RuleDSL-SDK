@@ -10,6 +10,8 @@ Assembles a deterministic SDK delivery bundle.
 pwsh Tools/release_bundle/build_bundle.ps1 \
   -EngineBin <path-to-engine-binary> \
   -CompilerBin <path-to-ruledslc> \
+  -EngineSourceSha <exact-lowercase-40-hex-engine-commit> \
+  -SdkSourceSha <exact-lowercase-40-hex-sdk-commit> \
   -EngineImportLib <optional-path-to-import-lib> \
   -BundleType Evaluation \
   -EmitManifests:$true \
@@ -34,8 +36,11 @@ bundle/
 ### Manifest behavior
 
 - `MANIFEST.json` is emitted with deterministic key order and sorted `file_list`.
+  `engine_source_sha` and `sdk_source_sha` are mandatory exact lowercase 40-hex
+  commit identities; engine/package/language versions remain separate fields.
 - `HASHES.txt` uses canonical lines: `<sha256>  <relative_path>` sorted by path.
-- `TOOLCHAIN.txt` records `ruledslc --version`, engine version (if discoverable), and script revision.
+- `TOOLCHAIN.txt` records `ruledslc --version`, engine version, both full source
+  SHAs, and the script revision.
 - `LICENSE_STATUS.txt` records the bundle license: `LICENSE=PolyForm-Free-Trial-1.0.0` / `TYPE=EVALUATION` for evaluation bundles, or the executed-commercial-agreement reference for commercial bundles.
 - No timestamps are emitted in manifests by default.
 
@@ -52,10 +57,12 @@ pwsh Tools/release_bundle/audit_bundle_layout.ps1 -BundleDir <bundle-folder>
 Checks include:
 - required directories and manifest files,
 - forbidden artifacts (`.pdb`, build dirs, CMake metadata),
-- sorted and normalized manifest paths,
+- strict relative paths: no absolute/backslash/empty/repeated/`.`/`..` aliases,
+- no reparse points or symbolic links inside the bundle,
 - sorted `HASHES.txt` format,
 - SHA256 verification for every listed file,
-- parity between `MANIFEST.json` `file_list` and `HASHES.txt` paths.
+- exact parity between actual files, `MANIFEST.json` `file_list`, and
+  `HASHES.txt` paths; only `manifests/HASHES.txt` itself is excluded.
 
 ## CI fixture
 
@@ -64,6 +71,28 @@ A public fixture is available at:
 `Tools/release_bundle/fixtures/min_bundle/`
 
 This fixture allows CI to validate layout audit behavior without private binaries.
+`test_audit_bundle_layout.ps1` copies it into isolated temporary directories and
+proves the valid case plus traversal/dot-segment, unlisted-extra, missing-file and
+hash-mismatch failures. Fixture source SHAs validate the schema only; the empty
+fixture binaries are not release artifacts or evidence that either SHA reproduces
+published v1.0.2 bytes.
+
+## Reviewed engine source pin
+
+`docs/distribution/engine_source_sha.txt` is the only engine source ref accepted by
+both bundle workflows and the canonical mirror gate. It contains one exact
+lowercase 40-hex commit. To update it:
+
+1. Review the intended private-engine commit and its engine CI/evidence.
+2. Change the pin in an SDK pull request; do not add a workflow input or branch/tag
+   override.
+3. Let `verify-canonical` prove the mirrored SDK artifacts against that checkout.
+4. Merge the SDK change before manually building or pushing a release tag. Manual
+   and tag builds read the pin from the checked-out SDK commit/tag and verify the
+   private checkout's `HEAD` before configure/build.
+
+The pin and provenance fields govern future bundle builds. They do not change or
+claim byte reproduction for already-published v1.0.2 engine bundles.
 
 ## Linux bundle workflow (`.github/workflows/bundle-linux.yml`)
 
@@ -93,9 +122,9 @@ What it does:
 
 ### Triggers
 
-- **Manual** (`workflow_dispatch`): choose `engine_ref` (default `main`) and
-  `bundle_type` (`Evaluation`/`Commercial`). Outputs land as a workflow
-  artifact.
+- **Manual** (`workflow_dispatch`): choose only `bundle_type`
+  (`Evaluation`/`Commercial`). The engine commit always comes from the reviewed
+  SDK-tree pin. Outputs land as a workflow artifact.
 - **Tag push** (`v*.*.*`): the bundle archives are additionally attached to the
   GitHub release (alongside the source archives from `release.yml`).
 

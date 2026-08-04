@@ -21,10 +21,6 @@ name: bundle-linux
 on:
   workflow_dispatch:
     inputs:
-      engine_ref:
-        description: "Engine repo ref (branch/tag/SHA) to build"
-        required: false
-        default: "main"
       bundle_type:
         description: "Bundle type"
         required: false
@@ -52,13 +48,55 @@ jobs:
         with:
           path: sdk
 
+      - name: Read reviewed source identities
+        id: source
+        shell: pwsh
+        working-directory: sdk
+        run: |
+          $pinPath = "docs/distribution/engine_source_sha.txt"
+          $pinRaw = [System.IO.File]::ReadAllText($pinPath)
+          if ($pinRaw -cnotmatch '^[0-9a-f]{40}(?:\r?\n)?\z') {
+            Write-Error "$pinPath must contain exactly one lowercase 40-hex Git commit SHA"
+            exit 1
+          }
+          $engineSha = $pinRaw.TrimEnd("`r", "`n")
+          $sdkSha = (& git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $sdkSha -cnotmatch '^[0-9a-f]{40}$') {
+            Write-Error "SDK checkout did not resolve to an exact lowercase 40-hex commit"
+            exit 1
+          }
+          $eventSha = '${{ github.sha }}'
+          if ($sdkSha -cne $eventSha) {
+            Write-Error "SDK checkout mismatch: expected event SHA $eventSha, got $sdkSha"
+            exit 1
+          }
+          "engine_sha=$engineSha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sdk_sha=$sdkSha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "reviewed engine source: $engineSha"
+          Write-Host "SDK source: $sdkSha"
+
       - name: Checkout engine (private source)
         uses: actions/checkout@v4
         with:
           repository: axiom-foundry/RuleDSL
-          ref: ${{ github.event.inputs.engine_ref || 'main' }}
+          ref: ${{ steps.source.outputs.engine_sha }}
           token: ${{ secrets.ENGINE_REPO_TOKEN }}
           path: engine
+
+      - name: Verify engine checkout identity
+        shell: pwsh
+        run: |
+          $expected = '${{ steps.source.outputs.engine_sha }}'
+          $actual = (& git -C engine rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $actual -cnotmatch '^[0-9a-f]{40}$') {
+            Write-Error "engine checkout did not resolve to an exact lowercase 40-hex commit"
+            exit 1
+          }
+          if ($actual -cne $expected) {
+            Write-Error "engine checkout mismatch: expected $expected, got $actual"
+            exit 1
+          }
+          Write-Host "verified engine checkout: $actual"
 
       - name: Install build deps
         run: |
@@ -131,10 +169,12 @@ jobs:
         working-directory: sdk
         run: |
           ./Tools/release_bundle/build_bundle.ps1 `
-            -EngineBin   "${{ steps.bins.outputs.engine_bin }}" `
-            -CompilerBin "${{ steps.bins.outputs.compiler_bin }}" `
-            -BundleType  "${{ github.event.inputs.bundle_type || 'Evaluation' }}" `
-            -Out         "$env:GITHUB_WORKSPACE/dist/bundle"
+            -EngineBin       "${{ steps.bins.outputs.engine_bin }}" `
+            -CompilerBin    "${{ steps.bins.outputs.compiler_bin }}" `
+            -EngineSourceSha "${{ steps.source.outputs.engine_sha }}" `
+            -SdkSourceSha    "${{ steps.source.outputs.sdk_sha }}" `
+            -BundleType      "${{ github.event.inputs.bundle_type || 'Evaluation' }}" `
+            -Out             "$env:GITHUB_WORKSPACE/dist/bundle"
 
       - name: Audit bundle layout
         shell: pwsh

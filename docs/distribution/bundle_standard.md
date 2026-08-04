@@ -60,7 +60,9 @@ The following MUST NOT appear in a delivery bundle:
 ## Deterministic Manifest Rules
 
 - `MANIFEST.json` MUST use deterministic key ordering.
-- `MANIFEST.json` `file_list` MUST be relative, forward-slash normalized, and sorted.
+- `MANIFEST.json` `file_list` MUST contain strict relative paths: forward slashes only, no absolute paths, empty segments, `.`/`..` segments, backslashes, or non-normalized aliases.
+- The actual bundle file inventory MUST exactly match both `MANIFEST.json` and `HASHES.txt`; only `manifests/HASHES.txt` itself is excluded from the hashed inventory.
+- Bundle roots and descendants MUST NOT be symbolic links or reparse points.
 - `HASHES.txt` MUST use canonical lines:
   - `<sha256>  <relative_path>`
 - `HASHES.txt` entries MUST be sorted by `<relative_path>`.
@@ -75,10 +77,12 @@ The following MUST NOT appear in a delivery bundle:
 - `created_by` (tool identifier only)
 - `ruledslc_version`
 - `engine_version` (or `UNKNOWN` if unavailable)
+- `engine_source_sha` (the reviewed, exact lowercase 40-hex engine commit)
+- `sdk_source_sha` (the exact lowercase 40-hex SDK commit used to build the bundle)
 - `lang_version`
 - `axbc_version`
 - `abi_level`
 - `file_list`
 
-`TOOLCHAIN.txt` MUST record version lines for compiler and engine.
+`TOOLCHAIN.txt` MUST record version lines for compiler and engine plus the same `ENGINE_SOURCE_SHA` and `SDK_SOURCE_SHA` values as `MANIFEST.json`.
 `LICENSE_STATUS.txt` MUST record the bundle license: `LICENSE=PolyForm-Free-Trial-1.0.0` with `TYPE=EVALUATION` for evaluation bundles, or the executed-commercial-agreement reference for commercial bundles.
