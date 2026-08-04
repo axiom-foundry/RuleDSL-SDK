@@ -159,6 +159,7 @@ rules/manifest.json
 rules/velocity_limits.ruledsl.txt
 site/assets/og-banner-spec.md
 site/assets/og-banner.png
+site/assets/og-banner.svg
 site/assets/ruledsl-duo-demo.mp4
 site/assets/ruledsl-throughput-demo.mp4
 site/assets/ruledsl-workbench-demo.mp4
