@@ -156,6 +156,7 @@ rules/allow_small.ruledsl.txt
 rules/block_extreme.ruledsl.txt
 rules/manifest.json
 rules/velocity_limits.ruledsl.txt
+site/assets/og-banner-spec.md
 site/assets/og-banner.png
 site/assets/ruledsl-duo-demo.mp4
 site/assets/ruledsl-throughput-demo.mp4
