@@ -17,7 +17,12 @@ Usage:
 It evaluates the same input twice and writes two records (run A, run B). Because
 the engine is deterministic, the two records match — confirm it with:
 
-    python ../../../Tools/replay_proof/verify_replay_proof.py --a <out>/run_a.json --b <out>/run_b.json
+    python ../../../Tools/replay_proof/verify_replay_proof.py --a <out>/run_a.json --b <out>/run_b.json --strict
+
+This example passes no evaluation options, so its canonical options payload is
+the empty JSON object (``{}``). A successful record is emitted only after the
+binding accepts the arguments and the engine returns a decision; that path is
+recorded as validation outcome ``OK`` with validation code ``0``.
 """
 
 import hashlib
@@ -54,6 +59,10 @@ def _decision_payload(decision) -> dict:
 
 def make_replay_proof(engine, bytecode, fields) -> dict:
     """Run one evaluation and build a replay_proof_v1 record."""
+    # This call supplies no explicit evaluation options. Hash the canonical
+    # empty object instead of omitting the field: strict replay comparison must
+    # distinguish "same options" from "options were not recorded".
+    evaluation_options = {}
     decision = engine.evaluate(bytecode, fields)
     compat = engine.check_compatibility(bytecode)
 
@@ -63,8 +72,14 @@ def make_replay_proof(engine, bytecode, fields) -> dict:
         "abi_level": compat["minimum_engine_abi"],
         "bytecode_hash": _sha256_hex(bytecode.data),
         "decision_hash": _sha256_hex(_canonical_json(_decision_payload(decision))),
-        # input_hash is optional but recommended: it pins the inputs the decision was made on.
+        # Strict evidence pins both inputs and the explicit evaluation options.
         "input_hash": _sha256_hex(_canonical_json(fields)),
+        "options_hash": _sha256_hex(_canonical_json(evaluation_options)),
+        # A record reaches this point only after binding validation and engine
+        # evaluation succeed. These are producer/binding validation fields; the
+        # engine does not emit them as part of AXDecision.
+        "validation_outcome": "OK",
+        "validation_code": 0,
         # informational, ignored by the verifier's equality check:
         "input_descriptor": "replay_proof_producer example",
     }
@@ -107,12 +122,17 @@ def main() -> int:
 
     # The records are produced independently; for a deterministic engine they agree
     # on the fields the verifier checks for replay equality.
-    equal = (
-        rec_a["engine_version_string"] == rec_b["engine_version_string"]
-        and rec_a["abi_level"] == rec_b["abi_level"]
-        and rec_a["bytecode_hash"] == rec_b["bytecode_hash"]
-        and rec_a["decision_hash"] == rec_b["decision_hash"]
+    strict_equality_fields = (
+        "engine_version_string",
+        "abi_level",
+        "bytecode_hash",
+        "decision_hash",
+        "input_hash",
+        "options_hash",
+        "validation_outcome",
+        "validation_code",
     )
+    equal = all(rec_a[field] == rec_b[field] for field in strict_equality_fields)
     if not equal:
         print("UNEXPECTED: the two records disagree on replay-equality fields", file=sys.stderr)
         return 1

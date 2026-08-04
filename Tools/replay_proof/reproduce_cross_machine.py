@@ -226,6 +226,15 @@ def main() -> int:
                                                    separators=(",", ":")).encode("utf-8")),
             "input_hash": sha256_hex(json.dumps(DET001_FIELDS, sort_keys=True,
                                                 separators=(",", ":")).encode("utf-8")),
+            # DET-001 supplies no explicit evaluation options. Strict evidence
+            # hashes the canonical empty options object instead of silently
+            # omitting the comparison surface.
+            "options_hash": sha256_hex(json.dumps({}, sort_keys=True,
+                                                   separators=(",", ":")).encode("utf-8")),
+            # This record is emitted only after the binding accepts the inputs
+            # and the real evaluation reproduces the golden decision.
+            "validation_outcome": "OK",
+            "validation_code": 0,
             "input_descriptor": "DET-001 canonical input",
             "notes": "cross-machine reproduction; DET-001 decision path",
         }

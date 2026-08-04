@@ -68,8 +68,12 @@ def validate_record(record: Dict[str, Any], label: str) -> Dict[str, Any]:
         raise ValueError(f"{label}: engine_version_string must be a non-empty string")
 
     abi_level = record.get("abi_level")
-    if not isinstance(abi_level, (str, int)):
+    if isinstance(abi_level, bool) or not isinstance(abi_level, (str, int)):
         raise ValueError(f"{label}: abi_level must be string or integer")
+
+    bytecode_hash = record.get("bytecode_hash")
+    if not isinstance(bytecode_hash, str) or not is_sha256_hex(bytecode_hash.lower()):
+        raise ValueError(f"{label}: bytecode_hash must be lowercase SHA-256 hex")
 
     for key in HASH_FIELDS:
         if key in record and record[key] is not None:
@@ -84,14 +88,16 @@ def validate_record(record: Dict[str, Any], label: str) -> Dict[str, Any]:
 
     if "validation_code" in record and record["validation_code"] is not None:
         validation_code = record["validation_code"]
-        if not isinstance(validation_code, int):
+        if isinstance(validation_code, bool) or not isinstance(validation_code, int):
             raise ValueError(f"{label}: validation_code must be an integer when present")
 
     if "input_descriptor" in record and record["input_descriptor"] is not None and not isinstance(record["input_descriptor"], str):
         raise ValueError(f"{label}: input_descriptor must be string when present")
 
-    if "error_code" in record and record["error_code"] is not None and not isinstance(record["error_code"], (str, int)):
-        raise ValueError(f"{label}: error_code must be string or integer when present")
+    if "error_code" in record and record["error_code"] is not None:
+        error_code = record["error_code"]
+        if isinstance(error_code, bool) or not isinstance(error_code, (str, int)):
+            raise ValueError(f"{label}: error_code must be string or integer when present")
 
     for key in ["error_message", "notes", "timestamp_utc"]:
         if key in record and record[key] is not None and not isinstance(record[key], str):

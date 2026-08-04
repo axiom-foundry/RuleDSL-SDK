@@ -130,10 +130,10 @@ jobs:
         run: |
           $dll = '${{ steps.bins.outputs.dll }}'
           Set-Location sdk
-          python Tools/replay_proof/test_verify_replay_proof.py
-          if ($LASTEXITCODE -ne 0) { Write-Error "replay verifier self-tests failed"; exit 1 }
           python bindings/python/examples/replay_proof_producer.py "$dll" rp
           if ($LASTEXITCODE -ne 0) { Write-Error "replay producer failed"; exit 1 }
-          python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json
-          if ($LASTEXITCODE -ne 0) { Write-Error "replay verify failed"; exit 1 }
-          Write-Host "OK    replay-proof produce + verify (Windows)"
+          python Tools/replay_proof/verify_replay_proof.py --a rp/run_a.json --b rp/run_b.json --strict
+          if ($LASTEXITCODE -ne 0) { Write-Error "strict replay verify failed"; exit 1 }
+          python Tools/replay_proof/test_verify_replay_proof.py --generated-a rp/run_a.json --generated-b rp/run_b.json
+          if ($LASTEXITCODE -ne 0) { Write-Error "generated replay contract tests failed"; exit 1 }
+          Write-Host "OK    replay-proof produce + strict verify (Windows)"
